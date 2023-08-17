@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin>
+    <author>Ingite Realtime</author>
+    <class>org.ifsoft.openfire.SparkWeb</class>
+    <name>${project.name}</name>
+    <description>${project.description}</description>
+    <version>${project.version}</version>
+    <licenseType>Proprietary</licenseType>
+    <date>${build.date}</date>
+	<csrfProtectionEnabled>true</csrfProtectionEnabled>	
+    <databaseKey>openlink</databaseKey>
+    <databaseVersion>0</databaseVersion>  	
+    <minServerVersion>4.7.5</minServerVersion>
+    <adminconsole>
+        <tab id="tab-webclients" name="${admin.sidebar.webclients.name}" description="${admin.sidebar.webclients.description}" url="sparkweb-config.jsp">
+            <sidebar id="tab-sparkweb" name="${plugin.title}" description="${plugin.description}">
+                <item id="sparkweb-config" name="${admin.sidebar.webclients.item.settings.name}" description="${admin.sidebar.webclients.item.settings.description}" url="sparkweb-config.jsp"/>
+            </sidebar>
+        </tab>	
+        <tab id="tab-users" >
+            <sidebar id="sidebar-users" >
+                <item id="user-summary" >
+                    <sidebar id="sidebar-users-options" >
+						<item id="sparkweb-api" name="${admin.sidebar.webclients.item.api.name}" description="${admin.sidebar.webclients.item.api.description}" url="sparkweb-api.jsp" />                      													
+                    </sidebar>
+                </item>
+            </sidebar>	
+        </tab>		
+    </adminconsole> 
+</plugin>
