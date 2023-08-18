@@ -16,7 +16,7 @@ window.onload = function() {
 		],
 		onComplete: async function() {
 			const urlify = (text) => {
-				var urlRegex = /(https?:\/\/[^\s]+)/g;
+				const urlRegex = /(https?:\/\/[^\s]+)/g;
 				return text.replace(urlRegex, '<a target="_blank" href="$1">$1</a>');
 			}
 
@@ -51,14 +51,14 @@ window.onload = function() {
 			if (username) {
 				try {
 					const token = await webAuthenticate(username);	
-					startSse(url, token);
+					setupListeners(username, url, token);
 				} catch (e) {
 					console.error("web authenticate fails", e);	
 
 					if (confirm("Create and register new credentials for " + username + "?")) {
 						const password = getUrlParam("password", "Password");	
 						const token = await webRegister(username, password);
-						startSse(url, token);	
+						setupListeners(username, url, token);	
 					}						
 				}
 			}			
@@ -81,8 +81,34 @@ window.onload = function() {
 		}
 	}
   
-	function startSse(url, token) {
-		window.ui.preauthorizeApiKey("authorization", token);		
+	function setupListeners(username, url, token) {
+		window.ui.preauthorizeApiKey("authorization", token);
+		let serviceWorkerRegistration;
+
+		const initialiseError = (error) => {
+			console.error("setupServiceWorker - initialiseError", error);
+		}	
+
+		const initialiseState = (registration) => {
+			if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
+				console.warn('Notifications aren\'t supported.');
+				return;
+			}
+
+			if (Notification.permission === 'denied') {
+				console.warn('The user has blocked notifications.');
+				return;
+			}
+
+			if (!('PushManager' in window)) {
+				console.warn('Push messaging isn\'t supported.');		
+				return;
+			}
+
+			console.debug("setupServiceWorker - initialiseState", registration);
+			setupPushNotifications(username, url, token, registration);				
+		}
+	
 		const source = new EventSource(url + "/sparkweb/sse?token=" + token);
 		
 		source.onerror = async event => {
@@ -94,19 +120,105 @@ window.onload = function() {
 		source.addEventListener('onConnect', async event => {
 			const msg = JSON.parse(event.data);				
 			document.getElementById("status").innerHTML = "User " + msg.username + " (" + msg.name + ") Signed In";				
-			console.debug("EventSource - onConnect", msg);	
+			console.debug("EventSource - onConnect", msg);
+
+			navigator.serviceWorker.register('./sparkweb-sw.js', {scope: '.'}).then(initialiseState, initialiseError);	
+			
 		});	
 		
 		source.addEventListener('chatapi.chat', async event => {
 			const msg = JSON.parse(event.data);	
 			if (msg.type == "headline") document.getElementById("status").innerHTML = "System Message - " + msg.body;				
 			console.debug("EventSource - chatapi.chat", msg);	
-		});			
+		});	
+
+		const actionChannel = new BroadcastChannel('sparkweb.notification.action');
+		
+		actionChannel.addEventListener('message', event => {
+			console.debug("setupListeners - notication action", event.data);
+		});		
 	}
+	
+	function setupPushNotifications(username, baseUrl, token, registration) {		
+		const url = baseUrl + "/sparkweb/api/rest/webpush/vapidkey/" + username;	
+		const options = {method: "GET", headers: {"Authorization": token, "Accept":"application/json", "Content-Type":"application/json"}};
+
+		console.debug("setupPushNotifications - vapidGetPublicKey", url, options);
+			
+		fetch(url, options).then(function(response) {
+			if (response.status < 400) {
+				return response.json()
+			}	
+		}).then(function(vapid) {
+			if (vapid?.publicKey) {
+				subscribeForPushNotifications(username, baseUrl, vapid.publicKey, token, registration);
+			}
+		}).catch(function (err) {
+			console.error('vapidGetPublicKey error!', err);
+		});	
+	}
+
+	function subscribeForPushNotifications(username, baseUrl, publicKey, token, registration) {
+		console.debug("subscribeForPushNotifications", username, baseUrl, publicKey, token);	
+		
+		registration.pushManager.subscribe({
+			userVisibleOnly: true,
+			applicationServerKey: base64UrlToUint8Array(publicKey)
+		})
+		.then(function (subscription) {
+			return sendSubscriptionToServer(username, baseUrl, subscription, token);
+		})
+		.catch(function (e) {
+			if (Notification.permission === 'denied') {
+				console.warn('Permission for Notifications was denied');
+			} else {
+				console.error('Unable to subscribe to push.', e);
+			}
+		});
+	}
+
+	function base64UrlToUint8Array(base64UrlData) {
+		const padding = '='.repeat((4 - base64UrlData.length % 4) % 4);
+		const base64 = (base64UrlData + padding).replace(/\-/g, '+').replace(/_/g, '/');
+		const rawData = atob(base64);
+		const buffer = new Uint8Array(rawData.length);
+
+		for (let i = 0; i < rawData.length; ++i) {
+			buffer[i] = rawData.charCodeAt(i);
+		}
+
+		return buffer;
+	}	
+	
+	function sendSubscriptionToServer(username, baseUrl, subscription, token) {
+		console.debug("sendSubscriptionToServer", subscription);
+
+		const key = subscription.getKey ? subscription.getKey('p256dh') : '';
+		const auth = subscription.getKey ? subscription.getKey('auth') : '';
+
+		const subscriptionString = JSON.stringify(subscription);  // TODO
+
+		console.debug("web push subscription", {
+			endpoint: subscription.endpoint,
+			key: key ? btoa(String.fromCharCode.apply(null, new Uint8Array(key))) : '',
+			auth: auth ? btoa(String.fromCharCode.apply(null, new Uint8Array(auth))) : ''
+		}, subscription);
+
+		const resource = "sparkweb-swagger";
+		const url = baseUrl + "/sparkweb/api/rest/webpush/subscribe/" + username + "/" + resource;
+		const options = {method: "POST", body: JSON.stringify(subscription), headers: {"Authorization": token, "Accept":"application/json", "Content-Type":"application/json"}};
+
+		return fetch(url, options).then(function(response) {
+			console.debug("sendSubscriptionToServer - subscribe response", response);
+
+		}).catch(function (err) {
+			console.error('subscribe error!', err);
+		});
+	}	
   
 	async function webAuthenticate(username) {
 		authorization = sessionStorage.getItem("sparkweb.config.token");
-		console.debug("webAuthn step 0", username, authorization);
+		console.debug("webAuthn step 0", username, authorization);		
 		const url = location.protocol + '//' + location.host + "/sparkweb/api/rest/webauthn";	
 		const response = await fetch(url + "/authenticate/start/" + username, {method: "POST", headers: {authorization}});
 		const json =  await response.json();

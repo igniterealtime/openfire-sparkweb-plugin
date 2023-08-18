@@ -12,6 +12,14 @@ SparkWeb REST API adds support for a whole range of modern web service connectio
 
 ## Tags
 
+  ### <span id="tag-web-authentication"></span>Web Authentication
+
+provide server-side Web Authentication services
+
+  ### <span id="tag-web-push"></span>Web Push
+
+provide server-side Web Push services
+
   ### <span id="tag-global-and-user-properties"></span>Global and User Properties
 
 Access global and user properties
@@ -27,10 +35,6 @@ Perform XMPP Chat functions
   ### <span id="tag-bookmarks"></span>Bookmarks
 
 Create, update and delete Openfire bookmarks
-
-  ### <span id="tag-web-authentication"></span>Web Authentication
-
-provide server-side Web Authentication services
 
 ## Content negotiation
 
@@ -105,6 +109,14 @@ provide server-side Web Authentication services
 | POST | /sparkweb/api/rest/webauthn/authenticate/start/{username} | [webauthn authenticate start](#webauthn-authenticate-start) | Web Authentication - Start Authentication |
 | POST | /sparkweb/api/rest/webauthn/register/finish/{username} | [webauthn register finish](#webauthn-register-finish) | Web Authentication - Finish Registration |
 | POST | /sparkweb/api/rest/webauthn/register/start/{username} | [webauthn register start](#webauthn-register-start) | Web Authentication - Start Registration |
+  
+
+
+###  web_push
+
+| Method  | URI     | Name   | Summary |
+|---------|---------|--------|---------|
+| GET | /sparkweb/api/rest/webpush/subscribers | [get push subscribers](#get-push-subscribers) | Web Push - Get all web push subscribers |
   
 
 
@@ -354,6 +366,37 @@ Status: OK
   
 
 
+
+### <span id="get-push-subscribers"></span> Web Push - Get all web push subscribers (*getPushSubscribers*)
+
+```
+GET /sparkweb/api/rest/webpush/subscribers
+```
+
+This endpoint is used to obtain all web push subscribers
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#get-push-subscribers-200) | OK | successful operation |  | [schema](#get-push-subscribers-200-schema) |
+
+#### Responses
+
+
+##### <span id="get-push-subscribers-200"></span> 200 - successful operation
+Status: OK
+
+###### <span id="get-push-subscribers-200-schema"></span> Schema
+   
+  
+
+[UserEntities](#user-entities)
 
 ### <span id="get-user-config"></span> Global and User Properties - List User Properties (*getUserConfig*)
 
@@ -767,6 +810,40 @@ Status: OK
   
 
 [interface{}](#interface)
+
+### <span id="user-entities"></span> UserEntities
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| users | [][UserEntity](#user-entity)| `[]*UserEntity` |  | |  |  |
+
+
+
+### <span id="user-entity"></span> UserEntity
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| email | string| `string` |  | |  |  |
+| name | string| `string` |  | |  |  |
+| password | string| `string` |  | |  |  |
+| properties | [][UserProperty](#user-property)| `[]*UserProperty` |  | |  |  |
+| username | string| `string` |  | |  |  |
+
+
 
 ### <span id="user-property"></span> UserProperty
 

@@ -49,6 +49,9 @@ import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.plugin.rest.BasicAuth;
 import org.jivesoftware.openfire.plugin.rest.exceptions.*;
+import org.jivesoftware.openfire.plugin.rest.entity.PublicKey;
+import org.jivesoftware.openfire.plugin.rest.entity.*;
+import org.jivesoftware.openfire.plugin.rest.utils.*;
 import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.openfire.group.*;
 import org.jivesoftware.openfire.plugin.spark.*;
@@ -78,7 +81,17 @@ import com.yubico.webauthn.*;
 import com.yubico.webauthn.data.*;
 import io.swagger.annotations.*;
 
-@SwaggerDefinition(tags = {@Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Presence", description = "Perform XMPP Prsence functions"), @Tag(name = "Chat", description = "Perform XMPP Chat functions"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks"), @Tag(name = "Web Authentication", description = "provide server-side Web Authentication services") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
+import com.google.common.io.BaseEncoding;
+import org.apache.http.HttpResponse;
+import nl.martijndwars.webpush.Utils;
+import nl.martijndwars.webpush.*;
+
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.interfaces.ECPrivateKey;
+import org.bouncycastle.jce.interfaces.ECPublicKey;
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
+
+@SwaggerDefinition(tags = { @Tag(name = "Web Authentication", description = "provide server-side Web Authentication services"), @Tag(name = "Web Push", description = "provide server-side Web Push services"), @Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Presence", description = "Perform XMPP Prsence functions"), @Tag(name = "Chat", description = "Perform XMPP Chat functions"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
 @Api(authorizations = {@Authorization("authorization")})
 @Path("rest")
 @Produces(MediaType.APPLICATION_JSON)
@@ -97,7 +110,6 @@ public class SparkWebAPI {
 	public void init() 	{
 
 	}	
-
 
 	//-------------------------------------------------------
 	//
@@ -233,7 +245,7 @@ public class SparkWebAPI {
 	@ApiOperation(tags = {"Global and User Properties"}, value="Global and User Properties - Update user properties", notes="Endpoint will update user properties from an array of name/value pairs")
     @POST
     @Path("/config/properties")
-    public Response postUserConfig(String json) throws ServiceException 	{
+    public Response postUserConfig(@ApiParam(value = "A JSON array of name pairs (name/value) to set the value of a property", required = true) String json) throws ServiceException 	{
 		String username = getEndUser();
 		String blockList = "";
 		
@@ -343,6 +355,120 @@ public class SparkWebAPI {
 		
         return json.toString();
     }	
+
+
+    //-------------------------------------------------------
+    //
+    //  Web Push
+    //
+    //-------------------------------------------------------
+
+	@ApiOperation(tags = {"Web Push"}, value="Web Push - Get all web push subscribers", notes="This endpoint is used to obtain all web push subscribers")
+    @Path("/webpush/subscribers")	
+    @GET	
+    public UserEntities getPushSubscribers()  throws ServiceException {
+        List<UserEntity> users = new ArrayList<UserEntity>();
+        List<User> usernames = SparkWeb.self.getUsersByProperty("webpush.subscribe.%", null);
+
+        for (User user : usernames) {
+            users.add(UserUtils.convertUserToUserEntity(user));			
+        }
+
+        UserEntities userEntities = new UserEntities();
+        userEntities.setUsers(users);		
+        return userEntities;
+    }
+
+	@ApiOperation(tags = {"Web Push"}, value="Web Push - Get the webpush vapid key", notes="This endpoint is used to obtain the vapid key need by the client to sign web push messages")
+    @Path("/webpush/vapidkey/{username}")
+    @GET
+    public PublicKey getWebPushPublicKey(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username) throws ServiceException {
+        Log.debug("getWebPushPublicKey " + username);
+
+        String publicKey = fetchWebPushPublicKey(username);
+
+        if (publicKey == null) {
+            publicKey = JiveGlobals.getProperty("vapid.public.key", null);
+        }
+
+        if (publicKey == null)
+            throw new ServiceException("Exception", "public key not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION,  Response.Status.NOT_FOUND);
+
+        return new PublicKey(publicKey);
+    }	
+
+	@ApiOperation(tags = {"Web Push"}, value="Web Push - Store web push subscription for this user", notes="This endpoint is used to save a subscription created by a web client for this user")
+    @Path("/webpush/subscribe/{username}/{resource}")	
+    @POST
+    public Response postWebPushSubscription(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "A name to tag the subscription", required = true) @PathParam("resource") String resource, @ApiParam(value = "The subscription as created by the web client", required = true) String subscription) throws ServiceException {
+        Log.debug("postWebPushSubscription " + username + " " + resource + "\n" + subscription);
+
+		User user = SparkWeb.self.getUser(username);
+		
+		if (user != null) {
+			user.getProperties().put("webpush.subscribe." + resource, subscription);
+			return Response.status(Response.Status.OK).build();
+		}
+
+        return Response.status(Response.Status.BAD_REQUEST).build();
+    }	
+
+	@ApiOperation(tags = {"Web Push"}, value="Web Push - Publish a message to all subscriptions of this user", notes="This endpoint is used to push a message with a payload to all subscriptions of the specified user")	
+    @POST
+    @Path("/webpush/publish/{username}")
+    public Response postWebPush(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "The message payload to be pushed to the user", required = true) String payload) throws ServiceException {
+        Log.debug("postWebPush " + username + "\n" + payload);
+
+        User user = SparkWeb.self.getUser(username);
+        
+		if (user == null) {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+		
+        boolean ok = true;
+        String publicKey = user.getProperties().get("vapid.public.key");
+        String privateKey = user.getProperties().get("vapid.private.key");
+
+        if (publicKey == null || privateKey == null) {
+			publicKey = JiveGlobals.getProperty("vapid.public.key", null);
+			privateKey = JiveGlobals.getProperty("vapid.private.key", null);
+		}
+
+        try {
+            if (publicKey != null && privateKey != null) {
+                PushService pushService = new PushService()
+                    .setPublicKey(publicKey)
+                    .setPrivateKey(privateKey)
+                    .setSubject("mailto:admin@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+
+                Log.debug("postWebPush keys \n"  + publicKey + "\n" + privateKey);
+
+                for (String key : user.getProperties().keySet())
+                {
+                    if (key.startsWith("webpush.subscribe.")) {
+                        try {
+                            Subscription subscription = new Gson().fromJson(user.getProperties().get(key), Subscription.class);
+                            Notification notification = new Notification(subscription, payload);
+                            HttpResponse response = pushService.send(notification);
+                            int statusCode = response.getStatusLine().getStatusCode();
+
+                            ok = ok && (200 == statusCode) || (201 == statusCode);
+
+							if (ok) {
+								Log.debug("postWebPush delivered "  + statusCode + "\n" + response);
+								return Response.status(Response.Status.BAD_REQUEST).build();
+							}		
+                        } catch (Exception e) {
+                            Log.error("postWebPush failed "  + username + "\n" + payload, e);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e1) {
+            Log.error("postWebPush failed "+ e1, e1);
+        }
+        return Response.status(Response.Status.BAD_REQUEST).build();
+    }	
 	
 	//-------------------------------------------------------
     //
@@ -353,7 +479,7 @@ public class SparkWebAPI {
 	@ApiOperation(tags = {"Web Authentication"}, value="Web Authentication - Start Registration", notes="This endpoint is used to start the webauthn registration proces")
     @POST
     @Path("/webauthn/register/start/{username}")
-    public String webauthnRegisterStart(@PathParam("username") String username, String password) throws ServiceException     {	
+    public String webauthnRegisterStart(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "The current Openfire password for the user", required = true) String password) throws ServiceException     {	
 		JSONObject json = new JSONObject();	
 		
         try {
@@ -382,7 +508,7 @@ public class SparkWebAPI {
 	@ApiOperation(tags = {"Web Authentication"}, value="Web Authentication - Finish Registration", notes="This endpoint is used to finish the webauthn registration proces")	
     @POST
     @Path("/webauthn/register/finish/{username}")
-    public String webauthnRegisterFinish(@PathParam("username") String username, String credentials) throws ServiceException    {
+    public String webauthnRegisterFinish(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "The credentials generated by the web client", required = true) String credentials) throws ServiceException    {
 		JSONObject json = new JSONObject();				
         Log.debug("webauthnRegisterFinish " + username + "\n" + credentials);
 			
@@ -404,7 +530,7 @@ public class SparkWebAPI {
 	@ApiOperation(tags = {"Web Authentication"}, value="Web Authentication - Start Authentication", notes="This endpoint is used to start the webauthn authentication proces")	
     @POST
     @Path("/webauthn/authenticate/start/{username}")
-    public String webauthnAuthenticateStart(@PathParam("username") String username) throws ServiceException  {		
+    public String webauthnAuthenticateStart(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username) throws ServiceException  {		
 		JSONObject json = new JSONObject();		
 		String auth = httpRequest.getHeader("authorization");		
 		
@@ -436,7 +562,7 @@ public class SparkWebAPI {
 	@ApiOperation(tags = {"Web Authentication"}, value="Web Authentication - End Authentication", notes="This endpoint is used to finish the webauthn authentication proces")	
     @POST
     @Path("/webauthn/authenticate/finish/{username}")
-    public String webauthnAuthenticateFinish(@PathParam("username") String username, String assertion) throws ServiceException     {
+    public String webauthnAuthenticateFinish(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "The assertion generated by the web client", required = true) String assertion) throws ServiceException     {
 		JSONObject json = new JSONObject();		
         Log.debug("webauthnAuthenticateFinish " + username + "\n" + assertion);
 			
@@ -555,6 +681,48 @@ public class SparkWebAPI {
 	//
 	//-------------------------------------------------------
 
+    public String fetchWebPushPublicKey(String username)  {
+        Log.debug("fetchWebPushPublicKey " + username);
+
+        User user = SparkWeb.self.getUser(username);
+        if (user == null) return null;
+
+        String ofPublicKey = user.getProperties().get("vapid.public.key");
+        String ofPrivateKey = user.getProperties().get("vapid.private.key");
+
+        if (ofPublicKey == null || ofPrivateKey == null) {
+            try {
+                KeyPair keyPair = generateKeyPair();
+
+                final ECPublicKey ecPublicKey = (ECPublicKey) keyPair.getPublic();
+                final ECPrivateKey ecPrivateKey = (ECPrivateKey) keyPair.getPrivate();
+
+				byte[] encodedPublicKey = Utils.encode(ecPublicKey);
+				byte[] encodedPrivateKey = Utils.encode(ecPrivateKey);
+		
+				ofPublicKey = java.util.Base64.getUrlEncoder().encodeToString(encodedPublicKey);
+				ofPrivateKey = java.util.Base64.getUrlEncoder().encodeToString(encodedPrivateKey);
+
+                user.getProperties().put("vapid.public.key", ofPublicKey);
+                user.getProperties().put("vapid.private.key", ofPrivateKey);
+
+            } catch (Exception e) {
+                Log.error("fetchWebPushPublicKey", e);
+            }
+        }
+
+        return ofPublicKey;
+    }
+
+    private KeyPair generateKeyPair() throws InvalidAlgorithmParameterException, NoSuchProviderException, NoSuchAlgorithmException {
+        ECNamedCurveParameterSpec parameterSpec = ECNamedCurveTable.getParameterSpec("prime256v1");
+
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDH", "BC");
+        keyPairGenerator.initialize(parameterSpec);
+
+        return keyPairGenerator.generateKeyPair();
+    }
+	
 	private URL getReferer() throws MalformedURLException 	{
 		if (httpRequest != null) {
 			String url = (String) httpRequest.getHeader("referer");
@@ -796,7 +964,7 @@ public class SparkWebAPI {
 		json.put("name", bookmark.getName());	
 		json.put("value", bookmark.getValue());						
 		
-		for (UserProperty userProperty : bookmark.getProperties()) {
+		for (org.jivesoftware.openfire.plugin.spark.UserProperty userProperty : bookmark.getProperties()) {
 			String key = userProperty.getKey();								
 			json.put(key, userProperty.getValue());
 		}
