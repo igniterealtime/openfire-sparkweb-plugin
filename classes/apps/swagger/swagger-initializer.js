@@ -53,12 +53,14 @@ window.onload = function() {
 					const token = await webAuthenticate(username);	
 					startSse(url, token);
 				} catch (e) {
-					console.error("web authenticate fails", e);					
-					const password = getUrlParam("password", "Password");	
-					const token = await webRegister(username, password);
-					startSse(url, token);					
-				}
+					console.error("web authenticate fails", e);	
 
+					if (confirm("Create and register new credentials for " + username + "?")) {
+						const password = getUrlParam("password", "Password");	
+						const token = await webRegister(username, password);
+						startSse(url, token);	
+					}						
+				}
 			}			
 		},	
 		layout: "StandaloneLayout"

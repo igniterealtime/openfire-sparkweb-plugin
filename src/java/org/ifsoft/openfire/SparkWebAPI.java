@@ -84,11 +84,11 @@ import io.swagger.annotations.*;
 @Produces(MediaType.APPLICATION_JSON)
 
 public class SparkWebAPI {   
-	private static final Logger Log = LogManager.getLogger(SparkWebAPI.class);
-	private static final HashMap<String, Object> requests = new HashMap<>();		
+	private static final Logger Log = LogManager.getLogger(SparkWebAPI.class);	
 	private static RelyingParty relyingParty = null;
 	private static UserRegistrationStorage userRegistrationStorage;	
 
+	public static final HashMap<String, Object> requests = new HashMap<>();	
 	
 	@Context
 	private HttpServletRequest httpRequest;
@@ -357,12 +357,19 @@ public class SparkWebAPI {
 		JSONObject json = new JSONObject();	
 		
         try {
-            AuthFactory.authenticate(username, password);		// authenticate user first before creating credentials	
-			User user = SparkWeb.self.getUser(username);			
+ 			User user = SparkWeb.self.getUser(username);	
+			
+			if (user == null) {	// create a new user
+				String name = username.substring(0, 1).toUpperCase() + username.substring(1);
+				String email = username + "@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+				user = SparkWeb.userManager.createUser( username, password, name, email);
+			} else {
+				AuthFactory.authenticate(username, password);		// authenticate user first before creating credentials	
+			}			
 			
 			URL url = getReferer();			
 			Log.debug("webauthnRegisterStart " + username + " " + url);			
-			json.put("credentials", new JSONObject(startRegisterWebAuthn(username, username, url)));				
+			json.put("credentials", new JSONObject(startRegisterWebAuthn(username, user.getName(), url)));				
 
         } catch (Exception e) {
             Log.error("webauthnRegisterStart", e);
@@ -597,7 +604,7 @@ public class SparkWebAPI {
 					.response(pkc)
 					.build());
 
-				userRegistrationStorage.addCredential(username, request.getUser().getId().getBytes(), result.getKeyId().getId().getBytes(), result.getPublicKeyCose().getBytes());											
+				userRegistrationStorage.addCredential(username, request.getUser().getId().getBytes(), result.getKeyId().getId().getBytes(), result.getPublicKeyCose().getBytes(), result.getSignatureCount());											
 				
 			} catch (Exception e) {
 				Log.error( "finishRegisterWebAuthn exception occurred", e );			
@@ -642,7 +649,8 @@ public class SparkWebAPI {
 				AssertionResult result = relyingParty.finishAssertion(FinishAssertionOptions.builder()
 					.request(request)
 					.response(pkc).build());
-					
+
+				userRegistrationStorage.storeSignatureCount(username, result.getSignatureCount());					
 				response = result.isSuccess();		
 				
 			} catch (Exception e) {

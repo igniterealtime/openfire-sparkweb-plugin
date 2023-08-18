@@ -1,5 +1,6 @@
 package org.ifsoft.webauthn;
 
+import org.ifsoft.openfire.SparkWebAPI;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
@@ -22,6 +23,12 @@ public class UserRegistrationStorage implements CredentialRepository {
   private Logger Log = LogManager.getLogger(UserRegistrationStorage.class);
   private UserManager userManager = XMPPServer.getInstance().getUserManager(); 
 
+  public void storeSignatureCount(String username, long count) {
+	Map<String, String> properties = getUserProperties(username);
+	properties.put("webauthn-signature-count", String.valueOf(count));	
+  }
+  
+  
   public void removeCredential(String username) {
 	Map<String, String> properties = getUserProperties(username);
 
@@ -37,7 +44,7 @@ public class UserRegistrationStorage implements CredentialRepository {
 	}
   }
   
-  public void addCredential(String username, byte[] id, byte[] credentialId, byte[] publicKeyCose) {
+  public void addCredential(String username, byte[] id, byte[] credentialId, byte[] publicKeyCose, long signatureCount) {
 	Log.debug("addCredential " + username);	  
 	Map<String, String> properties = getUserProperties(username);
 
@@ -50,7 +57,8 @@ public class UserRegistrationStorage implements CredentialRepository {
 		json.put("publicKeyCose", (new ByteArray(publicKeyCose)).getBase64Url());
 		
 		properties.put("webauthn-key-" + keyId, json.toString());	
-		properties.put("webauthn-userid", userId);			
+		properties.put("webauthn-userid", userId);	
+		properties.put("webauthn-signature-count", String.valueOf(signatureCount));			
 	}
   }  
 
@@ -64,8 +72,7 @@ public class UserRegistrationStorage implements CredentialRepository {
 	{
 		for (String key : properties.keySet())
 		{
-			if (key.startsWith("webauthn-key-"))
-			{
+			if (key.startsWith("webauthn-key-")) {
 				try {
 					JSONObject json = new JSONObject(properties.get(key));
 					Log.debug("getCredentialIdsForUsername - credential " + key + "\n" + json);					
@@ -152,13 +159,13 @@ public class UserRegistrationStorage implements CredentialRepository {
 					String userId2 = json.getString("userId");
 					Log.debug("lookup user webauthn\n" + json);						
 					
-					if (userId2.equals(userId))
-					{						
+					if (userId2.equals(userId)) {						
+						long signatureCount = Long.parseLong(properties.get("webauthn-signature-count"));
 						return Optional.of(RegisteredCredential.builder()
 						  .credentialId(credentialId)
 						  .userHandle(userHandle)
 						  .publicKeyCose(ByteArray.fromBase64Url(json.getString("publicKeyCose")))
-						  .signatureCount(1).build());
+						  .signatureCount(signatureCount).build());
 					}
 				}
 			}
@@ -184,8 +191,8 @@ public class UserRegistrationStorage implements CredentialRepository {
 			for (String username : usernames) {
 				Map<String, String> properties = getUserProperties(username);
 
-				if (properties != null)
-				{
+				if (properties != null) {
+					long signatureCount = Long.parseLong(properties.get("webauthn-signature-count"));
 					JSONObject json = new JSONObject(properties.get(key));	
 					String userId = json.getString("userId");
 					ByteArray id = new ByteArray(BytesUtil.stringToBytes(userId));
@@ -196,7 +203,7 @@ public class UserRegistrationStorage implements CredentialRepository {
 					  .credentialId(keyId)
 					  .userHandle(id)
 					  .publicKeyCose(publicKeyCose)
-					  .signatureCount(1).build());
+					  .signatureCount(signatureCount).build());
 				}
 			}
 		}	
