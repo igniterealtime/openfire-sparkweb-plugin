@@ -13,44 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jivesoftware.openfire.plugin.rest.entity;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-
 /**
- * The Class MessageEntity.
+ * A base class for pre-existing classes that each represent a collection of MUC-room affiliated users of a specific
+ * type.
+ *
+ * The existence of this base class is to be able to generically process all types of affiliations, while each subclass
+ * is allowed to retain the affiliation-specific JABX annotations.
+ *
+ * @author Guus der Kinderen, guus@goodbytes.nl
  */
-@XmlRootElement(name = "message")
-public class MessageEntity {
-
-    /** The body. */
-    private String body;
-
+public abstract class AffiliatedEntities
+{
     /**
-     * Instantiates a new message entity.
-     */
-    public MessageEntity() {
-    }
-
-    /**
-     * Gets the body.
+     * The list of user references (could be JIDs, usernames, Group-JIDs or group names) that are all affiliated in a
+     * particular way to a MUC room.
      *
-     * @return the body
+     * @return a list of user references
      */
-    @XmlElement
-    public String getBody() {
-        return body;
-    }
-
-    /**
-     * Sets the body.
-     *
-     * @param body
-     *            the new body
-     */
-    public void setBody(String body) {
-        this.body = body;
-    }
+    public abstract String[] asUserReferences();
 }

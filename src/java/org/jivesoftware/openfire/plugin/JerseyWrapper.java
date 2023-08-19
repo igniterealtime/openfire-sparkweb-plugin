@@ -85,7 +85,7 @@ public class JerseyWrapper extends ResourceConfig {
         register(StatisticsFilter.class);
 
         // Services
-        registerClasses(
+        registerClasses(	
             SparkWebAPI.class
         );
 

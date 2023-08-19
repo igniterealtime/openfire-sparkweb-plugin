@@ -23,24 +23,24 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "sessions")
-public class SessionEntities {
-    List<SessionEntity> sessions;
+@XmlRootElement(name = "logs")
+public class SecurityAuditLogs {
+	List<SecurityAuditLog> securityAuditLog;
 
-    public SessionEntities() {
-    }
+	public SecurityAuditLogs() {
+	}
 
-    public SessionEntities(List<SessionEntity> sessions) {
-        this.sessions = sessions;
-    }
+	public SecurityAuditLogs(List<SecurityAuditLog> securityAuditLog) {
+		this.securityAuditLog = securityAuditLog;
+	}
 
-    @XmlElement(name = "session")
-    @JsonProperty(value = "sessions")
-    public List<SessionEntity> getSessions() {
-        return sessions;
-    }
+	@XmlElement(name = "log")
+	@JsonProperty(value = "logs")
+	public List<SecurityAuditLog> getSecurityAuditLog() {
+		return securityAuditLog;
+	}
 
-    public void setSessions(List<SessionEntity> sessions) {
-        this.sessions = sessions;
-    }
+	public void setSecurityAuditLog(List<SecurityAuditLog> securityAuditLog) {
+		this.securityAuditLog = securityAuditLog;
+	}
 }

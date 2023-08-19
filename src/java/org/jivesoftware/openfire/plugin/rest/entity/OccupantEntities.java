@@ -1,27 +1,45 @@
+/*
+ * Copyright (c) 2022.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jivesoftware.openfire.plugin.rest.entity;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 
 @XmlRootElement(name = "occupants")
 public class OccupantEntities {
-	List<OccupantEntity> occupants;
+    List<OccupantEntity> occupants;
 
-	public OccupantEntities() {
-	}
+    public OccupantEntities() {
+    }
 
-	public OccupantEntities(List<OccupantEntity> occupants) {
-		this.occupants = occupants;
-	}
+    public OccupantEntities(List<OccupantEntity> occupants) {
+        this.occupants = occupants;
+    }
 
-	@XmlElement(name = "occupant")
-	public List<OccupantEntity> getOccupants() {
-		return occupants;
-	}
+    @XmlElement(name = "occupant")
+    @JsonProperty(value = "occupants")
+    public List<OccupantEntity> getOccupants() {
+        return occupants;
+    }
 
-	public void setOccupants(List<OccupantEntity> occupants) {
-		this.occupants = occupants;
-	}
+    public void setOccupants(List<OccupantEntity> occupants) {
+        this.occupants = occupants;
+    }
 }

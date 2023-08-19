@@ -287,8 +287,9 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
                     if (presence.getMode() != null)
                         show = presence.getMode().toString();
 
-                    rosterItemEntity.setStatus(presence.getStatus());
-                    rosterItemEntity.setShow(show);
+					// TODO implement roster presence
+                    //rosterItemEntity.setStatus(presence.getStatus());
+                    //rosterItemEntity.setShow(show);
                     rosterEntities.add(rosterItemEntity);
 
                     Log.debug("Roster entry " + entry.getUser() + " " + entry.getName() + " " + presence.getType().name() + " " + presence.getMode() + " " + presence.getStatus());

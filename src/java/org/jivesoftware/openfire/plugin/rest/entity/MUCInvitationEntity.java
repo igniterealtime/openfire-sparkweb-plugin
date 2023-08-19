@@ -16,31 +16,23 @@
 
 package org.jivesoftware.openfire.plugin.rest.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.List;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "sessions")
-public class SessionEntities {
-    List<SessionEntity> sessions;
+@XmlRootElement(name = "mucInvitation")
+public class MUCInvitationEntity {
 
-    public SessionEntities() {
+    String reason;
+
+    public MUCInvitationEntity() {
     }
 
-    public SessionEntities(List<SessionEntity> sessions) {
-        this.sessions = sessions;
+    @XmlElement
+    public String getReason() {
+        return reason;
     }
 
-    @XmlElement(name = "session")
-    @JsonProperty(value = "sessions")
-    public List<SessionEntity> getSessions() {
-        return sessions;
-    }
-
-    public void setSessions(List<SessionEntity> sessions) {
-        this.sessions = sessions;
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 }

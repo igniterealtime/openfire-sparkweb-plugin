@@ -18,29 +18,35 @@ package org.jivesoftware.openfire.plugin.rest.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 
-@XmlRootElement(name = "sessions")
-public class SessionEntities {
-    List<SessionEntity> sessions;
+@XmlRootElement(name = "admins")
+public class AdminEntities extends AffiliatedEntities
+{
+    List<String> admins;
 
-    public SessionEntities() {
+    public AdminEntities() {
     }
 
-    public SessionEntities(List<SessionEntity> sessions) {
-        this.sessions = sessions;
+    public AdminEntities(List<String> admins) {
+        this.admins = admins;
     }
 
-    @XmlElement(name = "session")
-    @JsonProperty(value = "sessions")
-    public List<SessionEntity> getSessions() {
-        return sessions;
+    @XmlElement(name = "admin")
+    @JsonProperty(value = "admins")
+    public List<String> getAdmins() {
+        return admins;
     }
 
-    public void setSessions(List<SessionEntity> sessions) {
-        this.sessions = sessions;
+    public void setAdmins(List<String> admins) {
+        this.admins = admins;
+    }
+
+    @Override
+    public String[] asUserReferences()
+    {
+        return admins == null ? new String[0] : admins.toArray(new String[0]);
     }
 }

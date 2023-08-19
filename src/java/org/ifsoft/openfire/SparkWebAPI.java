@@ -47,13 +47,17 @@ import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.container.PluginMetadataHelper;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.http.HttpBindManager;
+import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.plugin.rest.BasicAuth;
 import org.jivesoftware.openfire.plugin.rest.exceptions.*;
 import org.jivesoftware.openfire.plugin.rest.entity.PublicKey;
 import org.jivesoftware.openfire.plugin.rest.entity.*;
 import org.jivesoftware.openfire.plugin.rest.utils.*;
+import org.jivesoftware.openfire.plugin.rest.controller.*;
+
 import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.openfire.group.*;
+import org.jivesoftware.openfire.roster.*;
 import org.jivesoftware.openfire.plugin.spark.*;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
@@ -91,7 +95,7 @@ import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
-@SwaggerDefinition(tags = { @Tag(name = "Web Authentication", description = "provide server-side Web Authentication services"), @Tag(name = "Web Push", description = "provide server-side Web Push services"), @Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Presence", description = "Perform XMPP Prsence functions"), @Tag(name = "Chat", description = "Perform XMPP Chat functions"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
+@SwaggerDefinition(tags = { @Tag(name = "User Management", description = "provide user services for the authenticated user."), @Tag(name = "Contact Management", description = "provide user roster services to manage contacts"), @Tag(name = "Presence", description = "Perform XMPP Prsence functions"), @Tag(name = "Chat", description = "Perform XMPP Chat functions"), @Tag(name = "Web Authentication", description = "provide server-side Web Authentication services"), @Tag(name = "Web Push", description = "provide server-side Web Push services"), @Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
 @Api(authorizations = {@Authorization("authorization")})
 @Path("rest")
 @Produces(MediaType.APPLICATION_JSON)
@@ -100,16 +104,230 @@ public class SparkWebAPI {
 	private static final Logger Log = LogManager.getLogger(SparkWebAPI.class);	
 	private static RelyingParty relyingParty = null;
 	private static UserRegistrationStorage userRegistrationStorage;	
+	
+    private static final String COULD_NOT_UPDATE_THE_ROSTER = "Could not update the roster";
+    private static final String COULD_NOT_CREATE_ROSTER_ITEM = "Could not create roster item";
+	
+	public static final HashMap<String, Object> requests = new HashMap<>();
 
-	public static final HashMap<String, Object> requests = new HashMap<>();	
+	UserServiceController userServiceController;
 	
 	@Context
 	private HttpServletRequest httpRequest;
 	
 	@PostConstruct
 	public void init() 	{
-
+        userServiceController = UserServiceController.getInstance();
 	}	
+
+
+	//-------------------------------------------------------
+	//
+	//	Users
+	//
+	//-------------------------------------------------------
+
+	@ApiOperation(tags = {"User Management"}, value="Get users", notes="Retrieve all users defined in Openfire (with optional filtering).")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "A list of Openfire users.")})
+    @Path("/users")
+    @GET
+    public UserEntities getUsers(@ApiParam(value = "Search/Filter by username. This act like the wildcard search %String%", required = false) @QueryParam("search") String userSearch, @ApiParam(value = "Filter by a user property name.", required = false) @QueryParam("propertyKey") String propertyKey, @ApiParam(value = "Filter by user property value. Note: This can only be used in combination with a property name parameter", required = false) @QueryParam("propertyValue") String propertyValue) throws ServiceException {
+        return userServiceController.getUserEntities(userSearch, propertyKey, propertyValue);
+    }
+
+	@ApiOperation(tags = {"User Management"}, value="Get authenticated user", notes="Retrieve a user that is defined in Openfire.")		
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The Openfire user was retrieved."), @ApiResponse(code = 404, message = "No user with that username was found.") })	
+    @Path("/user")
+    @GET
+    public UserEntity getUser() throws ServiceException    {
+ 		String username = getEndUser();        
+		return userServiceController.getUserEntity(username);
+    }	
+	
+	@ApiOperation(tags = {"User Management"}, value="Update authenticated user", notes="Update the authenticated user in Openfire.")		
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The Openfire user was updated."), @ApiResponse(code = 404, message = "No user with that username was found.") })	
+    @Path("/user")
+    @PUT
+    public Response updateUser(@ApiParam(value = "The definition of the authenticated user to update.", required = true) UserEntity userEntity)  throws ServiceException    {
+ 		String username = getEndUser();
+		userServiceController.updateUser(username, userEntity);
+        return Response.status(Response.Status.OK).build();	
+    }
+
+	@ApiOperation(tags = {"User Management"}, value="Delete authenticated user", notes="Delete authenticated user in Openfire.")		
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The Openfire user was deleted."), @ApiResponse(code = 404, message = "No user with that username was found.") })	
+    @Path("/user")
+    @DELETE
+    public Response deleteUser() throws ServiceException    {
+		String username = getEndUser();	
+        userServiceController.deleteUser(username);
+        return Response.status(Response.Status.OK).build();	
+    }	
+
+	@ApiOperation(tags = {"User Management"}, value="Get user's groups", notes="Retrieve names of all groups that a particular user is in.")		
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The names of the groups that the user is in.") })	
+    @Path("/user/groups")
+    @GET
+    public UserGroupsEntity getUserGroups() throws ServiceException    {
+ 		String username = getEndUser();        
+        return new UserGroupsEntity(userServiceController.getUserGroups(username));
+    }	
+
+	@ApiOperation(tags = {"User Management"}, value="Add user to groups", notes="Add authenticated user to a collection of groups. When a group that is provided does not exist, it will be automatically created if possible.")		
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The user was added to all groups."), @ApiResponse(code = 404, message = "One or more groups could not be found.") })	
+    @Path("/user/groups")
+    @POST
+    public Response addUserToGroups(@ApiParam(value = "A collection of names for groups that the user is to be added to.", required = true) UserGroupsEntity userGroupsEntity)  throws ServiceException    {
+ 		String username = getEndUser();
+		userServiceController.addUserToGroups(username, userGroupsEntity);
+        return Response.status(Response.Status.OK).build();	
+    }
+
+	@ApiOperation(tags = {"User Management"}, value="Add user to a group", notes="Add authenticated user to a collection of groups. When a group that is provided does not exist, it will be automatically created if possible.")		
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The user was added to all groups."), @ApiResponse(code = 400, message = "The group could not be found.") })	
+    @Path("/user/groups/{groupName}")
+    @POST
+    public Response addUserToGroup(@ApiParam(value = "The name of the group that the user is to be added to.", required = true) @PathParam("groupName") String groupName)  throws ServiceException    {
+ 		String username = getEndUser();
+		userServiceController.addUserToGroup(username, groupName);
+        return Response.status(Response.Status.OK).build();	
+    }
+
+	@ApiOperation(tags = {"User Management"}, value="Delete user from group", notes="Removes a user from a group.")		
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The user was taken out of the group."), @ApiResponse(code = 400, message = "The group could not be found.") })	
+    @Path("/user/groups/{groupName}")
+    @DELETE
+    public Response deleteUserFromGroup(@ApiParam(value = "The name of the group that the user is to be added to.", required = true) @PathParam("groupName") String groupName)  throws ServiceException    {
+ 		String username = getEndUser();
+		userServiceController.deleteUserFromGroup(username, groupName);
+        return Response.status(Response.Status.OK).build();	
+    }	
+	
+	@ApiOperation(tags = {"User Management"}, value="Delete user from groups", notes="Removes a user from a collection of groups..")		
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The user was taken out of the group."), @ApiResponse(code = 404, message = "One or more groups could not be found.") })	
+    @Path("/user/groups")
+    @DELETE
+    public Response deleteUserFromGroups(@ApiParam(value = "A collection of names for groups that the user is to be added to.", required = true) UserGroupsEntity userGroupsEntity)  throws ServiceException    {
+ 		String username = getEndUser();
+		userServiceController.deleteUserFromGroups(username, userGroupsEntity);
+        return Response.status(Response.Status.OK).build();	
+    }	
+
+	//-------------------------------------------------------
+	//
+	//	Contacts
+	//
+	//-------------------------------------------------------
+	
+	@ApiOperation(tags = {"Contact Management"}, value="Retrieve user roster", notes="Get a list of all roster entries (buddies / contact list) of a authenticated user.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "All roster entries"), @ApiResponse(code = 404, message = "No user with that username was found.") })	
+    @Path("/roster")
+    @GET
+    public RosterEntities getUserRoster() throws ServiceException {
+		String username = getEndUser();		
+        return userServiceController.getRosterEntities(username);
+    }
+	
+	@ApiOperation(tags = {"Contact Management"}, value="Create roster entry", notes="Add a roster entry to the roster (buddies / contact list) of a particular user.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The entry was added to the roster."), @ApiResponse(code = 400, message = "A roster entry cannot be added to a 'shared group' (try removing group names from the roster entry and try again).") , @ApiResponse(code = 404, message = "No user of with this username exists.") , @ApiResponse(code = 409, message = "A roster entry already exists for the provided contact JID.")})	
+    @Path("/roster")
+    @POST
+    public Response createRoster(@ApiParam(value = "The definition of the roster entry that is to be added.", required = true) RosterItemEntity rosterItemEntity) throws ServiceException {
+		String username = getEndUser();	
+		
+        try {
+            userServiceController.addRosterItem(username, rosterItemEntity);
+        } catch (UserNotFoundException e) {
+            throw new ServiceException(COULD_NOT_CREATE_ROSTER_ITEM, "", ExceptionType.USER_NOT_FOUND_EXCEPTION, Response.Status.NOT_FOUND, e);
+        } catch (UserAlreadyExistsException e) {
+            throw new ServiceException(COULD_NOT_CREATE_ROSTER_ITEM, "", ExceptionType.USER_ALREADY_EXISTS_EXCEPTION, Response.Status.CONFLICT, e);
+        } catch (SharedGroupException e) {
+            throw new ServiceException(COULD_NOT_CREATE_ROSTER_ITEM, "", ExceptionType.SHARED_GROUP_EXCEPTION, Response.Status.BAD_REQUEST, e);
+        }
+        return Response.status(Response.Status.OK).build();
+    }	
+	
+	@ApiOperation(tags = {"Contact Management"}, value="Remove roster entry", notes="Removes one of the roster entries (contacts) of the authenticated user.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Roster entry removed"), @ApiResponse(code = 400, message = "A roster entry cannot be removed from a 'shared group'."), @ApiResponse(code = 404, message = "No user of with this username exists, or its roster did not contain this entry.") })	
+    @Path("/roster/{jid}")
+    @DELETE
+    public Response deleteRosterItem(@ApiParam(value = "The JID of the entry/contact to remove.", required = true) @PathParam("jid") String jid) throws ServiceException {
+		String username = getEndUser();		
+		
+        try {
+            userServiceController.deleteRosterItem(username, jid);
+        } catch (SharedGroupException e) {
+            throw new ServiceException("Could not delete the roster item", jid, ExceptionType.SHARED_GROUP_EXCEPTION, Response.Status.BAD_REQUEST, e);
+        }
+        return Response.status(Response.Status.OK).build();		
+    }
+
+	@ApiOperation(tags = {"Contact Management"}, value="Update roster entry", notes="Update a roster entry to the roster (buddies / contact list) of a particular user.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The entry was updated in the roster."), @ApiResponse(code = 400, message = "A roster entry cannot be updated with a 'shared group'."), @ApiResponse(code = 404, message = "No user of with this username exists.")})	
+    @Path("/roster/{jid}")
+    @PUT
+    public Response updateRosterItem(@ApiParam(value = "The JID of the entry/contact to remove.", required = true) @PathParam("jid") String jid, @ApiParam(value = "The definition of the roster entry that is to be updated.", required = true) RosterItemEntity rosterItemEntity) throws ServiceException {
+		String username = getEndUser();	
+		
+        try {
+            userServiceController.updateRosterItem(username, jid, rosterItemEntity);
+        } catch (UserNotFoundException e) {
+            throw new ServiceException(COULD_NOT_CREATE_ROSTER_ITEM, "", ExceptionType.USER_NOT_FOUND_EXCEPTION, Response.Status.NOT_FOUND, e);
+        } catch (UserAlreadyExistsException e) {
+            throw new ServiceException(COULD_NOT_CREATE_ROSTER_ITEM, "", ExceptionType.USER_ALREADY_EXISTS_EXCEPTION, Response.Status.CONFLICT, e);
+        } catch (SharedGroupException e) {
+            throw new ServiceException(COULD_NOT_CREATE_ROSTER_ITEM, "", ExceptionType.SHARED_GROUP_EXCEPTION, Response.Status.BAD_REQUEST, e);
+        }
+        return Response.status(Response.Status.OK).build();
+    }	
+	
+	//-------------------------------------------------------
+	//
+	//	Chat
+	//
+	//-------------------------------------------------------
+			
+	
+
+	//-------------------------------------------------------
+	//
+	//	Presence
+	//
+	//-------------------------------------------------------
+
+	@ApiOperation(tags = {"Presence"}, value="Presence - Store the presence of a user", notes="This endpoint is used to store the presence of a user")	
+	@POST
+    @Path("/presence")
+    public Response postPresence(String json) throws ServiceException 	{
+		try {	
+			String username = getEndUser();
+
+			if (username != null) {
+				User user = ensureUserExists(username);	
+	
+			}
+		} catch (Exception e) {
+			Log.error("postPresence " + e, e);
+		}					
+	
+        return Response.status(Response.Status.BAD_REQUEST).build();
+	}
+
+	@ApiOperation(tags = {"Presence"}, value="Presence - Query presence of a Teams user", notes="Endpoint to retrieve a the presence of a specific user.")	
+    @GET
+    @Path("/presence/{userid}")
+    public String getPresence(@PathParam("userid") String userid) throws ServiceException {
+		JSONObject presence = new JSONObject();		
+			
+		try {
+
+		} catch (Exception e) {
+			Log.error("getPresence " + e, e);
+			//throw new ServiceException("Exception", e.toString(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);							
+		}			
+		
+		return presence.toString();
+    }	
 
 	//-------------------------------------------------------
 	//
@@ -356,7 +574,6 @@ public class SparkWebAPI {
         return json.toString();
     }	
 
-
     //-------------------------------------------------------
     //
     //  Web Push
@@ -401,7 +618,7 @@ public class SparkWebAPI {
 	@ApiOperation(tags = {"Web Push"}, value="Web Push - Store web push subscription for this user", notes="This endpoint is used to save a subscription created by a web client for this user")
     @Path("/webpush/subscribe/{resource}")	
     @POST
-    public Response postWebPushSubscription(@PathParam("resource") String resource, @ApiParam(value = "The subscription as created by the web client", required = true) String subscription) throws ServiceException {
+    public Response postWebPushSubscription(@ApiParam(value = "A resource name to tag the subscription", required = true) @PathParam("resource") String resource, @ApiParam(value = "The subscription as created by the web client", required = true) String subscription) throws ServiceException {
 		String username = getEndUser();
         Log.debug("postWebPushSubscription " + username + " " + resource + "\n" + subscription);
 
@@ -588,99 +805,6 @@ public class SparkWebAPI {
         throw new ServiceException("Exception", "WebAuthn authentication failed", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
     }
 	
-	//-------------------------------------------------------
-	//
-	//	Chat
-	//
-	//-------------------------------------------------------
-
-	@ApiOperation(tags = {"Chat"}, value="Chat - Send ACS chat message to XMPP destination", notes="")	
-    @POST
-    @Path("/chat")
-    public Response postChat(String json) throws ServiceException 	{
-		String username = getEndUser();
-		
-		if (username != null) {
-			User user = ensureUserExists(username);	
-			
-			if (user != null) {	
-				try {
-					JSONObject msg = new JSONObject(json);
-					Log.debug("postChat json \n" + msg);
-					
-					Message message = new Message();
-					message.setFrom(username + "@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain());
-					message.setThread(msg.getString("id"));				
-					message.setBody(msg.getString("body"));
-					
-					String sender = msg.getString("sender");
-					String to = null;
-					
-					if (sender.startsWith("chat:")) {
-						to = sender.substring(5);				
-						message.setType(Message.Type.chat);					
-					
-					} else if (sender.startsWith("groupchat:")) {
-						to = sender.substring(10);					
-						message.setType(Message.Type.groupchat);						
-					}
-
-					if (to != null) {
-						message.setTo(to);		
-						XMPPServer.getInstance().getMessageRouter().route(message);			
-						return Response.status(Response.Status.OK).build();
-					}
-					else {
-						Log.error("postChat - invalid sender " + sender);
-					}
-				} catch (Exception e) {
-					Log.error("postChat -  " + e, e);					
-				}
-			}			
-		}
-        return Response.status(Response.Status.BAD_REQUEST).build();		
-	}			
-	
-
-	//-------------------------------------------------------
-	//
-	//	Presence
-	//
-	//-------------------------------------------------------
-
-	@ApiOperation(tags = {"Presence"}, value="Presence - Store the presence of a user", notes="This endpoint is used to store the presence of a user")	
-	@POST
-    @Path("/presence")
-    public Response postPresence(String json) throws ServiceException 	{
-		try {	
-			String username = getEndUser();
-
-			if (username != null) {
-				User user = ensureUserExists(username);	
-	
-			}
-		} catch (Exception e) {
-			Log.error("postPresence " + e, e);
-		}					
-	
-        return Response.status(Response.Status.BAD_REQUEST).build();
-	}
-
-	@ApiOperation(tags = {"Presence"}, value="Presence - Query presence of a Teams user", notes="Endpoint to retrieve a the presence of a specific user.")	
-    @GET
-    @Path("/presence/{userid}")
-    public String getPresence(@PathParam("userid") String userid) throws ServiceException {
-		JSONObject presence = new JSONObject();		
-			
-		try {
-
-		} catch (Exception e) {
-			Log.error("getPresence " + e, e);
-			//throw new ServiceException("Exception", e.toString(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);							
-		}			
-		
-		return presence.toString();
-    }	
 		
 	//-------------------------------------------------------
 	//
@@ -962,7 +1086,7 @@ public class SparkWebAPI {
 		}	
 		return date;		
 	}
-
+	
 	private JSONObject bookmarkToJson(Bookmark bookmark) {
 		JSONObject json = new JSONObject();						
 		long id = bookmark.getBookmarkID();

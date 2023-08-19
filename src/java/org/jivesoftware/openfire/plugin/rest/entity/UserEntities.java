@@ -1,6 +1,24 @@
+/*
+ * Copyright (c) 2022.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jivesoftware.openfire.plugin.rest.entity;
 
-import java.util.Collection;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -12,7 +30,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class UserEntities {
 
     /** The users. */
-    Collection<UserEntity> users;
+    List<UserEntity> users;
 
     /**
      * Instantiates a new user entities.
@@ -27,7 +45,7 @@ public class UserEntities {
      * @param users
      *            the users
      */
-    public UserEntities(Collection<UserEntity> users) {
+    public UserEntities(List<UserEntity> users) {
         this.users = users;
     }
 
@@ -37,7 +55,8 @@ public class UserEntities {
      * @return the users
      */
     @XmlElement(name = "user")
-    public Collection<UserEntity> getUsers() {
+    @JsonProperty(value = "users")
+    public List<UserEntity> getUsers() {
         return users;
     }
 
@@ -47,7 +66,7 @@ public class UserEntities {
      * @param users
      *            the new users
      */
-    public void setUsers(Collection<UserEntity> users) {
+    public void setUsers(List<UserEntity> users) {
         this.users = users;
     }
 

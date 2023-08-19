@@ -16,44 +16,49 @@
 
 package org.jivesoftware.openfire.plugin.rest.entity;
 
+import org.xmpp.packet.JID;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
-@XmlRootElement(name = "participant")
-public class ParticipantEntity {
 
-    private String jid;
-    private String role;
-    private String affiliation;
+@XmlRootElement(name = "result")
+@XmlType(propOrder = { "roomName", "resultType", "message"})
+public class RoomCreationResultEntity {
 
-    public ParticipantEntity() {
+    public enum RoomCreationResultType {
+        Success, Failure
+    }
+
+    String roomName;
+    RoomCreationResultType resultType;
+    String message;
+
+    @XmlElement
+    public String getRoomName() {
+        return roomName;
+    }
+
+    public void setRoomName(String roomName) {
+        this.roomName = JID.nodeprep(roomName);
     }
 
     @XmlElement
-    public String getJid() {
-        return jid;
+    public RoomCreationResultType getResultType() {
+        return resultType;
     }
 
-    public void setJid(String jid) {
-        this.jid = jid;
-    }
-
-    @XmlElement
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
+    public void setResultType(RoomCreationResultType resultType) {
+        this.resultType = resultType;
     }
 
     @XmlElement
-    public String getAffiliation() {
-        return affiliation;
+    public String getMessage() {
+        return message;
     }
 
-    public void setAffiliation(String affiliation) {
-        this.affiliation = affiliation;
+    public void setMessage(String message) {
+        this.message = message;
     }
-
 }

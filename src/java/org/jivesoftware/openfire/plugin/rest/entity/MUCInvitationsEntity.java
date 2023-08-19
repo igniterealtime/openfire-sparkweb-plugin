@@ -18,29 +18,33 @@ package org.jivesoftware.openfire.plugin.rest.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+@XmlRootElement(name = "mucInvitations")
+public class MUCInvitationsEntity extends MUCInvitationEntity
+{
+    public MUCInvitationsEntity() {
+        super();
+    }
+    
+    private List<String> jidsToInvite;
 
-@XmlRootElement(name = "sessions")
-public class SessionEntities {
-    List<SessionEntity> sessions;
-
-    public SessionEntities() {
+    @XmlElementWrapper(name = "jidsToInvite")
+    @XmlElement(name = "jid")
+    @JsonProperty(value = "jidsToInvite")
+    public List<String> getJidsToInvite() {
+        if (jidsToInvite == null) {
+            jidsToInvite = new ArrayList<>();
+        }
+        return jidsToInvite;
     }
 
-    public SessionEntities(List<SessionEntity> sessions) {
-        this.sessions = sessions;
+    public void setJidsToInvite(List<String> jidsToInvite) {
+        this.jidsToInvite = jidsToInvite;
     }
 
-    @XmlElement(name = "session")
-    @JsonProperty(value = "sessions")
-    public List<SessionEntity> getSessions() {
-        return sessions;
-    }
-
-    public void setSessions(List<SessionEntity> sessions) {
-        this.sessions = sessions;
-    }
 }

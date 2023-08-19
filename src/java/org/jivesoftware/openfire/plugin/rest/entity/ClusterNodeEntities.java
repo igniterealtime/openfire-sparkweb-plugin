@@ -13,34 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jivesoftware.openfire.plugin.rest.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
-
+import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 
-@XmlRootElement(name = "sessions")
-public class SessionEntities {
-    List<SessionEntity> sessions;
+@XmlRootElement(name = "clusterNodes")
+public class ClusterNodeEntities
+{
+    private List<ClusterNodeEntity> clusterNodeEntities;
 
-    public SessionEntities() {
+    public ClusterNodeEntities() {}
+
+    public ClusterNodeEntities(@Nonnull final List<ClusterNodeEntity> clusterNodeEntities) {
+        this.clusterNodeEntities = clusterNodeEntities;
     }
 
-    public SessionEntities(List<SessionEntity> sessions) {
-        this.sessions = sessions;
+    @XmlElement(name = "clusterNode")
+    @JsonProperty(value = "clusterNodes")
+    public List<ClusterNodeEntity> getClusterNodeEntities() {
+        return clusterNodeEntities;
     }
 
-    @XmlElement(name = "session")
-    @JsonProperty(value = "sessions")
-    public List<SessionEntity> getSessions() {
-        return sessions;
-    }
-
-    public void setSessions(List<SessionEntity> sessions) {
-        this.sessions = sessions;
+    public void setClusterNodeEntities(List<ClusterNodeEntity> clusterNodeEntities) {
+        this.clusterNodeEntities = clusterNodeEntities;
     }
 }
