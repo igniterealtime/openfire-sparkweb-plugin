@@ -380,9 +380,10 @@ public class SparkWebAPI {
     }
 
 	@ApiOperation(tags = {"Web Push"}, value="Web Push - Get the webpush vapid key", notes="This endpoint is used to obtain the vapid key need by the client to sign web push messages")
-    @Path("/webpush/vapidkey/{username}")
+    @Path("/webpush/vapidkey")
     @GET
-    public PublicKey getWebPushPublicKey(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username) throws ServiceException {
+    public PublicKey getWebPushPublicKey() throws ServiceException {
+		String username = getEndUser();
         Log.debug("getWebPushPublicKey " + username);
 
         String publicKey = fetchWebPushPublicKey(username);
@@ -398,9 +399,10 @@ public class SparkWebAPI {
     }	
 
 	@ApiOperation(tags = {"Web Push"}, value="Web Push - Store web push subscription for this user", notes="This endpoint is used to save a subscription created by a web client for this user")
-    @Path("/webpush/subscribe/{username}/{resource}")	
+    @Path("/webpush/subscribe/{resource}")	
     @POST
-    public Response postWebPushSubscription(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "A name to tag the subscription", required = true) @PathParam("resource") String resource, @ApiParam(value = "The subscription as created by the web client", required = true) String subscription) throws ServiceException {
+    public Response postWebPushSubscription(@PathParam("resource") String resource, @ApiParam(value = "The subscription as created by the web client", required = true) String subscription) throws ServiceException {
+		String username = getEndUser();
         Log.debug("postWebPushSubscription " + username + " " + resource + "\n" + subscription);
 
 		User user = SparkWeb.self.getUser(username);
@@ -413,17 +415,22 @@ public class SparkWebAPI {
         return Response.status(Response.Status.BAD_REQUEST).build();
     }	
 
-	@ApiOperation(tags = {"Web Push"}, value="Web Push - Publish a message to all subscriptions of this user", notes="This endpoint is used to push a message with a payload to all subscriptions of the specified user")	
+	@ApiOperation(tags = {"Web Push"}, value="Web Push - Send a text message to all subscriptions of another user", notes="This endpoint is used to push a message with a payload to all subscriptions of the specified user")	
     @POST
-    @Path("/webpush/publish/{username}")
-    public Response postWebPush(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "The message payload to be pushed to the user", required = true) String payload) throws ServiceException {
-        Log.debug("postWebPush " + username + "\n" + payload);
+    @Path("/webpush/publish/{target}")
+    public Response postWebPush(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("target") String target, @ApiParam(value = "The text message to be pushed to the user", required = true) String text) throws ServiceException {
+		String username = getEndUser(); 
+		Log.debug("postWebPush " + username + " " + target + "\n" + text);
 
-        User user = SparkWeb.self.getUser(username);
+        User user = SparkWeb.self.getUser(target);
         
 		if (user == null) {
 			return Response.status(Response.Status.BAD_REQUEST).build();
 		}
+		
+		JSONObject payload = new JSONObject();
+		payload.put("subject", username);
+		payload.put("body", text);
 		
         boolean ok = true;
         String publicKey = user.getProperties().get("vapid.public.key");
@@ -448,18 +455,18 @@ public class SparkWebAPI {
                     if (key.startsWith("webpush.subscribe.")) {
                         try {
                             Subscription subscription = new Gson().fromJson(user.getProperties().get(key), Subscription.class);
-                            Notification notification = new Notification(subscription, payload);
+                            Notification notification = new Notification(subscription, payload.toString());
                             HttpResponse response = pushService.send(notification);
                             int statusCode = response.getStatusLine().getStatusCode();
 
+							Log.debug("postWebPush delivery response "  + statusCode + "\n" + response);
                             ok = ok && (200 == statusCode) || (201 == statusCode);
 
 							if (ok) {
-								Log.debug("postWebPush delivered "  + statusCode + "\n" + response);
 								return Response.status(Response.Status.BAD_REQUEST).build();
 							}		
                         } catch (Exception e) {
-                            Log.error("postWebPush failed "  + username + "\n" + payload, e);
+                            Log.error("postWebPush failed "  + target + "\n" + payload, e);
                         }
                     }
                 }

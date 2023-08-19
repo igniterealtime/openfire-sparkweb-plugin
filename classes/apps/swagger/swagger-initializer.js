@@ -106,7 +106,7 @@ window.onload = function() {
 			}
 
 			console.debug("setupServiceWorker - initialiseState", registration);
-			setupPushNotifications(username, url, token, registration);				
+			setupPushNotifications(url, token, registration);				
 		}
 	
 		const source = new EventSource(url + "/sparkweb/sse?token=" + token);
@@ -139,8 +139,8 @@ window.onload = function() {
 		});		
 	}
 	
-	function setupPushNotifications(username, baseUrl, token, registration) {		
-		const url = baseUrl + "/sparkweb/api/rest/webpush/vapidkey/" + username;	
+	function setupPushNotifications(baseUrl, token, registration) {		
+		const url = baseUrl + "/sparkweb/api/rest/webpush/vapidkey";	
 		const options = {method: "GET", headers: {"Authorization": token, "Accept":"application/json", "Content-Type":"application/json"}};
 
 		console.debug("setupPushNotifications - vapidGetPublicKey", url, options);
@@ -151,30 +151,37 @@ window.onload = function() {
 			}	
 		}).then(function(vapid) {
 			if (vapid?.publicKey) {
-				subscribeForPushNotifications(username, baseUrl, vapid.publicKey, token, registration);
+				subscribeForPushNotifications(baseUrl, vapid.publicKey, token, registration);
 			}
 		}).catch(function (err) {
 			console.error('vapidGetPublicKey error!', err);
 		});	
 	}
 
-	function subscribeForPushNotifications(username, baseUrl, publicKey, token, registration) {
-		console.debug("subscribeForPushNotifications", username, baseUrl, publicKey, token);	
-		
-		registration.pushManager.subscribe({
-			userVisibleOnly: true,
-			applicationServerKey: base64UrlToUint8Array(publicKey)
-		})
-		.then(function (subscription) {
-			return sendSubscriptionToServer(username, baseUrl, subscription, token);
-		})
-		.catch(function (e) {
-			if (Notification.permission === 'denied') {
-				console.warn('Permission for Notifications was denied');
-			} else {
-				console.error('Unable to subscribe to push.', e);
+	function subscribeForPushNotifications(baseUrl, publicKey, token, registration) {
+		console.debug("subscribeForPushNotifications", baseUrl, publicKey, token);	
+
+		registration.pushManager.getSubscription().then(function (subscription) {
+			if (subscription) {
+				subscription.unsubscribe();
+				subscription = null;
 			}
-		});
+                  		
+			registration.pushManager.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: base64UrlToUint8Array(publicKey)
+			})
+			.then(function (subscription) {
+				return sendSubscriptionToServer(baseUrl, subscription, token);
+			})
+			.catch(function (e) {
+				if (Notification.permission === 'denied') {
+					console.warn('Permission for Notifications was denied');
+				} else {
+					console.error('Unable to subscribe to push.', e);
+				}
+			});
+		});  			
 	}
 
 	function base64UrlToUint8Array(base64UrlData) {
@@ -190,7 +197,7 @@ window.onload = function() {
 		return buffer;
 	}	
 	
-	function sendSubscriptionToServer(username, baseUrl, subscription, token) {
+	function sendSubscriptionToServer(baseUrl, subscription, token) {
 		console.debug("sendSubscriptionToServer", subscription);
 
 		const key = subscription.getKey ? subscription.getKey('p256dh') : '';
@@ -205,7 +212,7 @@ window.onload = function() {
 		}, subscription);
 
 		const resource = "sparkweb-swagger";
-		const url = baseUrl + "/sparkweb/api/rest/webpush/subscribe/" + username + "/" + resource;
+		const url = baseUrl + "/sparkweb/api/rest/webpush/subscribe/" + resource;
 		const options = {method: "POST", body: JSON.stringify(subscription), headers: {"Authorization": token, "Accept":"application/json", "Content-Type":"application/json"}};
 
 		return fetch(url, options).then(function(response) {
