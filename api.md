@@ -22,11 +22,11 @@ provide user roster services to manage contacts
 
   ### <span id="tag-presence"></span>Presence
 
-Perform XMPP Prsence functions
+provide presence services
 
   ### <span id="tag-chat"></span>Chat
 
-Perform XMPP Chat functions
+provide chat services
 
   ### <span id="tag-web-authentication"></span>Web Authentication
 
@@ -82,6 +82,16 @@ Create, update and delete Openfire bookmarks
   
 
 
+###  chat
+
+| Method  | URI     | Name   | Summary |
+|---------|---------|--------|---------|
+| GET | /sparkweb/api/rest/chat/messages | [get conversations](#get-conversations) | Get chat messages |
+| POST | /sparkweb/api/rest/chat/chatstate/{state}/{to} | [post chat state](#post-chat-state) | Post chat state indicator |
+| POST | /sparkweb/api/rest/chat/message/{to} | [post message](#post-message) | Post chat message |
+  
+
+
 ###  contact_management
 
 | Method  | URI     | Name   | Summary |
@@ -107,8 +117,9 @@ Create, update and delete Openfire bookmarks
 
 | Method  | URI     | Name   | Summary |
 |---------|---------|--------|---------|
-| GET | /sparkweb/api/rest/presence/{userid} | [get presence](#get-presence) | Presence - Query presence of a Teams user |
-| POST | /sparkweb/api/rest/presence | [post presence](#post-presence) | Presence - Store the presence of a user |
+| GET | /sparkweb/api/rest/presence/roster | [get user roster with presence](#get-user-roster-with-presence) | Get contacts presence |
+| POST | /sparkweb/api/rest/presence | [post presence](#post-presence) | Set Presence |
+| GET | /sparkweb/api/rest/presence/{target} | [probe presence](#probe-presence) | Probe a target user presence |
   
 
 
@@ -614,6 +625,50 @@ Status: OK
 
 [Bookmarks](#bookmarks)
 
+### <span id="get-conversations"></span> Get chat messages (*getConversations*)
+
+```
+GET /sparkweb/api/rest/chat/messages
+```
+
+Retrieves chat messages from Openfire messages archive
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| end | `query` | string | `string` |  |  |  | The end date in MM/dd/yy format |
+| keywords | `query` | string | `string` |  |  |  | Search keywords |
+| room | `query` | string | `string` |  |  |  | The groupchat room used |
+| service | `query` | string | `string` |  |  | `"conference"` | The groupchat service name |
+| start | `query` | string | `string` |  |  |  | The start date in MM/dd/yy format |
+| to | `query` | string | `string` |  |  |  | The message target |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#get-conversations-200) | OK | The messages were retrieved. |  | [schema](#get-conversations-200-schema) |
+| [400](#get-conversations-400) | Bad Request | The messages could not be retrieved. |  | [schema](#get-conversations-400-schema) |
+
+#### Responses
+
+
+##### <span id="get-conversations-200"></span> 200 - The messages were retrieved.
+Status: OK
+
+###### <span id="get-conversations-200-schema"></span> Schema
+
+##### <span id="get-conversations-400"></span> 400 - The messages could not be retrieved.
+Status: Bad Request
+
+###### <span id="get-conversations-400-schema"></span> Schema
+
 ### <span id="get-global-config"></span> Global and User Properties - List global properties affecting this user (*getGlobalConfig*)
 
 ```
@@ -640,43 +695,6 @@ Endpoint will retrieve all Openfire Global properties that are used by this auth
 Status: OK
 
 ###### <span id="get-global-config-200-schema"></span> Schema
-   
-  
-
-
-
-### <span id="get-presence"></span> Presence - Query presence of a Teams user (*getPresence*)
-
-```
-GET /sparkweb/api/rest/presence/{userid}
-```
-
-Endpoint to retrieve a the presence of a specific user.
-
-#### Produces
-  * application/json
-
-#### Security Requirements
-  * authorization
-
-#### Parameters
-
-| Name | Source | Type | Go type | Separator | Required | Default | Description |
-|------|--------|------|---------|-----------| :------: |---------|-------------|
-| userid | `path` | string | `string` |  | ✓ |  |  |
-
-#### All responses
-| Code | Status | Description | Has headers | Schema |
-|------|--------|-------------|:-----------:|--------|
-| [200](#get-presence-200) | OK | successful operation |  | [schema](#get-presence-200-schema) |
-
-#### Responses
-
-
-##### <span id="get-presence-200"></span> 200 - successful operation
-Status: OK
-
-###### <span id="get-presence-200-schema"></span> Schema
    
   
 
@@ -837,6 +855,39 @@ Status: Not Found
 
 ###### <span id="get-user-roster-404-schema"></span> Schema
 
+### <span id="get-user-roster-with-presence"></span> Get contacts presence (*getUserRosterWithPresence*)
+
+```
+GET /sparkweb/api/rest/presence/roster
+```
+
+Retrieve a list of all roster entries (buddies / contact list) with presence of a authenticated user.
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#get-user-roster-with-presence-200) | OK | All roster entries with presence |  | [schema](#get-user-roster-with-presence-200-schema) |
+| [400](#get-user-roster-with-presence-400) | Bad Request | No xmpp connection found for authenticated user. |  | [schema](#get-user-roster-with-presence-400-schema) |
+
+#### Responses
+
+
+##### <span id="get-user-roster-with-presence-200"></span> 200 - All roster entries with presence
+Status: OK
+
+###### <span id="get-user-roster-with-presence-200-schema"></span> Schema
+
+##### <span id="get-user-roster-with-presence-400"></span> 400 - No xmpp connection found for authenticated user.
+Status: Bad Request
+
+###### <span id="get-user-roster-with-presence-400-schema"></span> Schema
+
 ### <span id="get-users"></span> Get users (*getUsers*)
 
 ```
@@ -903,13 +954,13 @@ Status: OK
 
 [PublicKey](#public-key)
 
-### <span id="post-presence"></span> Presence - Store the presence of a user (*postPresence*)
+### <span id="post-chat-state"></span> Post chat state indicator (*postChatState*)
 
 ```
-POST /sparkweb/api/rest/presence
+POST /sparkweb/api/rest/chat/chatstate/{state}/{to}
 ```
 
-This endpoint is used to store the presence of a user
+Post a chat state to an xmpp address.
 
 #### Produces
   * application/json
@@ -921,21 +972,107 @@ This endpoint is used to store the presence of a user
 
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
 |------|--------|------|---------|-----------| :------: |---------|-------------|
-| body | `body` | string | `string` | |  | |  |
+| state | `path` | string | `string` |  | ✓ |  | The chat state to be posted. It can be 'composing', 'paused', 'active', 'inactive', 'gone' |
+| to | `path` | string | `string` |  | ✓ |  | The JID of the target xmpp address. |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
 |------|--------|-------------|:-----------:|--------|
-| [default](#post-presence-default) | | successful operation |  | [schema](#post-presence-default-schema) |
+| [200](#post-chat-state-200) | OK | The chat state was posted. |  | [schema](#post-chat-state-200-schema) |
+| [400](#post-chat-state-400) | Bad Request | The chat state could not be posted. |  | [schema](#post-chat-state-400-schema) |
 
 #### Responses
 
 
-##### <span id="post-presence-default"></span> Default Response
-successful operation
+##### <span id="post-chat-state-200"></span> 200 - The chat state was posted.
+Status: OK
 
-###### <span id="post-presence-default-schema"></span> Schema
-empty schema
+###### <span id="post-chat-state-200-schema"></span> Schema
+
+##### <span id="post-chat-state-400"></span> 400 - The chat state could not be posted.
+Status: Bad Request
+
+###### <span id="post-chat-state-400-schema"></span> Schema
+
+### <span id="post-message"></span> Post chat message (*postMessage*)
+
+```
+POST /sparkweb/api/rest/chat/message/{to}
+```
+
+post a chat message to an xmpp address.
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| to | `path` | string | `string` |  | ✓ |  | The JID of the target xmpp address. |
+| body | `body` | string | `string` | | ✓ | | The text message to be posted |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#post-message-200) | OK | The messages was posted. |  | [schema](#post-message-200-schema) |
+| [400](#post-message-400) | Bad Request | The messages could not be posted. |  | [schema](#post-message-400-schema) |
+
+#### Responses
+
+
+##### <span id="post-message-200"></span> 200 - The messages was posted.
+Status: OK
+
+###### <span id="post-message-200-schema"></span> Schema
+
+##### <span id="post-message-400"></span> 400 - The messages could not be posted.
+Status: Bad Request
+
+###### <span id="post-message-400-schema"></span> Schema
+
+### <span id="post-presence"></span> Set Presence (*postPresence*)
+
+```
+POST /sparkweb/api/rest/presence
+```
+
+Update the presence state of the authenticated user.
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| show | `query` | string | `string` |  |  |  | The availability state of the authenticated user |
+| status | `query` | string | `string` |  |  |  | A detailed description of the availability state |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#post-presence-200) | OK | Presence was set |  | [schema](#post-presence-200-schema) |
+| [400](#post-presence-400) | Bad Request | No xmpp connection found for authenticated user. |  | [schema](#post-presence-400-schema) |
+
+#### Responses
+
+
+##### <span id="post-presence-200"></span> 200 - Presence was set
+Status: OK
+
+###### <span id="post-presence-200-schema"></span> Schema
+
+##### <span id="post-presence-400"></span> 400 - No xmpp connection found for authenticated user.
+Status: Bad Request
+
+###### <span id="post-presence-400-schema"></span> Schema
 
 ### <span id="post-user-config"></span> Global and User Properties - Update user properties (*postUserConfig*)
 
@@ -1040,6 +1177,45 @@ successful operation
 
 ###### <span id="post-web-push-subscription-default-schema"></span> Schema
 empty schema
+
+### <span id="probe-presence"></span> Probe a target user presence (*probePresence*)
+
+```
+GET /sparkweb/api/rest/presence/{target}
+```
+
+Request the presence of an specific user
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| target | `path` | string | `string` |  | ✓ |  | The username to be probed. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#probe-presence-200) | OK | Presence of user requested |  | [schema](#probe-presence-200-schema) |
+| [400](#probe-presence-400) | Bad Request | No xmpp connection found for authenticated user or authenticated user is not premitted to probe user presence. |  | [schema](#probe-presence-400-schema) |
+
+#### Responses
+
+
+##### <span id="probe-presence-200"></span> 200 - Presence of user requested
+Status: OK
+
+###### <span id="probe-presence-200-schema"></span> Schema
+
+##### <span id="probe-presence-400"></span> 400 - No xmpp connection found for authenticated user or authenticated user is not premitted to probe user presence.
+Status: Bad Request
+
+###### <span id="probe-presence-400-schema"></span> Schema
 
 ### <span id="update-bookmark"></span> Bookmark API - Update a specific bookmark (*updateBookmark*)
 
@@ -1356,6 +1532,29 @@ Status: OK
 
 ## Models
 
+### <span id="archived-message"></span> ArchivedMessage
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| body | string| `string` |  | |  |  |
+| conversationID | int64 (formatted integer)| `int64` |  | |  |  |
+| from | string| `string` |  | |  |  |
+| fromJID | [JID](#j-id)| `JID` |  | |  |  |
+| roomEvent | boolean| `bool` |  | |  |  |
+| sentDate | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
+| stanza | string| `string` |  | |  |  |
+| to | string| `string` |  | |  |  |
+| toJID | [JID](#j-id)| `JID` |  | |  |  |
+
+
+
 ### <span id="bookmark"></span> Bookmark
 
 
@@ -1394,6 +1593,46 @@ Status: OK
 
 
 
+### <span id="conversation"></span> Conversation
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| chatRoom | string| `string` |  | |  |  |
+| conversationID | int64 (formatted integer)| `int64` |  | |  |  |
+| conversationParticipants | []string| `[]string` |  | |  |  |
+| external | boolean| `bool` |  | |  |  |
+| lastActivity | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
+| messageCount | int32 (formatted integer)| `int32` |  | |  |  |
+| messages | [][ArchivedMessage](#archived-message)| `[]*ArchivedMessage` |  | |  |  |
+| participantList | []string| `[]string` |  | |  |  |
+| participants | [][JID](#j-id)| `[]*JID` |  | |  |  |
+| room | [JID](#j-id)| `JID` |  | |  |  |
+| startDate | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
+
+
+
+### <span id="conversations"></span> Conversations
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| conversations | [][Conversation](#conversation)| `[]*Conversation` |  | |  |  |
+
+
+
 ### <span id="iterator"></span> Iterator
 
 
@@ -1407,6 +1646,40 @@ Status: OK
   
 
 [interface{}](#interface)
+
+### <span id="j-id"></span> JID
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| domain | string| `string` |  | |  |  |
+| node | string| `string` |  | |  |  |
+| resource | string| `string` |  | |  |  |
+
+
+
+### <span id="presence-entity"></span> PresenceEntity
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| show | string| `string` |  | |  |  |
+| status | string| `string` |  | |  |  |
+| username | string| `string` |  | |  |  |
+
+
 
 ### <span id="public-key"></span> PublicKey
 
@@ -1452,6 +1725,8 @@ Status: OK
 | groups | []string| `[]string` |  | |  |  |
 | jid | string| `string` |  | |  |  |
 | nickname | string| `string` |  | |  |  |
+| show | string| `string` |  | |  |  |
+| status | string| `string` |  | |  |  |
 | subscriptionType | int32 (formatted integer)| `int32` |  | |  |  |
 
 

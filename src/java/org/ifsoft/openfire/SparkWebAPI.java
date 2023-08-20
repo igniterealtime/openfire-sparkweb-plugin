@@ -44,6 +44,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.jivesoftware.util.*;
+import org.jivesoftware.openfire.handler.IQRegisterHandler;
 import org.jivesoftware.openfire.container.PluginMetadataHelper;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.http.HttpBindManager;
@@ -872,10 +873,16 @@ public class SparkWebAPI {
         try {
  			User user = SparkWeb.self.getUser(username);	
 			
-			if (user == null) {	// create a new user
-				String name = username.substring(0, 1).toUpperCase() + username.substring(1);
-				String email = username + "@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-				user = SparkWeb.userManager.createUser( username, password, name, email);
+			if (user == null) {	// create a new user if in-band reg is allowed
+				IQRegisterHandler regHandler = XMPPServer.getInstance().getIQRegisterHandler();
+				
+				if (regHandler.isInbandRegEnabled()) {
+					String name = username.substring(0, 1).toUpperCase() + username.substring(1);
+					String email = username + "@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+					user = SparkWeb.userManager.createUser( username, password, name, email);
+				} else {
+					throw new ServiceException("Exception", "user does not exist", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);					
+				}
 			} else {
 				AuthFactory.authenticate(username, password);		// authenticate user first before creating credentials	
 			}			
