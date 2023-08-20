@@ -100,7 +100,41 @@
 			<artifactId>commons-codec</artifactId>
 			<version>1.9</version>
 		</dependency>
+		
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>8.4.0</version>
+        </dependency>    
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-queryparser</artifactId>
+            <version>8.4.0</version>
+        </dependency> 	
 
+        <dependency>
+            <groupId>com.lowagie</groupId>
+            <artifactId>itext</artifactId>
+            <!-- NB. Later versions are available at com.itextpdf:itextpdf but require code changes -->
+            <version>2.0.8</version>
+			<exclusions>
+				<exclusion>
+					<groupId>bouncycastle</groupId>
+					<artifactId>bcmail-jdk14</artifactId>			
+				</exclusion>
+				<exclusion>
+					<groupId>bouncycastle</groupId>
+					<artifactId>bcprov-jdk14</artifactId>				
+				</exclusion>				
+			</exclusions> 			
+        </dependency>	
+
+        <dependency>
+            <groupId>org.picocontainer</groupId>
+            <artifactId>picocontainer</artifactId>
+            <version>1.2</version>		
+        </dependency>
+		
         <dependency>
             <groupId>org.igniterealtime.smack</groupId>
             <artifactId>smack-im</artifactId>

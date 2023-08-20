@@ -61,7 +61,7 @@ import org.jivesoftware.openfire.roster.*;
 import org.jivesoftware.openfire.plugin.spark.*;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
-
+import org.jivesoftware.openfire.archive.*;
 import org.jivesoftware.openfire.plugin.spark.Bookmark;
 import org.jivesoftware.openfire.plugin.spark.Bookmarks;
 import org.jivesoftware.openfire.plugin.spark.BookmarkManager;
@@ -287,8 +287,139 @@ public class SparkWebAPI {
 	//	Chat
 	//
 	//-------------------------------------------------------
-				
 
+	@ApiOperation(tags = {"Chat"}, value="Get chat messages", notes="Retrieves chat messages from Openfire messages archive")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The messages were retrieved."), @ApiResponse(code = 400, message = "The messages could not be retrieved.")})	
+    @Path("/chat/messages")
+    @GET
+    public Conversations getConversations(@ApiParam(value = "Search keywords", required = false) @QueryParam("keywords") String keywords, @ApiParam(value = "The message target", required = false) @QueryParam("to") String to, @ApiParam(value = "The start date in MM/dd/yy format", required = false) @QueryParam("start") String start, @ApiParam(value = "The end date in MM/dd/yy format", required = false) @QueryParam("end") String end, @ApiParam(value = "The groupchat room used", required = false) @QueryParam("room") String room, @ApiParam(value = "The groupchat service name", required = false) @DefaultValue("conference") @QueryParam("service") String service) throws ServiceException   {
+		String username = getEndUser();	 
+		Log.debug("getConversations " + username + " " + keywords + " " + " " + to  + " " + start + " " + end + " " + room + " " + service);
+
+        try {
+            ArchiveSearch search = new ArchiveSearch();
+            JID participant1JID = makeJid(username);
+            JID participant2JID = null;
+
+            if (to != null) participant2JID = makeJid(to);
+
+            if (participant2JID != null) {
+                search.setParticipants(participant1JID, participant2JID);
+            } else  {
+                search.setParticipants(participant1JID);
+            }
+
+            if (start != null) {
+                Date startDate = null;
+
+                try {
+                    if (start.contains("T")) {
+                        startDate = Date.from(Instant.parse(start));
+                    }
+                    else {
+                        DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
+                        startDate = formatter.parse(start);
+                    }
+                    startDate = new Date(startDate.getTime() - JiveConstants.MINUTE * 5);
+                    search.setDateRangeMin(startDate);
+                }
+                catch (Exception e) {
+                    Log.error("ConversationPDFServlet", e);
+                }
+            }
+
+            if (end != null) {
+                Date endDate = null;
+
+                try {
+                    if (end.contains("T"))
+                    {
+                        endDate = Date.from(Instant.parse(end));
+                    }
+                    else {
+                        DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
+                        endDate = formatter.parse(end);
+                    }
+                    endDate = new Date(endDate.getTime() + JiveConstants.DAY - 1);
+                    search.setDateRangeMax(endDate);
+                }
+                catch (Exception e) {
+                    Log.error("ConversationPDFServlet", e);
+                }
+            }
+
+            if (keywords != null) search.setQueryString(keywords);
+            if (service == null || "".equals(service)) service = "conference";
+
+            if (room != null) {
+                search.setRoom(new JID(room + "@" + service + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain()));
+            }
+
+            search.setSortOrder(ArchiveSearch.SortOrder.ascending);
+
+            Collection<Conversation> conversations = new ArchiveSearcher().search(search);
+            Collection<Conversation> list = new ArrayList<Conversation>();
+
+            for (Conversation conversation : conversations) {
+                list.add(conversation);
+            }
+
+            return new Conversations(list);
+
+        } catch (Exception e) {
+            Log.error("getConversations", e);
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+    }				
+
+	@ApiOperation(tags = {"Chat"}, value="Post chat message", notes="post a chat message to an xmpp address.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The messages was posted."), @ApiResponse(code = 400, message = "The messages could not be posted.")})	
+    @Path("/chat/message/{to}")
+    @POST
+    public Response postMessage(@ApiParam(value = "The JID of the target xmpp address.", required = true) @PathParam("to") String to, @ApiParam(value = "The text message to be posted", required = true) String body) throws ServiceException   {
+		String username = getEndUser();	
+        Log.debug("postMessage " + username + " " + to + "\n" + body);
+
+        try {
+            OpenfireConnection connection = OpenfireConnection.getConnection(username);
+
+            if (connection == null) {
+                throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+            connection.sendChatMessage(body, to);
+
+        } catch (Exception e) {
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+
+        return Response.status(Response.Status.OK).build();
+    }
+
+	@ApiOperation(tags = {"Chat"}, value="Post chat state indicator", notes="Post a chat state to an xmpp address.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat state was posted."), @ApiResponse(code = 400, message = "The chat state could not be posted.")})	
+    @Path("/chat/chatstate/{state}/{to}")
+    @POST
+    public Response postChatState(@ApiParam(value = "The chat state to be posted. It can be 'composing', 'paused', 'active', 'inactive', 'gone'", required = true) @PathParam("state") String state, @ApiParam(value = "The JID of the target xmpp address.", required = true) @PathParam("to") String to) throws ServiceException    {
+		String username = getEndUser();	
+        Log.debug("postChatState " + username + " " + to + "\n" + state);
+
+        try {
+            OpenfireConnection connection = OpenfireConnection.getConnection(username);
+
+            if (connection == null) {
+                throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+            connection.setCurrentState(state, to);
+
+        } catch (Exception e) {
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+
+        return Response.status(Response.Status.OK).build();
+    }
+	
 	//-------------------------------------------------------
 	//
 	//	Presence
@@ -315,7 +446,7 @@ public class SparkWebAPI {
 		throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
     }
 	
-	@ApiOperation(tags = {"Presence"}, value="Probe a user presence", notes="Request the presence of an specific user")	
+	@ApiOperation(tags = {"Presence"}, value="Probe a target user presence", notes="Request the presence of an specific user")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "Presence of user requested"), @ApiResponse(code = 400, message = "No xmpp connection found for authenticated user or authenticated user is not premitted to probe user presence.") })	
     @Path("/presence/{target}")
     @GET
@@ -844,6 +975,24 @@ public class SparkWebAPI {
 	//
 	//-------------------------------------------------------
 
+    private JID makeJid(String participant1) {
+        JID participant1JID = null;
+
+        try {
+            int position = participant1.lastIndexOf("@");
+
+            if (position > -1) {
+                String node = participant1.substring(0, position);
+                participant1JID = new JID(JID.escapeNode(node) + participant1.substring(position));
+            } else {
+                participant1JID = new JID(JID.escapeNode(participant1), XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null);
+            }
+        } catch (Exception e) {
+            Log.error("makeJid", e);
+        }
+        return participant1JID;
+    }
+	
     public String fetchWebPushPublicKey(String username)  {
         Log.debug("fetchWebPushPublicKey " + username);
 
