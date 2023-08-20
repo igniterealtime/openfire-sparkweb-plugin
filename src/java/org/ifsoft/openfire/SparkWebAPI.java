@@ -71,6 +71,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
+import org.jivesoftware.smack.OpenfireConnection;
 import org.ifsoft.webauthn.UserRegistrationStorage;
 
 import com.google.gson.Gson;
@@ -95,7 +96,7 @@ import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
-@SwaggerDefinition(tags = { @Tag(name = "User Management", description = "provide user services for the authenticated user."), @Tag(name = "Contact Management", description = "provide user roster services to manage contacts"), @Tag(name = "Presence", description = "Perform XMPP Prsence functions"), @Tag(name = "Chat", description = "Perform XMPP Chat functions"), @Tag(name = "Web Authentication", description = "provide server-side Web Authentication services"), @Tag(name = "Web Push", description = "provide server-side Web Push services"), @Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
+@SwaggerDefinition(tags = { @Tag(name = "User Management", description = "provide user services for the authenticated user."), @Tag(name = "Contact Management", description = "provide user roster services to manage contacts"), @Tag(name = "Presence", description = "provide presence services"), @Tag(name = "Chat", description = "provide chat services"), @Tag(name = "Web Authentication", description = "provide server-side Web Authentication services"), @Tag(name = "Web Push", description = "provide server-side Web Push services"), @Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
 @Api(authorizations = {@Authorization("authorization")})
 @Path("rest")
 @Produces(MediaType.APPLICATION_JSON)
@@ -286,8 +287,7 @@ public class SparkWebAPI {
 	//	Chat
 	//
 	//-------------------------------------------------------
-			
-	
+				
 
 	//-------------------------------------------------------
 	//
@@ -295,39 +295,71 @@ public class SparkWebAPI {
 	//
 	//-------------------------------------------------------
 
-	@ApiOperation(tags = {"Presence"}, value="Presence - Store the presence of a user", notes="This endpoint is used to store the presence of a user")	
-	@POST
-    @Path("/presence")
-    public Response postPresence(String json) throws ServiceException 	{
-		try {	
-			String username = getEndUser();
-
-			if (username != null) {
-				User user = ensureUserExists(username);	
-	
-			}
-		} catch (Exception e) {
-			Log.error("postPresence " + e, e);
-		}					
-	
-        return Response.status(Response.Status.BAD_REQUEST).build();
-	}
-
-	@ApiOperation(tags = {"Presence"}, value="Presence - Query presence of a Teams user", notes="Endpoint to retrieve a the presence of a specific user.")	
+	@ApiOperation(tags = {"Presence"}, value="Get contacts presence", notes="Retrieve a list of all roster entries (buddies / contact list) with presence of a authenticated user.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "All roster entries with presence"), @ApiResponse(code = 400, message = "No xmpp connection found for authenticated user.") })	
+    @Path("/presence/roster")
     @GET
-    @Path("/presence/{userid}")
-    public String getPresence(@PathParam("userid") String userid) throws ServiceException {
-		JSONObject presence = new JSONObject();		
-			
-		try {
-
-		} catch (Exception e) {
-			Log.error("getPresence " + e, e);
-			//throw new ServiceException("Exception", e.toString(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);							
-		}			
+    public RosterEntities getUserRosterWithPresence() throws ServiceException {
+		String username = getEndUser();	
 		
-		return presence.toString();
-    }	
+		try {
+			OpenfireConnection connection = OpenfireConnection.getConnection(username);
+
+			if (connection != null) {
+				return connection.getRosterEntities();	
+			}				
+		} catch (Exception e) {
+			Log.error("getUserRosterWithPresence " + e, e);
+		}
+
+		throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+    }
+	
+	@ApiOperation(tags = {"Presence"}, value="Probe a user presence", notes="Request the presence of an specific user")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Presence of user requested"), @ApiResponse(code = 400, message = "No xmpp connection found for authenticated user or authenticated user is not premitted to probe user presence.") })	
+    @Path("/presence/{target}")
+    @GET
+    public PresenceEntity probePresence(@ApiParam(value = "The username to be probed.", required = true) @PathParam("target") String target) throws ServiceException {
+		String username = getEndUser();	
+		
+		try {		
+			JID prober = new JID(username + "@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+
+			if (username.equals(target) || SparkWeb.presenceManager.canProbePresence(prober, target)) {		
+				User user = SparkWeb.userManager.getUser(target);
+				Presence presence = SparkWeb.presenceManager.getPresence(user);
+				return new PresenceEntity(target, presence.getShow() != null ? presence.getShow().toString() : "available", presence.getStatus());
+			}
+		} catch (Exception e) {  
+			Log.error("probePresence " + e, e);		
+		}
+		
+		return new PresenceEntity(target, "unknown", "");
+	}		
+	
+	@ApiOperation(tags = {"Presence"}, value="Set Presence", notes="Update the presence state of the authenticated user.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Presence was set"), @ApiResponse(code = 400, message = "No xmpp connection found for authenticated user.")})	
+    @Path("/presence")
+    @POST
+    public Response postPresence(@ApiParam(value = "The availability state of the authenticated user", required = false) @QueryParam("show") String show, @ApiParam(value = "A detailed description of the availability state", required = false) @QueryParam("status") String status) throws ServiceException   {
+        Log.debug("postPresence " + show + " " + status);
+
+        try {
+			String username = getEndUser();				
+            OpenfireConnection connection = OpenfireConnection.getConnection(username);
+
+            if (connection == null) {
+                throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+            connection.postPresence(show, status);
+
+        } catch (Exception e) {
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+
+        return Response.status(Response.Status.OK).build();
+    }
 
 	//-------------------------------------------------------
 	//

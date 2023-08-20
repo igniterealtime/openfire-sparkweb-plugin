@@ -221,6 +221,11 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
         return connection;
     }
 
+    public static OpenfireConnection getConnection(String username) throws SmackException    {
+		OpenfireConnection connection = users.get(username);
+		return connection;
+	}
+	
     public static OpenfireConnection removeConnection(String username) throws SmackException    {
 		OpenfireConnection connection = users.remove(username);
 		
@@ -240,68 +245,6 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
 			connection.disconnect(new Presence(Presence.Type.unavailable));
 		}
         return connection;
-    }
-
-    public static RosterEntities getRosterEntities(String username) {
-        Log.debug("getRoster " + username);
-
-        List<RosterItemEntity> rosterEntities = new ArrayList<RosterItemEntity>();
-
-        OpenfireConnection connection = users.get(username);
-
-        if (connection != null)
-        {
-            try {
-                Collection<RosterEntry> entries = connection.roster.getEntries();
-
-                for (RosterEntry entry : entries) {
-                    Presence presence = connection.roster.getPresence(JidCreate.entityBareFrom(entry.getUser()));
-
-                    int entryStatus = 0;
-
-                    if (entry.getType() != null) {
-                        if (entry.getType().equals(RosterPacket.ItemType.both))
-                            entryStatus = 3;
-                        if (entry.getType().equals(RosterPacket.ItemType.from))
-                            entryStatus = 2;
-                        if (entry.getType().equals(RosterPacket.ItemType.none))
-                            entryStatus = 0;
-                        if (entry.getType().equals(RosterPacket.ItemType.remove))
-                            entryStatus = -1;
-                        if (entry.getType().equals(RosterPacket.ItemType.to))
-                            entryStatus = 1;
-                    }
-
-                    RosterItemEntity rosterItemEntity = new RosterItemEntity(entry.getUser(), entry.getName(), entryStatus);
-
-                    List<String> groups = new ArrayList<String>();
-
-                    for (RosterGroup group : entry.getGroups()) {
-                        groups.add(group.getName());
-                    }
-
-                    rosterItemEntity.setGroups(groups);
-
-                    String show = presence.getType().name();
-
-                    if (presence.getMode() != null)
-                        show = presence.getMode().toString();
-
-					// TODO implement roster presence
-                    //rosterItemEntity.setStatus(presence.getStatus());
-                    //rosterItemEntity.setShow(show);
-                    rosterEntities.add(rosterItemEntity);
-
-                    Log.debug("Roster entry " + entry.getUser() + " " + entry.getName() + " " + presence.getType().name() + " " + presence.getMode() + " " + presence.getStatus());
-                }
-
-            } catch (Exception e) {
-                Log.error("getRoster", e);
-                return null;
-            }
-        }
-
-        return new RosterEntities(rosterEntities);
     }
 
     // -------------------------------------------------------
@@ -468,6 +411,58 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
             return false;
         }
     }
+	
+    public RosterEntities getRosterEntities() {
+        List<RosterItemEntity> rosterEntities = new ArrayList<RosterItemEntity>();
+		
+		try {
+			Collection<RosterEntry> entries = this.roster.getEntries();
+
+			for (RosterEntry entry : entries) {
+				Presence presence = this.roster.getPresence(JidCreate.entityBareFrom(entry.getUser()));
+
+				int entryStatus = 0;
+
+				if (entry.getType() != null) {
+					if (entry.getType().equals(RosterPacket.ItemType.both))
+						entryStatus = 3;
+					if (entry.getType().equals(RosterPacket.ItemType.from))
+						entryStatus = 2;
+					if (entry.getType().equals(RosterPacket.ItemType.none))
+						entryStatus = 0;
+					if (entry.getType().equals(RosterPacket.ItemType.remove))
+						entryStatus = -1;
+					if (entry.getType().equals(RosterPacket.ItemType.to))
+						entryStatus = 1;
+				}
+
+				RosterItemEntity rosterItemEntity = new RosterItemEntity(entry.getUser(), entry.getName(), entryStatus);
+
+				List<String> groups = new ArrayList<String>();
+
+				for (RosterGroup group : entry.getGroups()) {
+					groups.add(group.getName());
+				}
+
+				rosterItemEntity.setGroups(groups);
+
+				String show = presence.getType().name();
+
+				if (presence.getMode() != null) show = presence.getMode().toString();
+
+				rosterItemEntity.setStatus(presence.getStatus());
+				rosterItemEntity.setShow(show);
+				rosterEntities.add(rosterItemEntity);
+
+				Log.debug("Roster entry " + entry.getUser() + " " + entry.getName() + " " + presence.getType().name() + " " + presence.getMode() + " " + presence.getStatus());
+			}
+
+		} catch (Exception e) {
+			Log.error("getRoster", e);
+		}
+
+        return new RosterEntities(rosterEntities);
+    }	
 
     private void chatCreated(EntityBareJid from, Message message, Chat chat)  {
         String participant = from.toString();

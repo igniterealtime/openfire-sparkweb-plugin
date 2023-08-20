@@ -60,6 +60,7 @@ import org.jivesoftware.openfire.container.*;
 import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.PresenceManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -143,6 +144,7 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 	
     public static SparkWeb self;
 	public static UserManager userManager;
+	public static PresenceManager presenceManager;
 	public static GroupManager groupManager;
     public static String webRoot;		
 	
@@ -177,14 +179,17 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 
     public void initializePlugin(final PluginManager manager, final File pluginDirectory) {
         self = this;
-		userManager = XMPPServer.getInstance().getUserManager();
+		XMPPServer server = XMPPServer.getInstance();
+		userManager = server.getUserManager();
+		presenceManager = server.getPresenceManager();
+		
 		groupManager = GroupManager.getInstance();
         webRoot = pluginDirectory.getPath() + "/classes";
 		
 		InterceptorManager.getInstance().addInterceptor(this);
 		ClusterManager.addListener(this);
         MUCEventDispatcher.addListener(this);	
-		mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(MUC_NAME);
+		mucService = server.getMultiUserChatManager().getMultiUserChatService(MUC_NAME);
 
 		try {
 			setupHashMaps();
