@@ -86,7 +86,7 @@
 
 </section1>
 <section1 topic="Requesting a URL" anchor="request">
-  <p>A client requests an online new meeting URL by sending an IQ-get to the server containing a &lt;request&gt; child element qualified by the urn:xmpp:http:online-meetings:0 namespace. This element MUST include the attributes id and url specifying the identity and base url of the meeting respectfully.</p>
+  <p>A client requests an online new meeting URL by sending an IQ-get to the server containing a &lt;request&gt; child element qualified by the urn:xmpp:http:online-meetings:0 namespace. This element MUST include the attributes id and base-url specifying the identity and base url of the meeting respectfully.</p>
   <p>Additional attributes needed to secure permissions can be specified.</p>
   <example caption="Client requests an online meeting URL from the server"><![CDATA[
 <iq from='romeo@montague.tld/garden' id='step_02' to='montague.tld' type='get'>
