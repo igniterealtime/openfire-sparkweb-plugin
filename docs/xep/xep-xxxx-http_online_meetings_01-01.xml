@@ -90,7 +90,7 @@
   <p>Additional attributes needed to secure permissions can be specified.</p>
   <example caption="Client requests an online meeting URL from the server"><![CDATA[
 <iq from='romeo@montague.tld/garden' id='step_02' to='montague.tld' type='get'>
-  <request xmlns='urn:xmpp:http:online-meetings:0' id='my-meeting' url='https://meet.jit.si'  />
+  <request xmlns='urn:xmpp:http:online-meetings:0' id='my-meeting' base-url='https://meet.jit.si'  />
 </iq>]]></example>
   <p>The server responds with a <span class="ref"><link url="https://xmpp.org/extensions/xep-0066.html">Out-of-Band Data (XEP-0066)</link></span> <note>XEP-0066: Out of Band Data &lt;<link url="https://xmpp.org/extensions/xep-0066.html">https://xmpp.org/extensions/xep-0066.html</link>&gt;.</note> element. The host MUST provide Transport Layer Security (<span class="ref"><link url="http://tools.ietf.org/html/rfc5246">RFC 5246</link></span> <note>RFC 5246: The Transport Layer Security (TLS) Protocol Version 1.2 &lt;<link url="http://tools.ietf.org/html/rfc5246">http://tools.ietf.org/html/rfc5246</link>&gt;.</note>). The HTTPS URL MUST adhere to <span class="ref"><link url="http://tools.ietf.org/html/rfc3986">RFC 3986</link></span> <note>RFC 3986: Uniform Resource Identifiers (URI): Generic Syntax &lt;<link url="http://tools.ietf.org/html/rfc3986">http://tools.ietf.org/html/rfc3986</link>&gt;.</note>. Non ASCII characters MUST be percent-encoded.</p>
   <example caption="The server responds with an out of band URI"><![CDATA[
@@ -156,7 +156,7 @@ Access-Control-Allow-Credentials: true
 <section1 topic="Security Considerations" anchor="security">
   <section2 topic="General" anchor="general">
     <ul>
-      <li>Service implementors SHOULD use long randomized parts in their URLs making it impossible to guess the location of arbitrary files.</li>
+      <li>Service implementors SHOULD use long randomized parts in their URLs making it impossible to guess the location of arbitrary meeting url.</li>
       <li>Implementors should keep in mind, that without additional end-to-end-encryption, online meetings may not be sercure. Client implementors are advised to either use this only for semi public meetings (for example meetings hosted on a public MUC) or implement appropriate end-to-end encryption.</li>
       <li>Joining an HTTP Online Meeting will leak the client’s IP address to the HTTP service. The HTTP service might not be the same service as the XMPP service the client is currently connected to.</li>
   </ul>
@@ -182,9 +182,8 @@ Access-Control-Allow-Credentials: true
     xmlns="urn:xmpp:http:online-meetings:0">
   <xs:element name="request">
     <xs:complexType>
-      <xs:attribute name="filename" type="xs:string" use="required"/>
-      <xs:attribute name="size" type="xs:positiveInteger" use="required"/>
-      <xs:attribute name="content-type" type="xs:string" use="optional"/>
+      <xs:attribute name="id" type="xs:string" use="required"/>
+      <xs:attribute name="base-url" type="xs:positiveInteger" use="required"/>
     </xs:complexType>
   </xs:element>
   <xs:element name="slot">
@@ -216,13 +215,6 @@ Access-Control-Allow-Credentials: true
          </xs:complexType>
        </xs:element>
      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="file-too-large">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element name="max-file-size" type="xs:positiveInteger" minOccurs="0" maxOccurs="1"/>
-      </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:element name="retry">
