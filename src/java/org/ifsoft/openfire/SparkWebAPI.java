@@ -97,7 +97,7 @@ import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
-@SwaggerDefinition(tags = { @Tag(name = "User Management", description = "provide user services for the authenticated user."), @Tag(name = "Contact Management", description = "provide user roster services to manage contacts"), @Tag(name = "Presence", description = "provide presence services"), @Tag(name = "Chat", description = "provide chat services"), @Tag(name = "Web Authentication", description = "provide server-side Web Authentication services"), @Tag(name = "Web Push", description = "provide server-side Web Push services"), @Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
+@SwaggerDefinition(tags = { @Tag(name = "User Management", description = "provide user services for the authenticated user."), @Tag(name = "Contact Management", description = "provide user roster services to manage contacts"), @Tag(name = "Presence", description = "provide presence services"), @Tag(name = "Collaboration", description = "provide chat, groupchat and meeting services"), @Tag(name = "Web Authentication", description = "provide server-side Web Authentication services"), @Tag(name = "Web Push", description = "provide server-side Web Push services"), @Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
 @Api(authorizations = {@Authorization("authorization")})
 @Path("rest")
 @Produces(MediaType.APPLICATION_JSON)
@@ -285,11 +285,11 @@ public class SparkWebAPI {
 	
 	//-------------------------------------------------------
 	//
-	//	Chat
+	//	Collaboration
 	//
 	//-------------------------------------------------------
 
-	@ApiOperation(tags = {"Chat"}, value="Get chat messages", notes="Retrieves chat messages from Openfire messages archive")	
+	@ApiOperation(tags = {"Collaboration"}, value="Get chat or groupchat messages", notes="Retrieves chat or groupchat messages from Openfire messages archive")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The messages were retrieved."), @ApiResponse(code = 400, message = "The messages could not be retrieved.")})	
     @Path("/chat/messages")
     @GET
@@ -373,7 +373,7 @@ public class SparkWebAPI {
         }
     }				
 
-	@ApiOperation(tags = {"Chat"}, value="Post chat message", notes="post a chat message to an xmpp address.")	
+	@ApiOperation(tags = {"Collaboration"}, value="Post chat message", notes="post a chat message to an xmpp address.")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The messages was posted."), @ApiResponse(code = 400, message = "The messages could not be posted.")})	
     @Path("/chat/message/{to}")
     @POST
@@ -397,7 +397,7 @@ public class SparkWebAPI {
         return Response.status(Response.Status.OK).build();
     }
 
-	@ApiOperation(tags = {"Chat"}, value="Post chat state indicator", notes="Post a chat state to an xmpp address.")	
+	@ApiOperation(tags = {"Collaboration"}, value="Post chat state indicator", notes="Post a chat state to an xmpp address.")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat state was posted."), @ApiResponse(code = 400, message = "The chat state could not be posted.")})	
     @Path("/chat/chatstate/{state}/{to}")
     @POST
@@ -419,6 +419,32 @@ public class SparkWebAPI {
         }
 
         return Response.status(Response.Status.OK).build();
+    }
+
+	@ApiOperation(tags = {"Collaboration"}, value="Request file upload", notes="Request for GET and PUT URLs needed to upload and share a file with other users.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The request was accepted."), @ApiResponse(code = 400, message = "The upload request failed.")})	
+    @Path("/upload/{fileName}/{fileSize}")
+    @GET
+    public String uploadRequest(@ApiParam(value = "The file name to be upload.", required = true) @PathParam("fileName") String fileName, @ApiParam(value = "The size of the file to be uploaded.", required = true) @PathParam("fileSize") String fileSize) throws ServiceException  {
+		String username = getEndUser();	
+        try {
+            OpenfireConnection connection = OpenfireConnection.getConnection(username);
+
+            if (connection == null) {
+                throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+			
+            JSONObject response = connection.getUploadRequest(fileName, Long.parseLong(fileSize));
+
+            if (response.has("error")) {
+                throw new ServiceException("Exception", response.getString("error"), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+            return response.toString();
+
+        } catch (Exception e) {
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
     }
 	
 	//-------------------------------------------------------
@@ -752,7 +778,7 @@ public class SparkWebAPI {
         List<User> usernames = SparkWeb.self.getUsersByProperty("webpush.subscribe.%", null);
 
         for (User user : usernames) {
-            users.add(UserUtils.convertUserToUserEntity(user));			
+            users.add(new UserEntity(user.getUsername(), user.getName(), user.getEmail()));			
         }
 
         UserEntities userEntities = new UserEntities();

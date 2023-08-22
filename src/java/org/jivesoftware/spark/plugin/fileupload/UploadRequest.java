@@ -30,8 +30,8 @@ public class UploadRequest extends IQ
 {
     public static final String NAMESPACE = "urn:xmpp:http:upload:0";
 
-    private String filename;
-    private long filesize;
+    private String filename = "";
+    private long filesize = 0;
 
     public String getUrl = null;
     public String putUrl = null;

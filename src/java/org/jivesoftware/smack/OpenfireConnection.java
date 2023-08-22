@@ -973,7 +973,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
     //
     // -------------------------------------------------------
 
-    public static JSONObject getUploadRequest(String userId, String fileName, long fileLength) throws XMPPException {
+    public JSONObject getUploadRequest(String fileName, long fileLength) throws XMPPException {
         Log.debug("getUploadRequest " + fileName + " " + fileLength);
 
         JSONObject resp = new JSONObject();
@@ -981,59 +981,17 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
 
         try {
             UploadRequest request = new UploadRequest(fileName, fileLength);
-            request.setTo(JidCreate.entityBareFrom("httpfileupload." + domain));
+            request.setTo(JidCreate.fromOrThrowUnchecked("httpfileupload." + domain));
             request.setType(IQ.Type.get);
+			
+			IQ result = this.createStanzaCollectorAndSend(request).nextResultOrThrow();
+			UploadRequest response = (UploadRequest) result;
+			Log.debug("handleUpload response: putUrl=" + response.putUrl + " getUrl=" + response.getUrl);
 
-            OpenfireConnection uploadConnection = getXMPPConnection(userId, null);
-
-            if (uploadConnection != null)
-            {
-                StanzaCollector collector = uploadConnection.createStanzaCollector(new StanzaIdFilter(request.getStanzaId()));
-
-                uploadConnection.sendPacket(request);
-
-                IQ result = (IQ) collector.nextResult(5000);
-                collector.cancel();
-
-                if (result == null) {
-                   errorMsg = "No response from the server.";
-                   Log.error(errorMsg);
-                   resp.put("error", errorMsg);
-                   return resp;
-                }
-                if (result.getType() == IQ.Type.error) {
-                   errorMsg = result.getError().getConditionText();
-
-                   if (errorMsg == null)
-                   {
-                        if (result.getError().getCondition() == StanzaError.Condition.not_acceptable)
-                        {
-                            errorMsg = "File too large.";
-                        }
-                        else errorMsg = result.getError().toString();
-                   }
-
-                   Log.error(errorMsg);
-                   resp.put("error", errorMsg);
-                   return resp;
-                }
-
-                UploadRequest response = (UploadRequest) result;
-
-                Log.warn("handleUpload response " + response.putUrl + " " + response.getUrl);
-                resp.put("get", response.getUrl);
-                resp.put("put", response.putUrl);
-
-                uploadConnection.disconnect(new Presence(Presence.Type.unavailable));
-                assistConnections.remove(userId);
-
-                return resp;
-
-            } else {
-                resp.put("error", "upload failed. No XMPP connection");
-                return resp;
-            }
-
+			resp.put("get", response.getUrl);
+			resp.put("put", response.putUrl);
+			return resp;
+			
         } catch (Exception e) {
             Log.error("uploadFile error", e);
             resp.put("error", e.toString());
@@ -1473,9 +1431,9 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
                 text = text.substring(0, pos + 9) + "xmlns=\"jabber:client\"" + text.substring(pos + 8);
             }
 
-            Log.debug("SmackConnection - deliverRawText\n" + text);
+            Log.debug("SmackConnection - deliverRawText " + connection.username + "\n" + text);
 
-            SparkWeb.self.broadcast(username, "chatapi.xmpp", "{\"xmpp\": \"" + DatatypeConverter.printBase64Binary(text.getBytes()) + "\"}");
+            SparkWeb.self.broadcast(connection.username, "chatapi.xmpp", "{\"xmpp\": \"" + DatatypeConverter.printBase64Binary(text.getBytes()) + "\"}");
 
             Stanza stanza = connection.handleParser(text);
 
