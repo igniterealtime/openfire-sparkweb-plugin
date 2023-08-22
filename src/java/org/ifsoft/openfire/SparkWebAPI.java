@@ -39,6 +39,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Context;
+import javax.xml.bind.DatatypeConverter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -86,7 +87,7 @@ import org.xmpp.packet.*;
 import com.yubico.webauthn.*;
 import com.yubico.webauthn.data.*;
 import io.swagger.annotations.*;
-
+import org.broadbear.link.preview.*;
 import com.google.common.io.BaseEncoding;
 import org.apache.http.HttpResponse;
 import nl.martijndwars.webpush.Utils;
@@ -97,7 +98,7 @@ import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
-@SwaggerDefinition(tags = { @Tag(name = "User Management", description = "provide user services for the authenticated user."), @Tag(name = "Contact Management", description = "provide user roster services to manage contacts"), @Tag(name = "Presence", description = "provide presence services"), @Tag(name = "Collaboration", description = "provide chat, groupchat and meeting services"), @Tag(name = "Web Authentication", description = "provide server-side Web Authentication services"), @Tag(name = "Web Push", description = "provide server-side Web Push services"), @Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
+@SwaggerDefinition(tags = { @Tag(name = "Chat", description = "provides chat services for the authenticated user."), @Tag(name = "Group Chat", description = "provides groupchat services to manage contacts"), @Tag(name = "Presence", description = "provides presence services"), @Tag(name = "Collaboration", description = "provides meeting and other collaboration services"), @Tag(name = "User Management", description = "provides user services for the authenticated user."), @Tag(name = "Contact Management", description = "provides user roster services to manage contacts"), @Tag(name = "Web Authentication", description = "provides server-side Web Authentication services"), @Tag(name = "Web Push", description = "provides server-side Web Push services"), @Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
 @Api(authorizations = {@Authorization("authorization")})
 @Path("rest")
 @Produces(MediaType.APPLICATION_JSON)
@@ -113,6 +114,7 @@ public class SparkWebAPI {
 	public static final HashMap<String, Object> requests = new HashMap<>();
 
 	UserServiceController userServiceController;
+	MUCRoomController mucRoomController;
 	
 	@Context
 	private HttpServletRequest httpRequest;
@@ -120,6 +122,7 @@ public class SparkWebAPI {
 	@PostConstruct
 	public void init() 	{
         userServiceController = UserServiceController.getInstance();
+		mucRoomController = MUCRoomController.getInstance();
 	}	
 
 
@@ -285,95 +288,19 @@ public class SparkWebAPI {
 	
 	//-------------------------------------------------------
 	//
-	//	Collaboration
+	//	Chat
 	//
 	//-------------------------------------------------------
 
-	@ApiOperation(tags = {"Collaboration"}, value="Get chat or groupchat messages", notes="Retrieves chat or groupchat messages from Openfire messages archive")	
+	@ApiOperation(tags = {"Chat"}, value="Get chat messages", notes="Retrieves chat messages from Openfire messages archive")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The messages were retrieved."), @ApiResponse(code = 400, message = "The messages could not be retrieved.")})	
     @Path("/chat/messages")
     @GET
-    public Conversations getConversations(@ApiParam(value = "Search keywords", required = false) @QueryParam("keywords") String keywords, @ApiParam(value = "The message target", required = false) @QueryParam("to") String to, @ApiParam(value = "The start date in MM/dd/yy format", required = false) @QueryParam("start") String start, @ApiParam(value = "The end date in MM/dd/yy format", required = false) @QueryParam("end") String end, @ApiParam(value = "The groupchat room used", required = false) @QueryParam("room") String room, @ApiParam(value = "The groupchat service name", required = false) @DefaultValue("conference") @QueryParam("service") String service) throws ServiceException   {
-		String username = getEndUser();	 
-		Log.debug("getConversations " + username + " " + keywords + " " + " " + to  + " " + start + " " + end + " " + room + " " + service);
-
-        try {
-            ArchiveSearch search = new ArchiveSearch();
-            JID participant1JID = makeJid(username);
-            JID participant2JID = null;
-
-            if (to != null) participant2JID = makeJid(to);
-
-            if (participant2JID != null) {
-                search.setParticipants(participant1JID, participant2JID);
-            } else  {
-                search.setParticipants(participant1JID);
-            }
-
-            if (start != null) {
-                Date startDate = null;
-
-                try {
-                    if (start.contains("T")) {
-                        startDate = Date.from(Instant.parse(start));
-                    }
-                    else {
-                        DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
-                        startDate = formatter.parse(start);
-                    }
-                    startDate = new Date(startDate.getTime() - JiveConstants.MINUTE * 5);
-                    search.setDateRangeMin(startDate);
-                }
-                catch (Exception e) {
-                    Log.error("ConversationPDFServlet", e);
-                }
-            }
-
-            if (end != null) {
-                Date endDate = null;
-
-                try {
-                    if (end.contains("T"))
-                    {
-                        endDate = Date.from(Instant.parse(end));
-                    }
-                    else {
-                        DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
-                        endDate = formatter.parse(end);
-                    }
-                    endDate = new Date(endDate.getTime() + JiveConstants.DAY - 1);
-                    search.setDateRangeMax(endDate);
-                }
-                catch (Exception e) {
-                    Log.error("ConversationPDFServlet", e);
-                }
-            }
-
-            if (keywords != null) search.setQueryString(keywords);
-            if (service == null || "".equals(service)) service = "conference";
-
-            if (room != null) {
-                search.setRoom(new JID(room + "@" + service + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain()));
-            }
-
-            search.setSortOrder(ArchiveSearch.SortOrder.ascending);
-
-            Collection<Conversation> conversations = new ArchiveSearcher().search(search);
-            Collection<Conversation> list = new ArrayList<Conversation>();
-
-            for (Conversation conversation : conversations) {
-                list.add(conversation);
-            }
-
-            return new Conversations(list);
-
-        } catch (Exception e) {
-            Log.error("getConversations", e);
-            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
-        }
+    public Conversations getChatConversations(@ApiParam(value = "Search keywords", required = false) @QueryParam("keywords") String keywords, @ApiParam(value = "The message target", required = false) @QueryParam("to") String to, @ApiParam(value = "The start date in MM/dd/yy format", required = false) @QueryParam("start") String start, @ApiParam(value = "The end date in MM/dd/yy format", required = false) @QueryParam("end") String end ) throws ServiceException   {
+		 return getConversations(keywords, to, start, end, null, null);
     }				
 
-	@ApiOperation(tags = {"Collaboration"}, value="Post chat message", notes="post a chat message to an xmpp address.")	
+	@ApiOperation(tags = {"Chat"}, value="Post chat message", notes="post a chat message to an xmpp address.")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The messages was posted."), @ApiResponse(code = 400, message = "The messages could not be posted.")})	
     @Path("/chat/message/{to}")
     @POST
@@ -397,7 +324,7 @@ public class SparkWebAPI {
         return Response.status(Response.Status.OK).build();
     }
 
-	@ApiOperation(tags = {"Collaboration"}, value="Post chat state indicator", notes="Post a chat state to an xmpp address.")	
+	@ApiOperation(tags = {"Chat"}, value="Post chat state indicator", notes="Post a chat state to an xmpp address.")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat state was posted."), @ApiResponse(code = 400, message = "The chat state could not be posted.")})	
     @Path("/chat/chatstate/{state}/{to}")
     @POST
@@ -420,6 +347,173 @@ public class SparkWebAPI {
 
         return Response.status(Response.Status.OK).build();
     }
+	
+    //-------------------------------------------------------
+    //
+    //  Groupchat
+    //
+    //-------------------------------------------------------
+
+	@ApiOperation(tags = {"Group Chat"}, value="Get groupchat messages", notes="Retrieves chat groupchat messages from Openfire messages archive")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The messages were retrieved."), @ApiResponse(code = 400, message = "The messages could not be retrieved.")})	
+    @Path("/groupchat/messages")
+    @GET
+    public Conversations getGroupChatConversations(@ApiParam(value = "Search keywords", required = false) @QueryParam("keywords") String keywords, @ApiParam(value = "The start date in MM/dd/yy format", required = false) @QueryParam("start") String start, @ApiParam(value = "The end date in MM/dd/yy format", required = false) @QueryParam("end") String end, @ApiParam(value = "The groupchat room used", required = false) @QueryParam("room") String room, @ApiParam(value = "The groupchat service name", required = false) @DefaultValue("conference") @QueryParam("service") String service) throws ServiceException   {
+		 return getConversations(keywords, null, start, end, room, service);
+    }
+	
+	@ApiOperation(tags = {"Group Chat"}, value="Get chat rooms", notes="Get a list of all multi-user chat rooms of a particular chat room service.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "All chat rooms."), @ApiResponse(code = 404, message = "MUC service does not exist or is not accessible.")})	
+    @Path("/groupchat/rooms")
+    @GET
+    public MUCRoomEntities getMUCRooms(@ApiParam(value = "The name of the MUC service for which to return all chat rooms.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName, @ApiParam(value = "Room type-based filter: 'all' or 'public'", required = false) @DefaultValue(MUCChannelType.PUBLIC) @QueryParam("type") String channelType, @ApiParam(value = "Search/Filter by room name.\nThis act like the wildcard search %String%", required = false) @QueryParam("search") String roomSearch, @ApiParam(value = "For all groups defined in owners, admins, members and outcasts, list individual members instead of the group name.", required = false) @DefaultValue("false") @QueryParam("expandGroups") Boolean expand)  throws ServiceException   {
+        return mucRoomController.getChatRooms(serviceName, channelType, roomSearch, expand);
+    }
+
+	@ApiOperation(tags = {"Group Chat"}, value="Get chat room", notes="Get information of a specific multi-user chat room.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat room"), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
+    @Path("/groupchat/room/{roomName}")
+    @GET
+    public MUCRoomEntity getMUCRoomJSON2(@ApiParam(value = "The name of the MUC room", required = true) @PathParam("roomName") String roomName, @ApiParam(value = "The name of the MUC service.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName, @ApiParam(value = "For all groups defined in owners, admins, members and outcasts, list individual members instead of the group name.", required = false) @DefaultValue("false") @QueryParam("expandGroups") Boolean expand) throws ServiceException    {
+        return mucRoomController.getChatRoom(roomName, serviceName, expand);
+    }
+
+
+	@ApiOperation(tags = {"Group Chat"}, value="Get room participants", notes="Get all participants of a specific multi-user chat room.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat room participants"), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
+    @Path("/groupchat/room/{roomName}/participants")
+    @GET
+    public ParticipantEntities getMUCRoomParticipants(@ApiParam(value = "The name of the MUC room", required = true) @PathParam("roomName") String roomName, @ApiParam(value = "The name of the MUC service.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName)  throws ServiceException   {
+        return mucRoomController.getRoomParticipants(roomName, serviceName);
+    }
+
+	@ApiOperation(tags = {"Group Chat"}, value="Get room occupants", notes="Get all occupants of a specific multi-user chat room.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat room occupants"), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
+    @Path("/groupchat/room/{roomName}/occupants")
+    @GET
+    public OccupantEntities getMUCRoomOccupants(@ApiParam(value = "The name of the MUC room", required = true) @PathParam("roomName") String roomName, @ApiParam(value = "The name of the MUC service.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName)  throws ServiceException   {
+        return mucRoomController.getRoomOccupants(roomName, serviceName);
+    }
+
+	@ApiOperation(tags = {"Group Chat"}, value="Get room history", notes="Get messages that have been exchanged in a specific multi-user chat room.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat room message history"), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
+    @Path("/groupchat/room/{roomName}/chathistory")
+    @GET
+    public MUCRoomMessageEntities getMUCRoomHistory(@ApiParam(value = "The name of the MUC room", required = true) @PathParam("roomName") String roomName, @ApiParam(value = "The name of the MUC service.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName)  throws ServiceException  {
+        roomName = JID.nodeprep(roomName);		
+        return mucRoomController.getRoomHistory(roomName, serviceName);
+    }
+
+	@ApiOperation(tags = {"Group Chat"}, value="Join groupchat", notes="Join a groupchat by entering a MUC room")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The user has joined groupchat"), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
+    @Path("/groupchat/room/{roomName}")
+    @PUT	
+    public Response joinRoom(@ApiParam(value = "The name of the MUC room to join.", required = true) @PathParam("roomName") String roomName, @ApiParam(value = "The name of the MUC service.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName)  throws ServiceException  {
+		String username = getEndUser();
+        Log.debug("joinRoom " + username + " " + serviceName + " " + roomName);
+
+        try {
+           OpenfireConnection connection = OpenfireConnection.getConnection(username);
+
+            if (connection == null) {
+                throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+			User user = SparkWeb.self.getUser(username);
+			String nickName = user.getName() == null ? username : user.getName();
+		
+            if (!connection.joinRoom(roomName + "@" + serviceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), nickName))  {
+                throw new ServiceException("Exception", "join room failed", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+        } catch (Exception e) {
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+
+        return Response.status(Response.Status.OK).build();
+    }
+
+	@ApiOperation(tags = {"Group Chat"}, value="Leave groupchat", notes="Leave a groupchat by leaving a MUC room")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The user has left groupchat"), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
+    @Path("/groupchat/room/{roomName}")
+    @DELETE	
+    public Response leaveRoom(@ApiParam(value = "The name of the MUC room to leave.", required = true) @PathParam("roomName") String roomName, @ApiParam(value = "The name of the MUC service.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName)  throws ServiceException  {
+		String username = getEndUser();
+        Log.debug("leaveRoom " + username + " " + serviceName + " " + roomName);
+
+        try {
+           OpenfireConnection connection = OpenfireConnection.getConnection(username);
+
+            if (connection == null) {
+                throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+            if (!connection.leaveRoom(roomName + "@" + serviceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
+                throw new ServiceException("Exception", "join room failed", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+        } catch (Exception e) {
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+
+        return Response.status(Response.Status.OK).build();
+    }
+
+	@ApiOperation(tags = {"Group Chat"}, value="Post a message to a groupchat", notes="Post a message to a groupchat")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The message is posted"), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
+    @Path("/groupchat/room/{roomName}")
+    @POST	
+    public Response postToRoom(@ApiParam(value = "The name of the MUC room to post to.", required = true) @PathParam("roomName") String roomName, @ApiParam(value = "The name of the MUC service.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName, @ApiParam(value = "The text message to be posted", required = true) String body)  throws ServiceException  {
+		String username = getEndUser();
+        Log.debug("postToRoom " + username + " " + serviceName + " " + roomName);
+        try {
+           OpenfireConnection connection = OpenfireConnection.getConnection(username);
+
+            if (connection == null) {
+                throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+            if (!connection.sendRoomMessage(roomName + "@" + serviceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), body)) {
+                throw new ServiceException("Exception", "join room failed", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+        } catch (Exception e) {
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+
+        return Response.status(Response.Status.OK).build();
+    }
+
+	@ApiOperation(tags = {"Group Chat"}, value="Invite another user", notes="Invite another user to a groupchat")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The invitation has been sent"), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
+    @Path("/groupchat/room/{roomName}/{invitedJid}")
+    @POST	
+    public Response inviteToRoom(@ApiParam(value = "The name of the MUC room", required = true) @PathParam("roomName") String roomName, @ApiParam(value = "The name of the MUC service.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName, @ApiParam(value = "The xmpp address of the person to be invited", required = true) @PathParam("invitedJid") String invitedJid, @ApiParam(value = "The reason for the invitation", required = true) String reason)  throws ServiceException  {
+		String username = getEndUser();
+        Log.debug("inviteToRoom " + username + " " + serviceName + " " + roomName + " " + invitedJid + "\n" + reason);
+		
+        try {
+           OpenfireConnection connection = OpenfireConnection.getConnection(username);
+
+            if (connection == null) {
+                throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+            if (!connection.inviteToRoom(roomName + "@" + serviceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), invitedJid, reason)) {
+                throw new ServiceException("Exception", "join room failed", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+        } catch (Exception e) {
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+
+        return Response.status(Response.Status.OK).build();
+    }
+
+
+	//-------------------------------------------------------
+	//
+	//	Other Collaboration Services
+	//
+	//-------------------------------------------------------
 
 	@ApiOperation(tags = {"Collaboration"}, value="Request file upload", notes="Request for GET and PUT URLs needed to upload and share a file with other users.")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The request was accepted."), @ApiResponse(code = 400, message = "The upload request failed.")})	
@@ -443,6 +537,35 @@ public class SparkWebAPI {
             return response.toString();
 
         } catch (Exception e) {
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+    }
+
+	@ApiOperation(tags = {"Collaboration"}, value="Request URL preview", notes="Request for URL preview metadata.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The metadata was obtained."), @ApiResponse(code = 400, message = "The preview request failed.")})	
+    @Path("/preview/{quality}/{url}")
+    @GET	
+    public String previewLink(@ApiParam(value = "The quality of the preview image on a scale 1-9.", required = true) @PathParam("quality") String quality, @ApiParam(value = "The url to be previewd.", required = true) @PathParam("url") String url) throws ServiceException   {
+        Log.debug("previewLink " + url + " " + quality);
+
+        try {
+            JSONObject jsonObject = new JSONObject();
+            SourceContent sourceContent = TextCrawler.scrape(url, Integer.parseInt(quality));
+
+            if (sourceContent == null) {
+                throw new ServiceException("Exception", "bad url", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+			
+			List<String> images = sourceContent.getImages();
+			
+            if (images != null && images.size() > 0)      	jsonObject.put("image", sourceContent.getImages().get(0));
+            if (sourceContent.getDescription() != null) 	jsonObject.put("descriptionShort", sourceContent.getDescription());
+            if (sourceContent.getTitle()!=null)         	jsonObject.put("title", sourceContent.getTitle());
+
+            return jsonObject.toString();
+
+        } catch (Exception e) {
+			Log.error("previewLink " + e, e);
             throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
         }
     }
@@ -1000,7 +1123,6 @@ public class SparkWebAPI {
         
         throw new ServiceException("Exception", "WebAuthn authentication failed", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
     }
-	
 		
 	//-------------------------------------------------------
 	//
@@ -1008,6 +1130,84 @@ public class SparkWebAPI {
 	//
 	//-------------------------------------------------------
 
+    public Conversations getConversations(String keywords, String to, String start, String end, String room, String service) throws ServiceException   {
+		String username = getEndUser();	 
+		Log.debug("getConversations " + username + " " + keywords + " " + " " + to  + " " + start + " " + end + " " + room + " " + service);
+
+        try {
+            ArchiveSearch search = new ArchiveSearch();
+            JID participant1JID = makeJid(username);
+            JID participant2JID = null;
+
+            if (to != null) participant2JID = makeJid(to);
+
+            if (participant2JID != null) {
+                search.setParticipants(participant1JID, participant2JID);
+            }
+
+            if (start != null) {
+                Date startDate = null;
+
+                try {
+                    if (start.contains("T")) {
+                        startDate = Date.from(Instant.parse(start));
+                    }
+                    else {
+                        DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
+                        startDate = formatter.parse(start);
+                    }
+                    startDate = new Date(startDate.getTime() - JiveConstants.MINUTE * 5);
+                    search.setDateRangeMin(startDate);
+                }
+                catch (Exception e) {
+                    Log.error("ConversationPDFServlet", e);
+                }
+            }
+
+            if (end != null) {
+                Date endDate = null;
+
+                try {
+                    if (end.contains("T"))
+                    {
+                        endDate = Date.from(Instant.parse(end));
+                    }
+                    else {
+                        DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
+                        endDate = formatter.parse(end);
+                    }
+                    endDate = new Date(endDate.getTime() + JiveConstants.DAY - 1);
+                    search.setDateRangeMax(endDate);
+                }
+                catch (Exception e) {
+                    Log.error("ConversationPDFServlet", e);
+                }
+            }
+
+            if (keywords != null) search.setQueryString(keywords);
+            if (service == null || "".equals(service)) service = "conference";
+
+            if (room != null) {
+                search.setRoom(new JID(room + "@" + service + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain()));
+            }
+
+            search.setSortOrder(ArchiveSearch.SortOrder.ascending);
+
+            Collection<Conversation> conversations = new ArchiveSearcher().search(search);
+            Collection<Conversation> list = new ArrayList<Conversation>();
+
+            for (Conversation conversation : conversations) {
+                list.add(conversation);
+            }
+
+            return new Conversations(list);
+
+        } catch (Exception e) {
+            Log.error("getConversations", e);
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+    }
+	
     private JID makeJid(String participant1) {
         JID participant1JID = null;
 
@@ -1059,7 +1259,7 @@ public class SparkWebAPI {
         return ofPublicKey;
     }
 
-    private KeyPair generateKeyPair() throws InvalidAlgorithmParameterException, NoSuchProviderException, NoSuchAlgorithmException {
+    private KeyPair generateKeyPair() throws InvalidAlgorithmParameterException, java.security.NoSuchProviderException, NoSuchAlgorithmException {
         ECNamedCurveParameterSpec parameterSpec = ECNamedCurveTable.getParameterSpec("prime256v1");
 
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDH", "BC");

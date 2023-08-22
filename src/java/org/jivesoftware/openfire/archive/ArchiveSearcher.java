@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -65,7 +66,7 @@ public class ArchiveSearcher implements Startable {
     }
 
     public void start() {
-
+	
     }
 
     public void stop() {
@@ -98,34 +99,10 @@ public class ArchiveSearcher implements Startable {
     private Collection<Conversation> luceneSearch(ArchiveSearch search) {
         Log.debug( "Executing new Lucene search for query string {}", search.getQueryString() );
         try {
-            File searchDir = new File(JiveGlobals.getHomeDirectory() + File.separator + MonitoringConstants.NAME + File.separator + "search");
 
-            if (!searchDir.exists())
-            {
-                Log.error("Search folder missing " + searchDir);
-                return Collections.emptySet();
-            }
-            try {
-                directory = FSDirectory.open(searchDir.toPath());
-            }
-            catch (IOException ioe) {
-                Log.error(ioe.getMessage(), ioe);
-                return Collections.emptySet();
-            }
-
-            if (searcher == null) {
-                DirectoryReader reader = DirectoryReader.open(directory);
-                searcher = new IndexSearcher(reader);
-            }
-            // See if the searcher needs to be closed due to the index being updated.
-            final DirectoryReader replacement = DirectoryReader.openIfChanged((DirectoryReader) searcher.getIndexReader());
-            if ( replacement != null )
-            {
-                Log.debug("Returning new Index Searcher (as index was updated)");
-                searcher.getIndexReader().close();
-                searcher = new IndexSearcher(replacement);
-            }
-
+			DirectoryReader reader = DirectoryReader.open(directory);
+			searcher = new IndexSearcher(reader);
+			
             final StandardAnalyzer analyzer = new StandardAnalyzer();
 
             // Create the query based on the search terms.
@@ -137,7 +114,7 @@ public class ArchiveSearcher implements Startable {
             Sort sort = null;
             if (search.getSortField() != ArchiveSearch.SortField.relevance) {
                 if (search.getSortField() == ArchiveSearch.SortField.date) {
-                    sort = new Sort(new SortField("date", SortField.Type.STRING, search.getSortOrder() == ArchiveSearch.SortOrder.descending));
+                    sort = new Sort(new SortField("date", SortField.Type.LONG, search.getSortOrder() == ArchiveSearch.SortOrder.descending));
                     Log.debug( "... applying sort: {}", sort );
                 }
             }
@@ -145,18 +122,17 @@ public class ArchiveSearcher implements Startable {
             // See if we need to filter on date. Default to a null filter so that it has
             // no effect if date filtering hasn't been selected.
             if (search.getDateRangeMin() != null || search.getDateRangeMax() != null) {
-                String min = null;
+                Long min = null;
                 if (search.getDateRangeMin() != null) {
-                    min = DateTools.dateToString(search.getDateRangeMin(), DateTools.Resolution.DAY);
+                    min = search.getDateRangeMin().getTime();
                 }
-                String max = null;
+                Long max = null;
                 if (search.getDateRangeMax() != null) {
-                    max = DateTools.dateToString(search.getDateRangeMax(), DateTools.Resolution.DAY);
+                    max = search.getDateRangeMax().getTime();
                 }
 
                 if (max != null || min != null) {
-                    // ENT-271: don't include upper or lower bound if these elements are null
-                    final TermRangeQuery dateRangeQuery = TermRangeQuery.newStringRange("date", min, max, min != null, max != null);
+                    final Query dateRangeQuery = NumericDocValuesField.newSlowRangeQuery("date", min != null ? min : Long.MIN_VALUE, max != null ? max : Long.MAX_VALUE);
                     Log.debug( "... limiting to range: {}", dateRangeQuery );
                     query = new BooleanQuery.Builder()
                         .add(query, BooleanClause.Occur.MUST)
@@ -184,7 +160,7 @@ public class ArchiveSearcher implements Startable {
             if (!participants.isEmpty()) {
                 if (participants.size() == 1) {
                     JID jid = participants.iterator().next().asBareJID();
-                    Query participantQuery = new QueryParser("jid", analyzer).parse(jid.toString());
+                    TermQuery participantQuery = new TermQuery(new Term("jid", jid.toBareJID()));
                     Log.debug( "... restricting to participant: {}", jid );
 
                     // Add this query to the existing query.
@@ -204,8 +180,8 @@ public class ArchiveSearcher implements Startable {
 
                     Log.debug( "... restricting to participants: {} and {}", participant1, participant2 );
                     final BooleanQuery participantQuery = new BooleanQuery.Builder()
-                        .add(new QueryParser("jid", analyzer).parse(participant1), BooleanClause.Occur.MUST)
-                        .add(new QueryParser("jid", analyzer).parse(participant2), BooleanClause.Occur.MUST)
+                        .add(new TermQuery(new Term("jid", participant1)), BooleanClause.Occur.MUST)
+                        .add(new TermQuery(new Term("jid", participant2)), BooleanClause.Occur.MUST)
                         .build();
 
                     // Add this query to the existing query.
@@ -242,6 +218,7 @@ public class ArchiveSearcher implements Startable {
             return Collections.emptySet();
         }
     }
+
 
     /**
      * Searches the database for all archived conversations using the specified search.

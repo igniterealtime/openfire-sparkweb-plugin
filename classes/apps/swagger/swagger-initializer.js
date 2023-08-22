@@ -1,3 +1,20 @@
+window.addEventListener('online', function() {
+	console.debug("window.online");
+	
+	function restartApp() {
+		if (!isOnline()) {
+			setTimeout(restartApp, 1000);		
+			return;
+		}
+		
+		window.location.reload();	
+	}	
+	restartApp();
+})
+
+window.addEventListener('offline', function() {
+	console.debug("window.offline");
+})
 
 window.onload = function() {
 	console.debug("window.onload");
@@ -65,21 +82,6 @@ window.onload = function() {
 		},	
 		layout: "StandaloneLayout"
 	});
-
-	async function isOnline() {
-		try {
-			if (!self.navigator.onLine) //false is always reliable that no network. true might lie
-				return false;
-	
-			const url = location.protocol + "//" + location.host;					
-			const request = new URL(url);
-			request.searchParams.set('rand', Date.now().toString()); // random value to prevent cached responses
-			const response = await fetch(request.toString(), { method: 'HEAD' });
-			return response.ok;
-		} catch {
-			return false;
-		}
-	}
   
 	function setupListeners(username, url, token) {
 		window.ui.preauthorizeApiKey("authorization", token);
@@ -128,9 +130,20 @@ window.onload = function() {
 		
 		source.addEventListener('chatapi.chat', async event => {
 			const msg = JSON.parse(event.data);	
-			if (msg.type == "headline") document.getElementById("status").innerHTML = "System Message - " + msg.body;				
+			
+			if (msg.type == "headline") {
+				document.getElementById("status").innerHTML = "System Message - " + msg.body;				
+			} else {
+				document.getElementById("status").innerHTML = msg.type + " " + msg.from + " - " + msg.body;								
+			}
 			console.debug("EventSource - chatapi.chat", msg);	
 		});	
+		
+		source.addEventListener('chatapi.muc', async event => {
+			const msg = JSON.parse(event.data);	
+			document.getElementById("status").innerHTML = msg.type + " " + msg.from + " - " + msg.body;				
+			console.debug("EventSource - chatapi.muc", msg);	
+		});		
 
 		const actionChannel = new BroadcastChannel('sparkweb.notification.action');
 		
@@ -332,3 +345,19 @@ window.onload = function() {
 		return btoa(n).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "")
 	}  
 };
+
+
+async function isOnline() {
+	try {
+		if (!self.navigator.onLine) //false is always reliable that no network. true might lie
+			return false;
+
+		const url = location.protocol + "//" + location.host;					
+		const request = new URL(url);
+		request.searchParams.set('rand', Date.now().toString()); // random value to prevent cached responses
+		const response = await fetch(request.toString(), { method: 'HEAD' });
+		return response.ok;
+	} catch {
+		return false;
+	}
+}

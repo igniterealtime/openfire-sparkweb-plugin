@@ -12,29 +12,37 @@ SparkWeb REST API adds support for a whole range of modern web service connectio
 
 ## Tags
 
-  ### <span id="tag-user-management"></span>User Management
+  ### <span id="tag-chat"></span>Chat
 
-provide user services for the authenticated user.
+provides chat services for the authenticated user.
 
-  ### <span id="tag-contact-management"></span>Contact Management
+  ### <span id="tag-group-chat"></span>Group Chat
 
-provide user roster services to manage contacts
+provides groupchat services to manage contacts
 
   ### <span id="tag-presence"></span>Presence
 
-provide presence services
+provides presence services
 
-  ### <span id="tag-chat"></span>Chat
+  ### <span id="tag-collaboration"></span>Collaboration
 
-provide chat services
+provides meeting and other collaboration services
+
+  ### <span id="tag-user-management"></span>User Management
+
+provides user services for the authenticated user.
+
+  ### <span id="tag-contact-management"></span>Contact Management
+
+provides user roster services to manage contacts
 
   ### <span id="tag-web-authentication"></span>Web Authentication
 
-provide server-side Web Authentication services
+provides server-side Web Authentication services
 
   ### <span id="tag-web-push"></span>Web Push
 
-provide server-side Web Push services
+provides server-side Web Push services
 
   ### <span id="tag-global-and-user-properties"></span>Global and User Properties
 
@@ -86,9 +94,18 @@ Create, update and delete Openfire bookmarks
 
 | Method  | URI     | Name   | Summary |
 |---------|---------|--------|---------|
-| GET | /sparkweb/api/rest/chat/messages | [get conversations](#get-conversations) | Get chat messages |
+| GET | /sparkweb/api/rest/chat/messages | [get chat conversations](#get-chat-conversations) | Get chat messages |
 | POST | /sparkweb/api/rest/chat/chatstate/{state}/{to} | [post chat state](#post-chat-state) | Post chat state indicator |
 | POST | /sparkweb/api/rest/chat/message/{to} | [post message](#post-message) | Post chat message |
+  
+
+
+###  collaboration
+
+| Method  | URI     | Name   | Summary |
+|---------|---------|--------|---------|
+| GET | /sparkweb/api/rest/preview/{quality}/{url} | [preview link](#preview-link) | Request URL preview |
+| GET | /sparkweb/api/rest/upload/{fileName}/{fileSize} | [upload request](#upload-request) | Request file upload |
   
 
 
@@ -110,6 +127,23 @@ Create, update and delete Openfire bookmarks
 | GET | /sparkweb/api/rest/config/global | [get global config](#get-global-config) | Global and User Properties - List global properties affecting this user |
 | GET | /sparkweb/api/rest/config/properties | [get user config](#get-user-config) | Global and User Properties - List User Properties |
 | POST | /sparkweb/api/rest/config/properties | [post user config](#post-user-config) | Global and User Properties - Update user properties |
+  
+
+
+###  group_chat
+
+| Method  | URI     | Name   | Summary |
+|---------|---------|--------|---------|
+| GET | /sparkweb/api/rest/groupchat/messages | [get group chat conversations](#get-group-chat-conversations) | Get groupchat messages |
+| GET | /sparkweb/api/rest/groupchat/room/{roomName}/chathistory | [get m u c room history](#get-m-u-c-room-history) | Get room history |
+| GET | /sparkweb/api/rest/groupchat/room/{roomName} | [get m u c room JSON 2](#get-m-u-c-room-json-2) | Get chat room |
+| GET | /sparkweb/api/rest/groupchat/room/{roomName}/occupants | [get m u c room occupants](#get-m-u-c-room-occupants) | Get room occupants |
+| GET | /sparkweb/api/rest/groupchat/room/{roomName}/participants | [get m u c room participants](#get-m-u-c-room-participants) | Get room participants |
+| GET | /sparkweb/api/rest/groupchat/rooms | [get m u c rooms](#get-m-u-c-rooms) | Get chat rooms |
+| POST | /sparkweb/api/rest/groupchat/room/{roomName}/{invitedJid} | [invite to room](#invite-to-room) | Invite another user |
+| PUT | /sparkweb/api/rest/groupchat/room/{roomName} | [join room](#join-room) | Join groupchat |
+| DELETE | /sparkweb/api/rest/groupchat/room/{roomName} | [leave room](#leave-room) | Leave groupchat |
+| POST | /sparkweb/api/rest/groupchat/room/{roomName} | [post to room](#post-to-room) | Post a message to a groupchat |
   
 
 
@@ -625,7 +659,7 @@ Status: OK
 
 [Bookmarks](#bookmarks)
 
-### <span id="get-conversations"></span> Get chat messages (*getConversations*)
+### <span id="get-chat-conversations"></span> Get chat messages (*getChatConversations*)
 
 ```
 GET /sparkweb/api/rest/chat/messages
@@ -645,29 +679,27 @@ Retrieves chat messages from Openfire messages archive
 |------|--------|------|---------|-----------| :------: |---------|-------------|
 | end | `query` | string | `string` |  |  |  | The end date in MM/dd/yy format |
 | keywords | `query` | string | `string` |  |  |  | Search keywords |
-| room | `query` | string | `string` |  |  |  | The groupchat room used |
-| service | `query` | string | `string` |  |  | `"conference"` | The groupchat service name |
 | start | `query` | string | `string` |  |  |  | The start date in MM/dd/yy format |
 | to | `query` | string | `string` |  |  |  | The message target |
 
 #### All responses
 | Code | Status | Description | Has headers | Schema |
 |------|--------|-------------|:-----------:|--------|
-| [200](#get-conversations-200) | OK | The messages were retrieved. |  | [schema](#get-conversations-200-schema) |
-| [400](#get-conversations-400) | Bad Request | The messages could not be retrieved. |  | [schema](#get-conversations-400-schema) |
+| [200](#get-chat-conversations-200) | OK | The messages were retrieved. |  | [schema](#get-chat-conversations-200-schema) |
+| [400](#get-chat-conversations-400) | Bad Request | The messages could not be retrieved. |  | [schema](#get-chat-conversations-400-schema) |
 
 #### Responses
 
 
-##### <span id="get-conversations-200"></span> 200 - The messages were retrieved.
+##### <span id="get-chat-conversations-200"></span> 200 - The messages were retrieved.
 Status: OK
 
-###### <span id="get-conversations-200-schema"></span> Schema
+###### <span id="get-chat-conversations-200-schema"></span> Schema
 
-##### <span id="get-conversations-400"></span> 400 - The messages could not be retrieved.
+##### <span id="get-chat-conversations-400"></span> 400 - The messages could not be retrieved.
 Status: Bad Request
 
-###### <span id="get-conversations-400-schema"></span> Schema
+###### <span id="get-chat-conversations-400-schema"></span> Schema
 
 ### <span id="get-global-config"></span> Global and User Properties - List global properties affecting this user (*getGlobalConfig*)
 
@@ -699,6 +731,253 @@ Status: OK
   
 
 
+
+### <span id="get-group-chat-conversations"></span> Get groupchat messages (*getGroupChatConversations*)
+
+```
+GET /sparkweb/api/rest/groupchat/messages
+```
+
+Retrieves chat groupchat messages from Openfire messages archive
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| end | `query` | string | `string` |  |  |  | The end date in MM/dd/yy format |
+| keywords | `query` | string | `string` |  |  |  | Search keywords |
+| room | `query` | string | `string` |  |  |  | The groupchat room used |
+| service | `query` | string | `string` |  |  | `"conference"` | The groupchat service name |
+| start | `query` | string | `string` |  |  |  | The start date in MM/dd/yy format |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#get-group-chat-conversations-200) | OK | The messages were retrieved. |  | [schema](#get-group-chat-conversations-200-schema) |
+| [400](#get-group-chat-conversations-400) | Bad Request | The messages could not be retrieved. |  | [schema](#get-group-chat-conversations-400-schema) |
+
+#### Responses
+
+
+##### <span id="get-group-chat-conversations-200"></span> 200 - The messages were retrieved.
+Status: OK
+
+###### <span id="get-group-chat-conversations-200-schema"></span> Schema
+
+##### <span id="get-group-chat-conversations-400"></span> 400 - The messages could not be retrieved.
+Status: Bad Request
+
+###### <span id="get-group-chat-conversations-400-schema"></span> Schema
+
+### <span id="get-m-u-c-room-history"></span> Get room history (*getMUCRoomHistory*)
+
+```
+GET /sparkweb/api/rest/groupchat/room/{roomName}/chathistory
+```
+
+Get messages that have been exchanged in a specific multi-user chat room.
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| roomName | `path` | string | `string` |  | ✓ |  | The name of the MUC room |
+| serviceName | `query` | string | `string` |  |  | `"conference"` | The name of the MUC service. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#get-m-u-c-room-history-200) | OK | The chat room message history |  | [schema](#get-m-u-c-room-history-200-schema) |
+| [404](#get-m-u-c-room-history-404) | Not Found | The chat room (or its service) can not be found or is not accessible. |  | [schema](#get-m-u-c-room-history-404-schema) |
+
+#### Responses
+
+
+##### <span id="get-m-u-c-room-history-200"></span> 200 - The chat room message history
+Status: OK
+
+###### <span id="get-m-u-c-room-history-200-schema"></span> Schema
+
+##### <span id="get-m-u-c-room-history-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.
+Status: Not Found
+
+###### <span id="get-m-u-c-room-history-404-schema"></span> Schema
+
+### <span id="get-m-u-c-room-json-2"></span> Get chat room (*getMUCRoomJSON2*)
+
+```
+GET /sparkweb/api/rest/groupchat/room/{roomName}
+```
+
+Get information of a specific multi-user chat room.
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| roomName | `path` | string | `string` |  | ✓ |  | The name of the MUC room |
+| expandGroups | `query` | boolean | `bool` |  |  |  | For all groups defined in owners, admins, members and outcasts, list individual members instead of the group name. |
+| serviceName | `query` | string | `string` |  |  | `"conference"` | The name of the MUC service. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#get-m-u-c-room-json-2-200) | OK | The chat room |  | [schema](#get-m-u-c-room-json-2-200-schema) |
+| [404](#get-m-u-c-room-json-2-404) | Not Found | The chat room (or its service) can not be found or is not accessible. |  | [schema](#get-m-u-c-room-json-2-404-schema) |
+
+#### Responses
+
+
+##### <span id="get-m-u-c-room-json-2-200"></span> 200 - The chat room
+Status: OK
+
+###### <span id="get-m-u-c-room-json-2-200-schema"></span> Schema
+
+##### <span id="get-m-u-c-room-json-2-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.
+Status: Not Found
+
+###### <span id="get-m-u-c-room-json-2-404-schema"></span> Schema
+
+### <span id="get-m-u-c-room-occupants"></span> Get room occupants (*getMUCRoomOccupants*)
+
+```
+GET /sparkweb/api/rest/groupchat/room/{roomName}/occupants
+```
+
+Get all occupants of a specific multi-user chat room.
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| roomName | `path` | string | `string` |  | ✓ |  | The name of the MUC room |
+| serviceName | `query` | string | `string` |  |  | `"conference"` | The name of the MUC service. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#get-m-u-c-room-occupants-200) | OK | The chat room occupants |  | [schema](#get-m-u-c-room-occupants-200-schema) |
+| [404](#get-m-u-c-room-occupants-404) | Not Found | The chat room (or its service) can not be found or is not accessible. |  | [schema](#get-m-u-c-room-occupants-404-schema) |
+
+#### Responses
+
+
+##### <span id="get-m-u-c-room-occupants-200"></span> 200 - The chat room occupants
+Status: OK
+
+###### <span id="get-m-u-c-room-occupants-200-schema"></span> Schema
+
+##### <span id="get-m-u-c-room-occupants-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.
+Status: Not Found
+
+###### <span id="get-m-u-c-room-occupants-404-schema"></span> Schema
+
+### <span id="get-m-u-c-room-participants"></span> Get room participants (*getMUCRoomParticipants*)
+
+```
+GET /sparkweb/api/rest/groupchat/room/{roomName}/participants
+```
+
+Get all participants of a specific multi-user chat room.
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| roomName | `path` | string | `string` |  | ✓ |  | The name of the MUC room |
+| serviceName | `query` | string | `string` |  |  | `"conference"` | The name of the MUC service. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#get-m-u-c-room-participants-200) | OK | The chat room participants |  | [schema](#get-m-u-c-room-participants-200-schema) |
+| [404](#get-m-u-c-room-participants-404) | Not Found | The chat room (or its service) can not be found or is not accessible. |  | [schema](#get-m-u-c-room-participants-404-schema) |
+
+#### Responses
+
+
+##### <span id="get-m-u-c-room-participants-200"></span> 200 - The chat room participants
+Status: OK
+
+###### <span id="get-m-u-c-room-participants-200-schema"></span> Schema
+
+##### <span id="get-m-u-c-room-participants-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.
+Status: Not Found
+
+###### <span id="get-m-u-c-room-participants-404-schema"></span> Schema
+
+### <span id="get-m-u-c-rooms"></span> Get chat rooms (*getMUCRooms*)
+
+```
+GET /sparkweb/api/rest/groupchat/rooms
+```
+
+Get a list of all multi-user chat rooms of a particular chat room service.
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| expandGroups | `query` | boolean | `bool` |  |  |  | For all groups defined in owners, admins, members and outcasts, list individual members instead of the group name. |
+| search | `query` | string | `string` |  |  |  | Search/Filter by room name.
+This act like the wildcard search %String% |
+| serviceName | `query` | string | `string` |  |  | `"conference"` | The name of the MUC service for which to return all chat rooms. |
+| type | `query` | string | `string` |  |  | `"public"` | Room type-based filter: 'all' or 'public' |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#get-m-u-c-rooms-200) | OK | All chat rooms. |  | [schema](#get-m-u-c-rooms-200-schema) |
+| [404](#get-m-u-c-rooms-404) | Not Found | MUC service does not exist or is not accessible. |  | [schema](#get-m-u-c-rooms-404-schema) |
+
+#### Responses
+
+
+##### <span id="get-m-u-c-rooms-200"></span> 200 - All chat rooms.
+Status: OK
+
+###### <span id="get-m-u-c-rooms-200-schema"></span> Schema
+
+##### <span id="get-m-u-c-rooms-404"></span> 404 - MUC service does not exist or is not accessible.
+Status: Not Found
+
+###### <span id="get-m-u-c-rooms-404-schema"></span> Schema
 
 ### <span id="get-push-subscribers"></span> Web Push - Get all web push subscribers (*getPushSubscribers*)
 
@@ -954,6 +1233,128 @@ Status: OK
 
 [PublicKey](#public-key)
 
+### <span id="invite-to-room"></span> Invite another user (*inviteToRoom*)
+
+```
+POST /sparkweb/api/rest/groupchat/room/{roomName}/{invitedJid}
+```
+
+Invite another user to a groupchat
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| invitedJid | `path` | string | `string` |  | ✓ |  | The xmpp address of the person to be invited |
+| roomName | `path` | string | `string` |  | ✓ |  | The name of the MUC room |
+| serviceName | `query` | string | `string` |  |  | `"conference"` | The name of the MUC service. |
+| body | `body` | string | `string` | | ✓ | | The reason for the invitation |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#invite-to-room-200) | OK | The invitation has been sent |  | [schema](#invite-to-room-200-schema) |
+| [404](#invite-to-room-404) | Not Found | The chat room (or its service) can not be found or is not accessible. |  | [schema](#invite-to-room-404-schema) |
+
+#### Responses
+
+
+##### <span id="invite-to-room-200"></span> 200 - The invitation has been sent
+Status: OK
+
+###### <span id="invite-to-room-200-schema"></span> Schema
+
+##### <span id="invite-to-room-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.
+Status: Not Found
+
+###### <span id="invite-to-room-404-schema"></span> Schema
+
+### <span id="join-room"></span> Join groupchat (*joinRoom*)
+
+```
+PUT /sparkweb/api/rest/groupchat/room/{roomName}
+```
+
+Join a groupchat by entering a MUC room
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| roomName | `path` | string | `string` |  | ✓ |  | The name of the MUC room to join. |
+| serviceName | `query` | string | `string` |  |  | `"conference"` | The name of the MUC service. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#join-room-200) | OK | The user has joined groupchat |  | [schema](#join-room-200-schema) |
+| [404](#join-room-404) | Not Found | The chat room (or its service) can not be found or is not accessible. |  | [schema](#join-room-404-schema) |
+
+#### Responses
+
+
+##### <span id="join-room-200"></span> 200 - The user has joined groupchat
+Status: OK
+
+###### <span id="join-room-200-schema"></span> Schema
+
+##### <span id="join-room-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.
+Status: Not Found
+
+###### <span id="join-room-404-schema"></span> Schema
+
+### <span id="leave-room"></span> Leave groupchat (*leaveRoom*)
+
+```
+DELETE /sparkweb/api/rest/groupchat/room/{roomName}
+```
+
+Leave a groupchat by leaving a MUC room
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| roomName | `path` | string | `string` |  | ✓ |  | The name of the MUC room to leave. |
+| serviceName | `query` | string | `string` |  |  | `"conference"` | The name of the MUC service. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#leave-room-200) | OK | The user has left groupchat |  | [schema](#leave-room-200-schema) |
+| [404](#leave-room-404) | Not Found | The chat room (or its service) can not be found or is not accessible. |  | [schema](#leave-room-404-schema) |
+
+#### Responses
+
+
+##### <span id="leave-room-200"></span> 200 - The user has left groupchat
+Status: OK
+
+###### <span id="leave-room-200-schema"></span> Schema
+
+##### <span id="leave-room-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.
+Status: Not Found
+
+###### <span id="leave-room-404-schema"></span> Schema
+
 ### <span id="post-chat-state"></span> Post chat state indicator (*postChatState*)
 
 ```
@@ -1074,6 +1475,47 @@ Status: Bad Request
 
 ###### <span id="post-presence-400-schema"></span> Schema
 
+### <span id="post-to-room"></span> Post a message to a groupchat (*postToRoom*)
+
+```
+POST /sparkweb/api/rest/groupchat/room/{roomName}
+```
+
+Post a message to a groupchat
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| roomName | `path` | string | `string` |  | ✓ |  | The name of the MUC room to post to. |
+| serviceName | `query` | string | `string` |  |  | `"conference"` | The name of the MUC service. |
+| body | `body` | string | `string` | | ✓ | | The text message to be posted |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#post-to-room-200) | OK | The message is posted |  | [schema](#post-to-room-200-schema) |
+| [404](#post-to-room-404) | Not Found | The chat room (or its service) can not be found or is not accessible. |  | [schema](#post-to-room-404-schema) |
+
+#### Responses
+
+
+##### <span id="post-to-room-200"></span> 200 - The message is posted
+Status: OK
+
+###### <span id="post-to-room-200-schema"></span> Schema
+
+##### <span id="post-to-room-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.
+Status: Not Found
+
+###### <span id="post-to-room-404-schema"></span> Schema
+
 ### <span id="post-user-config"></span> Global and User Properties - Update user properties (*postUserConfig*)
 
 ```
@@ -1177,6 +1619,46 @@ successful operation
 
 ###### <span id="post-web-push-subscription-default-schema"></span> Schema
 empty schema
+
+### <span id="preview-link"></span> Request URL preview (*previewLink*)
+
+```
+GET /sparkweb/api/rest/preview/{quality}/{url}
+```
+
+Request for URL preview metadata.
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| quality | `path` | string | `string` |  | ✓ |  | The quality of the preview image on a scale 1-9. |
+| url | `path` | string | `string` |  | ✓ |  | The url to be previewd. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#preview-link-200) | OK | The metadata was obtained. |  | [schema](#preview-link-200-schema) |
+| [400](#preview-link-400) | Bad Request | The preview request failed. |  | [schema](#preview-link-400-schema) |
+
+#### Responses
+
+
+##### <span id="preview-link-200"></span> 200 - The metadata was obtained.
+Status: OK
+
+###### <span id="preview-link-200-schema"></span> Schema
+
+##### <span id="preview-link-400"></span> 400 - The preview request failed.
+Status: Bad Request
+
+###### <span id="preview-link-400-schema"></span> Schema
 
 ### <span id="probe-presence"></span> Probe a target user presence (*probePresence*)
 
@@ -1378,6 +1860,46 @@ Status: OK
 Status: Not Found
 
 ###### <span id="update-user-404-schema"></span> Schema
+
+### <span id="upload-request"></span> Request file upload (*uploadRequest*)
+
+```
+GET /sparkweb/api/rest/upload/{fileName}/{fileSize}
+```
+
+Request for GET and PUT URLs needed to upload and share a file with other users.
+
+#### Produces
+  * application/json
+
+#### Security Requirements
+  * authorization
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| fileName | `path` | string | `string` |  | ✓ |  | The file name to be upload. |
+| fileSize | `path` | string | `string` |  | ✓ |  | The size of the file to be uploaded. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#upload-request-200) | OK | The request was accepted. |  | [schema](#upload-request-200-schema) |
+| [400](#upload-request-400) | Bad Request | The upload request failed. |  | [schema](#upload-request-400-schema) |
+
+#### Responses
+
+
+##### <span id="upload-request-200"></span> 200 - The request was accepted.
+Status: OK
+
+###### <span id="upload-request-200-schema"></span> Schema
+
+##### <span id="upload-request-400"></span> 400 - The upload request failed.
+Status: Bad Request
+
+###### <span id="upload-request-400-schema"></span> Schema
 
 ### <span id="webauthn-authenticate-finish"></span> Web Authentication - End Authentication (*webauthnAuthenticateFinish*)
 
@@ -1661,6 +2183,164 @@ Status: OK
 | domain | string| `string` |  | |  |  |
 | node | string| `string` |  | |  |  |
 | resource | string| `string` |  | |  |  |
+
+
+
+### <span id="m-u-c-room-entities"></span> MUCRoomEntities
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| chatRooms | [][MUCRoomEntity](#m-u-c-room-entity)| `[]*MUCRoomEntity` |  | |  |  |
+
+
+
+### <span id="m-u-c-room-entity"></span> MUCRoomEntity
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| adminGroups | []string| `[]string` |  | |  |  |
+| admins | []string| `[]string` |  | |  |  |
+| allowPM | string| `string` |  | |  |  |
+| broadcastPresenceRoles | []string| `[]string` |  | |  |  |
+| canAnyoneDiscoverJID | boolean| `bool` |  | |  |  |
+| canChangeNickname | boolean| `bool` |  | |  |  |
+| canOccupantsChangeSubject | boolean| `bool` |  | |  |  |
+| canOccupantsInvite | boolean| `bool` |  | |  |  |
+| creationDate | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
+| description | string| `string` |  | |  |  |
+| logEnabled | boolean| `bool` |  | |  |  |
+| loginRestrictedToNickname | boolean| `bool` |  | |  |  |
+| maxUsers | int32 (formatted integer)| `int32` |  | |  |  |
+| memberGroups | []string| `[]string` |  | |  |  |
+| members | []string| `[]string` |  | |  |  |
+| membersOnly | boolean| `bool` |  | |  |  |
+| moderated | boolean| `bool` |  | |  |  |
+| modificationDate | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
+| naturalName | string| `string` |  | |  |  |
+| outcastGroups | []string| `[]string` |  | |  |  |
+| outcasts | []string| `[]string` |  | |  |  |
+| ownerGroups | []string| `[]string` |  | |  |  |
+| owners | []string| `[]string` |  | |  |  |
+| password | string| `string` |  | |  |  |
+| persistent | boolean| `bool` |  | |  |  |
+| publicRoom | boolean| `bool` |  | |  |  |
+| registrationEnabled | boolean| `bool` |  | |  |  |
+| roomName | string| `string` |  | |  |  |
+| subject | string| `string` |  | |  |  |
+
+
+
+### <span id="m-u-c-room-message-entities"></span> MUCRoomMessageEntities
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| messages | [][MUCRoomMessageEntity](#m-u-c-room-message-entity)| `[]*MUCRoomMessageEntity` |  | |  |  |
+
+
+
+### <span id="m-u-c-room-message-entity"></span> MUCRoomMessageEntity
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| body | string| `string` |  | |  |  |
+| delayFrom | string| `string` |  | |  |  |
+| delayStamp | string| `string` |  | |  |  |
+| from | string| `string` |  | |  |  |
+| to | string| `string` |  | |  |  |
+| type | string| `string` |  | |  |  |
+
+
+
+### <span id="occupant-entities"></span> OccupantEntities
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| occupants | [][OccupantEntity](#occupant-entity)| `[]*OccupantEntity` |  | |  |  |
+
+
+
+### <span id="occupant-entity"></span> OccupantEntity
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| affiliation | string| `string` |  | |  |  |
+| jid | string| `string` |  | |  |  |
+| role | string| `string` |  | |  |  |
+| userAddress | string| `string` |  | |  |  |
+
+
+
+### <span id="participant-entities"></span> ParticipantEntities
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| participants | [][ParticipantEntity](#participant-entity)| `[]*ParticipantEntity` |  | |  |  |
+
+
+
+### <span id="participant-entity"></span> ParticipantEntity
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| affiliation | string| `string` |  | |  |  |
+| jid | string| `string` |  | |  |  |
+| role | string| `string` |  | |  |  |
 
 
 

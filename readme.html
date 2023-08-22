@@ -13,14 +13,25 @@
     <div class="stackedit__toc">
       
 <ul>
-<li><a href="#openfire-sparkweb-plugin">openfire-sparkweb-plugin</a></li>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#rest-api">Rest API</a>
+<ul>
+<li><a href="#informations">Informations</a></li>
+<li><a href="#tags">Tags</a></li>
+<li><a href="#content-negotiation">Content negotiation</a></li>
+<li><a href="#access-control">Access control</a></li>
+<li><a href="#all-endpoints">All endpoints</a></li>
+<li><a href="#paths">Paths</a></li>
+<li><a href="#models">Models</a></li>
+</ul>
+</li>
 </ul>
 
     </div>
   </div>
   <div class="stackedit__right">
     <div class="stackedit__html">
-      <h1 id="openfire-sparkweb-plugin">openfire-sparkweb-plugin</h1>
+      <h1 id="introduction">Introduction</h1>
 <p>This plugin adds support for a whole range of modern web service connections to Openfire/XMPP via the embedded Jetty web server in a different way to the traditional persistent client XMPP session over TCP/5222 or Bosh/7443 or Websockets/7443 used by native binary clients.</p>
 <p>It uses :</p>
 <ul>
@@ -32,7 +43,5366 @@
 <p>A user has a singleton xmpp session in Openfire that is created on demand and removed when it expires. This single user session can have many active REST and SSE connections depending on how many browsers tabs, browser windows or browser instances are connected to Openfire from applications in web pages opened on behalf of the user.</p>
 <p>The xmpp session has the full feature set of an XMPP client that is based on Smack/Spark. It also has User Interface (UI) consisting of web-components that can bind directly to Spark features. For example, a contacts roster widget and a chat conversation widget. that work independent of each other and can be hosted in different web pages or different browsers but end up pointing at the same xmpp session.</p>
 <p>A fully working XMPP client can be constructed in a web page with minimal HTML and JavaScript.</p>
+<h1 id="rest-api">Rest API</h1>
+<p>SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP</p>
+<h2 id="informations">Informations</h2>
+<h3 id="version">Version</h3>
+<p>0.0.1-SNAPSHOT</p>
+<h2 id="tags">Tags</h2>
+<h3 id="span-idtag-chatspanchat"><span id="tag-chat"></span>Chat</h3>
+<p>provides chat services for the authenticated user.</p>
+<h3 id="span-idtag-group-chatspangroup-chat"><span id="tag-group-chat"></span>Group Chat</h3>
+<p>provides groupchat services to manage contacts</p>
+<h3 id="span-idtag-presencespanpresence"><span id="tag-presence"></span>Presence</h3>
+<p>provides presence services</p>
+<h3 id="span-idtag-collaborationspancollaboration"><span id="tag-collaboration"></span>Collaboration</h3>
+<p>provides meeting and other collaboration services</p>
+<h3 id="span-idtag-user-managementspanuser-management"><span id="tag-user-management"></span>User Management</h3>
+<p>provides user services for the authenticated user.</p>
+<h3 id="span-idtag-contact-managementspancontact-management"><span id="tag-contact-management"></span>Contact Management</h3>
+<p>provides user roster services to manage contacts</p>
+<h3 id="span-idtag-web-authenticationspanweb-authentication"><span id="tag-web-authentication"></span>Web Authentication</h3>
+<p>provides server-side Web Authentication services</p>
+<h3 id="span-idtag-web-pushspanweb-push"><span id="tag-web-push"></span>Web Push</h3>
+<p>provides server-side Web Push services</p>
+<h3 id="span-idtag-global-and-user-propertiesspanglobal-and-user-properties"><span id="tag-global-and-user-properties"></span>Global and User Properties</h3>
+<p>Access global and user properties</p>
+<h3 id="span-idtag-bookmarksspanbookmarks"><span id="tag-bookmarks"></span>Bookmarks</h3>
+<p>Create, update and delete Openfire bookmarks</p>
+<h2 id="content-negotiation">Content negotiation</h2>
+<h3 id="uri-schemes">URI Schemes</h3>
+<ul>
+<li>http</li>
+<li>https</li>
+</ul>
+<h3 id="consumes">Consumes</h3>
+<ul>
+<li>application/json</li>
+</ul>
+<h3 id="produces">Produces</h3>
+<ul>
+<li>application/json</li>
+</ul>
+<h2 id="access-control">Access control</h2>
+<h3 id="security-schemes">Security Schemes</h3>
+<h4 id="authorization-header-authorization">authorization (header: authorization)</h4>
+<blockquote>
+<p><strong>Type</strong>: apikey</p>
+</blockquote>
+<h2 id="all-endpoints">All endpoints</h2>
+<h3 id="bookmarks">bookmarks</h3>
 
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>URI</th>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/bookmark</td>
+<td><a href="#create-bookmark">create bookmark</a></td>
+<td>Bookmark API - Create a new bookmark</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/sparkweb/api/rest/bookmark/{bookmarkID}</td>
+<td><a href="#delete-bookmark">delete bookmark</a></td>
+<td>Bookmark API - Delete a specific bookmark</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/sparkweb/api/rest/bookmark/{bookmarkID}/{name}</td>
+<td><a href="#delete-bookmark-property">delete bookmark property</a></td>
+<td>Bookmark API - Delete a bookmark property</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/bookmark/{bookmarkID}</td>
+<td><a href="#get-bookmark">get bookmark</a></td>
+<td>Bookmark API - Get a specific bookmark</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/bookmarks</td>
+<td><a href="#get-bookmarks">get bookmarks</a></td>
+<td>Bookmark API - Get all bookmark</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>/sparkweb/api/rest/bookmark/{bookmarkID}</td>
+<td><a href="#update-bookmark">update bookmark</a></td>
+<td>Bookmark API - Update a specific bookmark</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/bookmark/{bookmarkID}/{name}</td>
+<td><a href="#update-bookmark-property">update bookmark property</a></td>
+<td>Bookmark API - Create/Update a bookmark property</td>
+</tr>
+</tbody>
+</table><h3 id="chat">chat</h3>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>URI</th>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/chat/messages</td>
+<td><a href="#get-chat-conversations">get chat conversations</a></td>
+<td>Get chat messages</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/chat/chatstate/{state}/{to}</td>
+<td><a href="#post-chat-state">post chat state</a></td>
+<td>Post chat state indicator</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/chat/message/{to}</td>
+<td><a href="#post-message">post message</a></td>
+<td>Post chat message</td>
+</tr>
+</tbody>
+</table><h3 id="collaboration">collaboration</h3>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>URI</th>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/preview/{quality}/{url}</td>
+<td><a href="#preview-link">preview link</a></td>
+<td>Request URL preview</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/upload/{fileName}/{fileSize}</td>
+<td><a href="#upload-request">upload request</a></td>
+<td>Request file upload</td>
+</tr>
+</tbody>
+</table><h3 id="contact_management">contact_management</h3>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>URI</th>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/roster</td>
+<td><a href="#create-roster">create roster</a></td>
+<td>Create roster entry</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/sparkweb/api/rest/roster/{jid}</td>
+<td><a href="#delete-roster-item">delete roster item</a></td>
+<td>Remove roster entry</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/roster</td>
+<td><a href="#get-user-roster">get user roster</a></td>
+<td>Retrieve user roster</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>/sparkweb/api/rest/roster/{jid}</td>
+<td><a href="#update-roster-item">update roster item</a></td>
+<td>Update roster entry</td>
+</tr>
+</tbody>
+</table><h3 id="global_and_user_properties">global_and_user_properties</h3>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>URI</th>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/config/global</td>
+<td><a href="#get-global-config">get global config</a></td>
+<td>Global and User Properties - List global properties affecting this user</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/config/properties</td>
+<td><a href="#get-user-config">get user config</a></td>
+<td>Global and User Properties - List User Properties</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/config/properties</td>
+<td><a href="#post-user-config">post user config</a></td>
+<td>Global and User Properties - Update user properties</td>
+</tr>
+</tbody>
+</table><h3 id="group_chat">group_chat</h3>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>URI</th>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/groupchat/messages</td>
+<td><a href="#get-group-chat-conversations">get group chat conversations</a></td>
+<td>Get groupchat messages</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/groupchat/room/{roomName}/chathistory</td>
+<td><a href="#get-m-u-c-room-history">get m u c room history</a></td>
+<td>Get room history</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/groupchat/room/{roomName}</td>
+<td><a href="#get-m-u-c-room-json-2">get m u c room JSON 2</a></td>
+<td>Get chat room</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/groupchat/room/{roomName}/occupants</td>
+<td><a href="#get-m-u-c-room-occupants">get m u c room occupants</a></td>
+<td>Get room occupants</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/groupchat/room/{roomName}/participants</td>
+<td><a href="#get-m-u-c-room-participants">get m u c room participants</a></td>
+<td>Get room participants</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/groupchat/rooms</td>
+<td><a href="#get-m-u-c-rooms">get m u c rooms</a></td>
+<td>Get chat rooms</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/groupchat/room/{roomName}/{invitedJid}</td>
+<td><a href="#invite-to-room">invite to room</a></td>
+<td>Invite another user</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>/sparkweb/api/rest/groupchat/room/{roomName}</td>
+<td><a href="#join-room">join room</a></td>
+<td>Join groupchat</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/sparkweb/api/rest/groupchat/room/{roomName}</td>
+<td><a href="#leave-room">leave room</a></td>
+<td>Leave groupchat</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/groupchat/room/{roomName}</td>
+<td><a href="#post-to-room">post to room</a></td>
+<td>Post a message to a groupchat</td>
+</tr>
+</tbody>
+</table><h3 id="presence">presence</h3>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>URI</th>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/presence/roster</td>
+<td><a href="#get-user-roster-with-presence">get user roster with presence</a></td>
+<td>Get contacts presence</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/presence</td>
+<td><a href="#post-presence">post presence</a></td>
+<td>Set Presence</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/presence/{target}</td>
+<td><a href="#probe-presence">probe presence</a></td>
+<td>Probe a target user presence</td>
+</tr>
+</tbody>
+</table><h3 id="user_management">user_management</h3>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>URI</th>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/user/groups/{groupName}</td>
+<td><a href="#add-user-to-group">add user to group</a></td>
+<td>Add user to a group</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/user/groups</td>
+<td><a href="#add-user-to-groups">add user to groups</a></td>
+<td>Add user to groups</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/sparkweb/api/rest/user</td>
+<td><a href="#delete-user">delete user</a></td>
+<td>Delete authenticated user</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/sparkweb/api/rest/user/groups/{groupName}</td>
+<td><a href="#delete-user-from-group">delete user from group</a></td>
+<td>Delete user from group</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>/sparkweb/api/rest/user/groups</td>
+<td><a href="#delete-user-from-groups">delete user from groups</a></td>
+<td>Delete user from groups</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/user</td>
+<td><a href="#get-user">get user</a></td>
+<td>Get authenticated user</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/user/groups</td>
+<td><a href="#get-user-groups">get user groups</a></td>
+<td>Get user’s groups</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/users</td>
+<td><a href="#get-users">get users</a></td>
+<td>Get users</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>/sparkweb/api/rest/user</td>
+<td><a href="#update-user">update user</a></td>
+<td>Update authenticated user</td>
+</tr>
+</tbody>
+</table><h3 id="web_authentication">web_authentication</h3>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>URI</th>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/webauthn/authenticate/finish/{username}</td>
+<td><a href="#webauthn-authenticate-finish">webauthn authenticate finish</a></td>
+<td>Web Authentication - End Authentication</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/webauthn/authenticate/start/{username}</td>
+<td><a href="#webauthn-authenticate-start">webauthn authenticate start</a></td>
+<td>Web Authentication - Start Authentication</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/webauthn/register/finish/{username}</td>
+<td><a href="#webauthn-register-finish">webauthn register finish</a></td>
+<td>Web Authentication - Finish Registration</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/webauthn/register/start/{username}</td>
+<td><a href="#webauthn-register-start">webauthn register start</a></td>
+<td>Web Authentication - Start Registration</td>
+</tr>
+</tbody>
+</table><h3 id="web_push">web_push</h3>
+
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>URI</th>
+<th>Name</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/webpush/subscribers</td>
+<td><a href="#get-push-subscribers">get push subscribers</a></td>
+<td>Web Push - Get all web push subscribers</td>
+</tr>
+<tr>
+<td>GET</td>
+<td>/sparkweb/api/rest/webpush/vapidkey</td>
+<td><a href="#get-web-push-public-key">get web push public key</a></td>
+<td>Web Push - Get the webpush vapid key</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/webpush/publish/{target}</td>
+<td><a href="#post-web-push">post web push</a></td>
+<td>Web Push - Send a text message to all subscriptions of another user</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>/sparkweb/api/rest/webpush/subscribe/{resource}</td>
+<td><a href="#post-web-push-subscription">post web push subscription</a></td>
+<td>Web Push - Store web push subscription for this user</td>
+</tr>
+</tbody>
+</table><h2 id="paths">Paths</h2>
+<h3 id="span-idadd-user-to-groupspan-add-user-to-a-group-addusertogroup"><span id="add-user-to-group"></span> Add user to a group (<em>addUserToGroup</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/user/groups/{groupName}
+</code></pre>
+<p>Add authenticated user to a collection of groups. When a group that is provided does not exist, it will be automatically created if possible.</p>
+<h4 id="produces-1">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>groupName</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The name of the group that the user is to be added to.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#add-user-to-group-200">200</a></td>
+<td>OK</td>
+<td>The user was added to all groups.</td>
+<td align="center"></td>
+<td><a href="#add-user-to-group-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#add-user-to-group-400">400</a></td>
+<td>Bad Request</td>
+<td>The group could not be found.</td>
+<td align="center"></td>
+<td><a href="#add-user-to-group-400-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses">Responses</h4>
+<h5 id="span-idadd-user-to-group-200span-200---the-user-was-added-to-all-groups."><span id="add-user-to-group-200"></span> 200 - The user was added to all groups.</h5>
+<p>Status: OK</p>
+<h6 id="span-idadd-user-to-group-200-schemaspan-schema"><span id="add-user-to-group-200-schema"></span> Schema</h6>
+<h5 id="span-idadd-user-to-group-400span-400---the-group-could-not-be-found."><span id="add-user-to-group-400"></span> 400 - The group could not be found.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-idadd-user-to-group-400-schemaspan-schema"><span id="add-user-to-group-400-schema"></span> Schema</h6>
+<h3 id="span-idadd-user-to-groupsspan-add-user-to-groups-addusertogroups"><span id="add-user-to-groups"></span> Add user to groups (<em>addUserToGroups</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/user/groups
+</code></pre>
+<p>Add authenticated user to a collection of groups. When a group that is provided does not exist, it will be automatically created if possible.</p>
+<h4 id="produces-2">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-1">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-1">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td><a href="#user-groups-entity">UserGroupsEntity</a></td>
+<td><code>models.UserGroupsEntity</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>A collection of names for groups that the user is to be added to.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-1">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#add-user-to-groups-200">200</a></td>
+<td>OK</td>
+<td>The user was added to all groups.</td>
+<td align="center"></td>
+<td><a href="#add-user-to-groups-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#add-user-to-groups-404">404</a></td>
+<td>Not Found</td>
+<td>One or more groups could not be found.</td>
+<td align="center"></td>
+<td><a href="#add-user-to-groups-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-1">Responses</h4>
+<h5 id="span-idadd-user-to-groups-200span-200---the-user-was-added-to-all-groups."><span id="add-user-to-groups-200"></span> 200 - The user was added to all groups.</h5>
+<p>Status: OK</p>
+<h6 id="span-idadd-user-to-groups-200-schemaspan-schema"><span id="add-user-to-groups-200-schema"></span> Schema</h6>
+<h5 id="span-idadd-user-to-groups-404span-404---one-or-more-groups-could-not-be-found."><span id="add-user-to-groups-404"></span> 404 - One or more groups could not be found.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idadd-user-to-groups-404-schemaspan-schema"><span id="add-user-to-groups-404-schema"></span> Schema</h6>
+<h3 id="span-idcreate-bookmarkspan-bookmark-api---create-a-new-bookmark-createbookmark"><span id="create-bookmark"></span> Bookmark API - Create a new bookmark (<em>createBookmark</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/bookmark
+</code></pre>
+<p>This endpoint is used to create a new bookmark</p>
+<h4 id="produces-3">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-2">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-2">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td><a href="#bookmark">Bookmark</a></td>
+<td><code>models.Bookmark</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-2">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#create-bookmark-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#create-bookmark-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-2">Responses</h4>
+<h5 id="span-idcreate-bookmark-200span-200---successful-operation"><span id="create-bookmark-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idcreate-bookmark-200-schemaspan-schema"><span id="create-bookmark-200-schema"></span> Schema</h6>
+<p><a href="#bookmark">Bookmark</a></p>
+<h3 id="span-idcreate-rosterspan-create-roster-entry-createroster"><span id="create-roster"></span> Create roster entry (<em>createRoster</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/roster
+</code></pre>
+<p>Add a roster entry to the roster (buddies / contact list) of a particular user.</p>
+<h4 id="produces-4">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-3">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-3">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td><a href="#roster-item-entity">RosterItemEntity</a></td>
+<td><code>models.RosterItemEntity</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The definition of the roster entry that is to be added.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-3">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#create-roster-200">200</a></td>
+<td>OK</td>
+<td>The entry was added to the roster.</td>
+<td align="center"></td>
+<td><a href="#create-roster-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#create-roster-400">400</a></td>
+<td>Bad Request</td>
+<td>A roster entry cannot be added to a ‘shared group’ (try removing group names from the roster entry and try again).</td>
+<td align="center"></td>
+<td><a href="#create-roster-400-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#create-roster-404">404</a></td>
+<td>Not Found</td>
+<td>No user of with this username exists.</td>
+<td align="center"></td>
+<td><a href="#create-roster-404-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#create-roster-409">409</a></td>
+<td>Conflict</td>
+<td>A roster entry already exists for the provided contact JID.</td>
+<td align="center"></td>
+<td><a href="#create-roster-409-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-3">Responses</h4>
+<h5 id="span-idcreate-roster-200span-200---the-entry-was-added-to-the-roster."><span id="create-roster-200"></span> 200 - The entry was added to the roster.</h5>
+<p>Status: OK</p>
+<h6 id="span-idcreate-roster-200-schemaspan-schema"><span id="create-roster-200-schema"></span> Schema</h6>
+<h5 id="span-idcreate-roster-400span-400---a-roster-entry-cannot-be-added-to-a-shared-group-try-removing-group-names-from-the-roster-entry-and-try-again."><span id="create-roster-400"></span> 400 - A roster entry cannot be added to a ‘shared group’ (try removing group names from the roster entry and try again).</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-idcreate-roster-400-schemaspan-schema"><span id="create-roster-400-schema"></span> Schema</h6>
+<h5 id="span-idcreate-roster-404span-404---no-user-of-with-this-username-exists."><span id="create-roster-404"></span> 404 - No user of with this username exists.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idcreate-roster-404-schemaspan-schema"><span id="create-roster-404-schema"></span> Schema</h6>
+<h5 id="span-idcreate-roster-409span-409---a-roster-entry-already-exists-for-the-provided-contact-jid."><span id="create-roster-409"></span> 409 - A roster entry already exists for the provided contact JID.</h5>
+<p>Status: Conflict</p>
+<h6 id="span-idcreate-roster-409-schemaspan-schema"><span id="create-roster-409-schema"></span> Schema</h6>
+<h3 id="span-iddelete-bookmarkspan-bookmark-api---delete-a-specific-bookmark-deletebookmark"><span id="delete-bookmark"></span> Bookmark API - Delete a specific bookmark (<em>deleteBookmark</em>)</h3>
+<pre><code>DELETE /sparkweb/api/rest/bookmark/{bookmarkID}
+</code></pre>
+<p>This endpoint is used to delete a specific bookmark</p>
+<h4 id="produces-5">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-4">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-4">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bookmarkID</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-4">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#delete-bookmark-default">default</a></td>
+<td></td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#delete-bookmark-default-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-4">Responses</h4>
+<h5 id="span-iddelete-bookmark-defaultspan-default-response"><span id="delete-bookmark-default"></span> Default Response</h5>
+<p>successful operation</p>
+<h6 id="span-iddelete-bookmark-default-schemaspan-schema"><span id="delete-bookmark-default-schema"></span> Schema</h6>
+<p>empty schema</p>
+<h3 id="span-iddelete-bookmark-propertyspan-bookmark-api---delete-a-bookmark-property-deletebookmarkproperty"><span id="delete-bookmark-property"></span> Bookmark API - Delete a bookmark property (<em>deleteBookmarkProperty</em>)</h3>
+<pre><code>DELETE /sparkweb/api/rest/bookmark/{bookmarkID}/{name}
+</code></pre>
+<p>This endpoint is used to delete a bookmark property</p>
+<h4 id="produces-6">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-5">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-5">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bookmarkID</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>name</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-5">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#delete-bookmark-property-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#delete-bookmark-property-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-5">Responses</h4>
+<h5 id="span-iddelete-bookmark-property-200span-200---successful-operation"><span id="delete-bookmark-property-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-iddelete-bookmark-property-200-schemaspan-schema"><span id="delete-bookmark-property-200-schema"></span> Schema</h6>
+<p><a href="#bookmark">Bookmark</a></p>
+<h3 id="span-iddelete-roster-itemspan-remove-roster-entry-deleterosteritem"><span id="delete-roster-item"></span> Remove roster entry (<em>deleteRosterItem</em>)</h3>
+<pre><code>DELETE /sparkweb/api/rest/roster/{jid}
+</code></pre>
+<p>Removes one of the roster entries (contacts) of the authenticated user.</p>
+<h4 id="produces-7">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-6">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-6">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>jid</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The JID of the entry/contact to remove.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-6">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#delete-roster-item-200">200</a></td>
+<td>OK</td>
+<td>Roster entry removed</td>
+<td align="center"></td>
+<td><a href="#delete-roster-item-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#delete-roster-item-400">400</a></td>
+<td>Bad Request</td>
+<td>A roster entry cannot be removed from a ‘shared group’.</td>
+<td align="center"></td>
+<td><a href="#delete-roster-item-400-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#delete-roster-item-404">404</a></td>
+<td>Not Found</td>
+<td>No user of with this username exists, or its roster did not contain this entry.</td>
+<td align="center"></td>
+<td><a href="#delete-roster-item-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-6">Responses</h4>
+<h5 id="span-iddelete-roster-item-200span-200---roster-entry-removed"><span id="delete-roster-item-200"></span> 200 - Roster entry removed</h5>
+<p>Status: OK</p>
+<h6 id="span-iddelete-roster-item-200-schemaspan-schema"><span id="delete-roster-item-200-schema"></span> Schema</h6>
+<h5 id="span-iddelete-roster-item-400span-400---a-roster-entry-cannot-be-removed-from-a-shared-group."><span id="delete-roster-item-400"></span> 400 - A roster entry cannot be removed from a ‘shared group’.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-iddelete-roster-item-400-schemaspan-schema"><span id="delete-roster-item-400-schema"></span> Schema</h6>
+<h5 id="span-iddelete-roster-item-404span-404---no-user-of-with-this-username-exists-or-its-roster-did-not-contain-this-entry."><span id="delete-roster-item-404"></span> 404 - No user of with this username exists, or its roster did not contain this entry.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-iddelete-roster-item-404-schemaspan-schema"><span id="delete-roster-item-404-schema"></span> Schema</h6>
+<h3 id="span-iddelete-userspan-delete-authenticated-user-deleteuser"><span id="delete-user"></span> Delete authenticated user (<em>deleteUser</em>)</h3>
+<pre><code>DELETE /sparkweb/api/rest/user
+</code></pre>
+<p>Delete authenticated user in Openfire.</p>
+<h4 id="produces-8">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-7">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="all-responses-7">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#delete-user-200">200</a></td>
+<td>OK</td>
+<td>The Openfire user was deleted.</td>
+<td align="center"></td>
+<td><a href="#delete-user-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#delete-user-404">404</a></td>
+<td>Not Found</td>
+<td>No user with that username was found.</td>
+<td align="center"></td>
+<td><a href="#delete-user-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-7">Responses</h4>
+<h5 id="span-iddelete-user-200span-200---the-openfire-user-was-deleted."><span id="delete-user-200"></span> 200 - The Openfire user was deleted.</h5>
+<p>Status: OK</p>
+<h6 id="span-iddelete-user-200-schemaspan-schema"><span id="delete-user-200-schema"></span> Schema</h6>
+<h5 id="span-iddelete-user-404span-404---no-user-with-that-username-was-found."><span id="delete-user-404"></span> 404 - No user with that username was found.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-iddelete-user-404-schemaspan-schema"><span id="delete-user-404-schema"></span> Schema</h6>
+<h3 id="span-iddelete-user-from-groupspan-delete-user-from-group-deleteuserfromgroup"><span id="delete-user-from-group"></span> Delete user from group (<em>deleteUserFromGroup</em>)</h3>
+<pre><code>DELETE /sparkweb/api/rest/user/groups/{groupName}
+</code></pre>
+<p>Removes a user from a group.</p>
+<h4 id="produces-9">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-8">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-7">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>groupName</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The name of the group that the user is to be added to.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-8">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#delete-user-from-group-200">200</a></td>
+<td>OK</td>
+<td>The user was taken out of the group.</td>
+<td align="center"></td>
+<td><a href="#delete-user-from-group-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#delete-user-from-group-400">400</a></td>
+<td>Bad Request</td>
+<td>The group could not be found.</td>
+<td align="center"></td>
+<td><a href="#delete-user-from-group-400-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-8">Responses</h4>
+<h5 id="span-iddelete-user-from-group-200span-200---the-user-was-taken-out-of-the-group."><span id="delete-user-from-group-200"></span> 200 - The user was taken out of the group.</h5>
+<p>Status: OK</p>
+<h6 id="span-iddelete-user-from-group-200-schemaspan-schema"><span id="delete-user-from-group-200-schema"></span> Schema</h6>
+<h5 id="span-iddelete-user-from-group-400span-400---the-group-could-not-be-found."><span id="delete-user-from-group-400"></span> 400 - The group could not be found.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-iddelete-user-from-group-400-schemaspan-schema"><span id="delete-user-from-group-400-schema"></span> Schema</h6>
+<h3 id="span-iddelete-user-from-groupsspan-delete-user-from-groups-deleteuserfromgroups"><span id="delete-user-from-groups"></span> Delete user from groups (<em>deleteUserFromGroups</em>)</h3>
+<pre><code>DELETE /sparkweb/api/rest/user/groups
+</code></pre>
+<p>Removes a user from a collection of groups…</p>
+<h4 id="produces-10">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-9">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-8">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td><a href="#user-groups-entity">UserGroupsEntity</a></td>
+<td><code>models.UserGroupsEntity</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>A collection of names for groups that the user is to be added to.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-9">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#delete-user-from-groups-200">200</a></td>
+<td>OK</td>
+<td>The user was taken out of the group.</td>
+<td align="center"></td>
+<td><a href="#delete-user-from-groups-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#delete-user-from-groups-404">404</a></td>
+<td>Not Found</td>
+<td>One or more groups could not be found.</td>
+<td align="center"></td>
+<td><a href="#delete-user-from-groups-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-9">Responses</h4>
+<h5 id="span-iddelete-user-from-groups-200span-200---the-user-was-taken-out-of-the-group."><span id="delete-user-from-groups-200"></span> 200 - The user was taken out of the group.</h5>
+<p>Status: OK</p>
+<h6 id="span-iddelete-user-from-groups-200-schemaspan-schema"><span id="delete-user-from-groups-200-schema"></span> Schema</h6>
+<h5 id="span-iddelete-user-from-groups-404span-404---one-or-more-groups-could-not-be-found."><span id="delete-user-from-groups-404"></span> 404 - One or more groups could not be found.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-iddelete-user-from-groups-404-schemaspan-schema"><span id="delete-user-from-groups-404-schema"></span> Schema</h6>
+<h3 id="span-idget-bookmarkspan-bookmark-api---get-a-specific-bookmark-getbookmark"><span id="get-bookmark"></span> Bookmark API - Get a specific bookmark (<em>getBookmark</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/bookmark/{bookmarkID}
+</code></pre>
+<p>This endpoint is used to retrieve a specific bookmark</p>
+<h4 id="produces-11">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-10">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-9">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bookmarkID</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-10">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-bookmark-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#get-bookmark-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-10">Responses</h4>
+<h5 id="span-idget-bookmark-200span-200---successful-operation"><span id="get-bookmark-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-bookmark-200-schemaspan-schema"><span id="get-bookmark-200-schema"></span> Schema</h6>
+<p><a href="#bookmark">Bookmark</a></p>
+<h3 id="span-idget-bookmarksspan-bookmark-api---get-all-bookmark-getbookmarks"><span id="get-bookmarks"></span> Bookmark API - Get all bookmark (<em>getBookmarks</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/bookmarks
+</code></pre>
+<p>This endpoint is used to retrieve all bookmarks</p>
+<h4 id="produces-12">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-11">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="all-responses-11">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-bookmarks-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#get-bookmarks-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-11">Responses</h4>
+<h5 id="span-idget-bookmarks-200span-200---successful-operation"><span id="get-bookmarks-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-bookmarks-200-schemaspan-schema"><span id="get-bookmarks-200-schema"></span> Schema</h6>
+<p><a href="#bookmarks">Bookmarks</a></p>
+<h3 id="span-idget-chat-conversationsspan-get-chat-messages-getchatconversations"><span id="get-chat-conversations"></span> Get chat messages (<em>getChatConversations</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/chat/messages
+</code></pre>
+<p>Retrieves chat messages from Openfire messages archive</p>
+<h4 id="produces-13">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-12">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-10">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>end</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>The end date in MM/dd/yy format</td>
+</tr>
+<tr>
+<td>keywords</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>Search keywords</td>
+</tr>
+<tr>
+<td>start</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>The start date in MM/dd/yy format</td>
+</tr>
+<tr>
+<td>to</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>The message target</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-12">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-chat-conversations-200">200</a></td>
+<td>OK</td>
+<td>The messages were retrieved.</td>
+<td align="center"></td>
+<td><a href="#get-chat-conversations-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#get-chat-conversations-400">400</a></td>
+<td>Bad Request</td>
+<td>The messages could not be retrieved.</td>
+<td align="center"></td>
+<td><a href="#get-chat-conversations-400-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-12">Responses</h4>
+<h5 id="span-idget-chat-conversations-200span-200---the-messages-were-retrieved."><span id="get-chat-conversations-200"></span> 200 - The messages were retrieved.</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-chat-conversations-200-schemaspan-schema"><span id="get-chat-conversations-200-schema"></span> Schema</h6>
+<h5 id="span-idget-chat-conversations-400span-400---the-messages-could-not-be-retrieved."><span id="get-chat-conversations-400"></span> 400 - The messages could not be retrieved.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-idget-chat-conversations-400-schemaspan-schema"><span id="get-chat-conversations-400-schema"></span> Schema</h6>
+<h3 id="span-idget-global-configspan-global-and-user-properties---list-global-properties-affecting-this-user-getglobalconfig"><span id="get-global-config"></span> Global and User Properties - List global properties affecting this user (<em>getGlobalConfig</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/config/global
+</code></pre>
+<p>Endpoint will retrieve all Openfire Global properties that are used by this authenticated user.</p>
+<h4 id="produces-14">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-13">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="all-responses-13">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-global-config-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#get-global-config-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-13">Responses</h4>
+<h5 id="span-idget-global-config-200span-200---successful-operation"><span id="get-global-config-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-global-config-200-schemaspan-schema"><span id="get-global-config-200-schema"></span> Schema</h6>
+<h3 id="span-idget-group-chat-conversationsspan-get-groupchat-messages-getgroupchatconversations"><span id="get-group-chat-conversations"></span> Get groupchat messages (<em>getGroupChatConversations</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/groupchat/messages
+</code></pre>
+<p>Retrieves chat groupchat messages from Openfire messages archive</p>
+<h4 id="produces-15">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-14">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-11">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>end</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>The end date in MM/dd/yy format</td>
+</tr>
+<tr>
+<td>keywords</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>Search keywords</td>
+</tr>
+<tr>
+<td>room</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>The groupchat room used</td>
+</tr>
+<tr>
+<td>service</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td><code>"conference"</code></td>
+<td>The groupchat service name</td>
+</tr>
+<tr>
+<td>start</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>The start date in MM/dd/yy format</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-14">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-group-chat-conversations-200">200</a></td>
+<td>OK</td>
+<td>The messages were retrieved.</td>
+<td align="center"></td>
+<td><a href="#get-group-chat-conversations-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#get-group-chat-conversations-400">400</a></td>
+<td>Bad Request</td>
+<td>The messages could not be retrieved.</td>
+<td align="center"></td>
+<td><a href="#get-group-chat-conversations-400-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-14">Responses</h4>
+<h5 id="span-idget-group-chat-conversations-200span-200---the-messages-were-retrieved."><span id="get-group-chat-conversations-200"></span> 200 - The messages were retrieved.</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-group-chat-conversations-200-schemaspan-schema"><span id="get-group-chat-conversations-200-schema"></span> Schema</h6>
+<h5 id="span-idget-group-chat-conversations-400span-400---the-messages-could-not-be-retrieved."><span id="get-group-chat-conversations-400"></span> 400 - The messages could not be retrieved.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-idget-group-chat-conversations-400-schemaspan-schema"><span id="get-group-chat-conversations-400-schema"></span> Schema</h6>
+<h3 id="span-idget-m-u-c-room-historyspan-get-room-history-getmucroomhistory"><span id="get-m-u-c-room-history"></span> Get room history (<em>getMUCRoomHistory</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/groupchat/room/{roomName}/chathistory
+</code></pre>
+<p>Get messages that have been exchanged in a specific multi-user chat room.</p>
+<h4 id="produces-16">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-15">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-12">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>roomName</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The name of the MUC room</td>
+</tr>
+<tr>
+<td>serviceName</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td><code>"conference"</code></td>
+<td>The name of the MUC service.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-15">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-m-u-c-room-history-200">200</a></td>
+<td>OK</td>
+<td>The chat room message history</td>
+<td align="center"></td>
+<td><a href="#get-m-u-c-room-history-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#get-m-u-c-room-history-404">404</a></td>
+<td>Not Found</td>
+<td>The chat room (or its service) can not be found or is not accessible.</td>
+<td align="center"></td>
+<td><a href="#get-m-u-c-room-history-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-15">Responses</h4>
+<h5 id="span-idget-m-u-c-room-history-200span-200---the-chat-room-message-history"><span id="get-m-u-c-room-history-200"></span> 200 - The chat room message history</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-m-u-c-room-history-200-schemaspan-schema"><span id="get-m-u-c-room-history-200-schema"></span> Schema</h6>
+<h5 id="span-idget-m-u-c-room-history-404span-404---the-chat-room-or-its-service-can-not-be-found-or-is-not-accessible."><span id="get-m-u-c-room-history-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idget-m-u-c-room-history-404-schemaspan-schema"><span id="get-m-u-c-room-history-404-schema"></span> Schema</h6>
+<h3 id="span-idget-m-u-c-room-json-2span-get-chat-room-getmucroomjson2"><span id="get-m-u-c-room-json-2"></span> Get chat room (<em>getMUCRoomJSON2</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/groupchat/room/{roomName}
+</code></pre>
+<p>Get information of a specific multi-user chat room.</p>
+<h4 id="produces-17">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-16">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-13">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>roomName</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The name of the MUC room</td>
+</tr>
+<tr>
+<td>expandGroups</td>
+<td><code>query</code></td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>For all groups defined in owners, admins, members and outcasts, list individual members instead of the group name.</td>
+</tr>
+<tr>
+<td>serviceName</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td><code>"conference"</code></td>
+<td>The name of the MUC service.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-16">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-m-u-c-room-json-2-200">200</a></td>
+<td>OK</td>
+<td>The chat room</td>
+<td align="center"></td>
+<td><a href="#get-m-u-c-room-json-2-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#get-m-u-c-room-json-2-404">404</a></td>
+<td>Not Found</td>
+<td>The chat room (or its service) can not be found or is not accessible.</td>
+<td align="center"></td>
+<td><a href="#get-m-u-c-room-json-2-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-16">Responses</h4>
+<h5 id="span-idget-m-u-c-room-json-2-200span-200---the-chat-room"><span id="get-m-u-c-room-json-2-200"></span> 200 - The chat room</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-m-u-c-room-json-2-200-schemaspan-schema"><span id="get-m-u-c-room-json-2-200-schema"></span> Schema</h6>
+<h5 id="span-idget-m-u-c-room-json-2-404span-404---the-chat-room-or-its-service-can-not-be-found-or-is-not-accessible."><span id="get-m-u-c-room-json-2-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idget-m-u-c-room-json-2-404-schemaspan-schema"><span id="get-m-u-c-room-json-2-404-schema"></span> Schema</h6>
+<h3 id="span-idget-m-u-c-room-occupantsspan-get-room-occupants-getmucroomoccupants"><span id="get-m-u-c-room-occupants"></span> Get room occupants (<em>getMUCRoomOccupants</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/groupchat/room/{roomName}/occupants
+</code></pre>
+<p>Get all occupants of a specific multi-user chat room.</p>
+<h4 id="produces-18">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-17">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-14">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>roomName</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The name of the MUC room</td>
+</tr>
+<tr>
+<td>serviceName</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td><code>"conference"</code></td>
+<td>The name of the MUC service.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-17">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-m-u-c-room-occupants-200">200</a></td>
+<td>OK</td>
+<td>The chat room occupants</td>
+<td align="center"></td>
+<td><a href="#get-m-u-c-room-occupants-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#get-m-u-c-room-occupants-404">404</a></td>
+<td>Not Found</td>
+<td>The chat room (or its service) can not be found or is not accessible.</td>
+<td align="center"></td>
+<td><a href="#get-m-u-c-room-occupants-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-17">Responses</h4>
+<h5 id="span-idget-m-u-c-room-occupants-200span-200---the-chat-room-occupants"><span id="get-m-u-c-room-occupants-200"></span> 200 - The chat room occupants</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-m-u-c-room-occupants-200-schemaspan-schema"><span id="get-m-u-c-room-occupants-200-schema"></span> Schema</h6>
+<h5 id="span-idget-m-u-c-room-occupants-404span-404---the-chat-room-or-its-service-can-not-be-found-or-is-not-accessible."><span id="get-m-u-c-room-occupants-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idget-m-u-c-room-occupants-404-schemaspan-schema"><span id="get-m-u-c-room-occupants-404-schema"></span> Schema</h6>
+<h3 id="span-idget-m-u-c-room-participantsspan-get-room-participants-getmucroomparticipants"><span id="get-m-u-c-room-participants"></span> Get room participants (<em>getMUCRoomParticipants</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/groupchat/room/{roomName}/participants
+</code></pre>
+<p>Get all participants of a specific multi-user chat room.</p>
+<h4 id="produces-19">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-18">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-15">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>roomName</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The name of the MUC room</td>
+</tr>
+<tr>
+<td>serviceName</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td><code>"conference"</code></td>
+<td>The name of the MUC service.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-18">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-m-u-c-room-participants-200">200</a></td>
+<td>OK</td>
+<td>The chat room participants</td>
+<td align="center"></td>
+<td><a href="#get-m-u-c-room-participants-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#get-m-u-c-room-participants-404">404</a></td>
+<td>Not Found</td>
+<td>The chat room (or its service) can not be found or is not accessible.</td>
+<td align="center"></td>
+<td><a href="#get-m-u-c-room-participants-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-18">Responses</h4>
+<h5 id="span-idget-m-u-c-room-participants-200span-200---the-chat-room-participants"><span id="get-m-u-c-room-participants-200"></span> 200 - The chat room participants</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-m-u-c-room-participants-200-schemaspan-schema"><span id="get-m-u-c-room-participants-200-schema"></span> Schema</h6>
+<h5 id="span-idget-m-u-c-room-participants-404span-404---the-chat-room-or-its-service-can-not-be-found-or-is-not-accessible."><span id="get-m-u-c-room-participants-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idget-m-u-c-room-participants-404-schemaspan-schema"><span id="get-m-u-c-room-participants-404-schema"></span> Schema</h6>
+<h3 id="span-idget-m-u-c-roomsspan-get-chat-rooms-getmucrooms"><span id="get-m-u-c-rooms"></span> Get chat rooms (<em>getMUCRooms</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/groupchat/rooms
+</code></pre>
+<p>Get a list of all multi-user chat rooms of a particular chat room service.</p>
+<h4 id="produces-20">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-19">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-16">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>expandGroups</td>
+<td><code>query</code></td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>For all groups defined in owners, admins, members and outcasts, list individual members instead of the group name.</td>
+</tr>
+<tr>
+<td>search</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>Search/Filter by room name.</td>
+</tr>
+<tr>
+<td>This act like the wildcard search %String%</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>serviceName</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td><code>"conference"</code></td>
+<td>The name of the MUC service for which to return all chat rooms.</td>
+</tr>
+<tr>
+<td>type</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td><code>"public"</code></td>
+<td>Room type-based filter: ‘all’ or ‘public’</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-19">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-m-u-c-rooms-200">200</a></td>
+<td>OK</td>
+<td>All chat rooms.</td>
+<td align="center"></td>
+<td><a href="#get-m-u-c-rooms-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#get-m-u-c-rooms-404">404</a></td>
+<td>Not Found</td>
+<td>MUC service does not exist or is not accessible.</td>
+<td align="center"></td>
+<td><a href="#get-m-u-c-rooms-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-19">Responses</h4>
+<h5 id="span-idget-m-u-c-rooms-200span-200---all-chat-rooms."><span id="get-m-u-c-rooms-200"></span> 200 - All chat rooms.</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-m-u-c-rooms-200-schemaspan-schema"><span id="get-m-u-c-rooms-200-schema"></span> Schema</h6>
+<h5 id="span-idget-m-u-c-rooms-404span-404---muc-service-does-not-exist-or-is-not-accessible."><span id="get-m-u-c-rooms-404"></span> 404 - MUC service does not exist or is not accessible.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idget-m-u-c-rooms-404-schemaspan-schema"><span id="get-m-u-c-rooms-404-schema"></span> Schema</h6>
+<h3 id="span-idget-push-subscribersspan-web-push---get-all-web-push-subscribers-getpushsubscribers"><span id="get-push-subscribers"></span> Web Push - Get all web push subscribers (<em>getPushSubscribers</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/webpush/subscribers
+</code></pre>
+<p>This endpoint is used to obtain all web push subscribers</p>
+<h4 id="produces-21">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-20">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="all-responses-20">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-push-subscribers-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#get-push-subscribers-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-20">Responses</h4>
+<h5 id="span-idget-push-subscribers-200span-200---successful-operation"><span id="get-push-subscribers-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-push-subscribers-200-schemaspan-schema"><span id="get-push-subscribers-200-schema"></span> Schema</h6>
+<p><a href="#user-entities">UserEntities</a></p>
+<h3 id="span-idget-userspan-get-authenticated-user-getuser"><span id="get-user"></span> Get authenticated user (<em>getUser</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/user
+</code></pre>
+<p>Retrieve a user that is defined in Openfire.</p>
+<h4 id="produces-22">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-21">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="all-responses-21">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-user-200">200</a></td>
+<td>OK</td>
+<td>The Openfire user was retrieved.</td>
+<td align="center"></td>
+<td><a href="#get-user-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#get-user-404">404</a></td>
+<td>Not Found</td>
+<td>No user with that username was found.</td>
+<td align="center"></td>
+<td><a href="#get-user-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-21">Responses</h4>
+<h5 id="span-idget-user-200span-200---the-openfire-user-was-retrieved."><span id="get-user-200"></span> 200 - The Openfire user was retrieved.</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-user-200-schemaspan-schema"><span id="get-user-200-schema"></span> Schema</h6>
+<h5 id="span-idget-user-404span-404---no-user-with-that-username-was-found."><span id="get-user-404"></span> 404 - No user with that username was found.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idget-user-404-schemaspan-schema"><span id="get-user-404-schema"></span> Schema</h6>
+<h3 id="span-idget-user-configspan-global-and-user-properties---list-user-properties-getuserconfig"><span id="get-user-config"></span> Global and User Properties - List User Properties (<em>getUserConfig</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/config/properties
+</code></pre>
+<p>Endpoint to retrieve a list of all config properties for the authenticated user.</p>
+<h4 id="produces-23">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-22">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="all-responses-22">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-user-config-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#get-user-config-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-22">Responses</h4>
+<h5 id="span-idget-user-config-200span-200---successful-operation"><span id="get-user-config-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-user-config-200-schemaspan-schema"><span id="get-user-config-200-schema"></span> Schema</h6>
+<h3 id="span-idget-user-groupsspan-get-users-groups-getusergroups"><span id="get-user-groups"></span> Get user’s groups (<em>getUserGroups</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/user/groups
+</code></pre>
+<p>Retrieve names of all groups that a particular user is in.</p>
+<h4 id="produces-24">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-23">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="all-responses-23">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-user-groups-200">200</a></td>
+<td>OK</td>
+<td>The names of the groups that the user is in.</td>
+<td align="center"></td>
+<td><a href="#get-user-groups-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-23">Responses</h4>
+<h5 id="span-idget-user-groups-200span-200---the-names-of-the-groups-that-the-user-is-in."><span id="get-user-groups-200"></span> 200 - The names of the groups that the user is in.</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-user-groups-200-schemaspan-schema"><span id="get-user-groups-200-schema"></span> Schema</h6>
+<h3 id="span-idget-user-rosterspan-retrieve-user-roster-getuserroster"><span id="get-user-roster"></span> Retrieve user roster (<em>getUserRoster</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/roster
+</code></pre>
+<p>Get a list of all roster entries (buddies / contact list) of a authenticated user.</p>
+<h4 id="produces-25">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-24">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="all-responses-24">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-user-roster-200">200</a></td>
+<td>OK</td>
+<td>All roster entries</td>
+<td align="center"></td>
+<td><a href="#get-user-roster-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#get-user-roster-404">404</a></td>
+<td>Not Found</td>
+<td>No user with that username was found.</td>
+<td align="center"></td>
+<td><a href="#get-user-roster-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-24">Responses</h4>
+<h5 id="span-idget-user-roster-200span-200---all-roster-entries"><span id="get-user-roster-200"></span> 200 - All roster entries</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-user-roster-200-schemaspan-schema"><span id="get-user-roster-200-schema"></span> Schema</h6>
+<h5 id="span-idget-user-roster-404span-404---no-user-with-that-username-was-found."><span id="get-user-roster-404"></span> 404 - No user with that username was found.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idget-user-roster-404-schemaspan-schema"><span id="get-user-roster-404-schema"></span> Schema</h6>
+<h3 id="span-idget-user-roster-with-presencespan-get-contacts-presence-getuserrosterwithpresence"><span id="get-user-roster-with-presence"></span> Get contacts presence (<em>getUserRosterWithPresence</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/presence/roster
+</code></pre>
+<p>Retrieve a list of all roster entries (buddies / contact list) with presence of a authenticated user.</p>
+<h4 id="produces-26">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-25">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="all-responses-25">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-user-roster-with-presence-200">200</a></td>
+<td>OK</td>
+<td>All roster entries with presence</td>
+<td align="center"></td>
+<td><a href="#get-user-roster-with-presence-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#get-user-roster-with-presence-400">400</a></td>
+<td>Bad Request</td>
+<td>No xmpp connection found for authenticated user.</td>
+<td align="center"></td>
+<td><a href="#get-user-roster-with-presence-400-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-25">Responses</h4>
+<h5 id="span-idget-user-roster-with-presence-200span-200---all-roster-entries-with-presence"><span id="get-user-roster-with-presence-200"></span> 200 - All roster entries with presence</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-user-roster-with-presence-200-schemaspan-schema"><span id="get-user-roster-with-presence-200-schema"></span> Schema</h6>
+<h5 id="span-idget-user-roster-with-presence-400span-400---no-xmpp-connection-found-for-authenticated-user."><span id="get-user-roster-with-presence-400"></span> 400 - No xmpp connection found for authenticated user.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-idget-user-roster-with-presence-400-schemaspan-schema"><span id="get-user-roster-with-presence-400-schema"></span> Schema</h6>
+<h3 id="span-idget-usersspan-get-users-getusers"><span id="get-users"></span> Get users (<em>getUsers</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/users
+</code></pre>
+<p>Retrieve all users defined in Openfire (with optional filtering).</p>
+<h4 id="produces-27">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-26">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-17">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>propertyKey</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>Filter by a user property name.</td>
+</tr>
+<tr>
+<td>propertyValue</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>Filter by user property value. Note: This can only be used in combination with a property name parameter</td>
+</tr>
+<tr>
+<td>search</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>Search/Filter by username. This act like the wildcard search %String%</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-26">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-users-200">200</a></td>
+<td>OK</td>
+<td>A list of Openfire users.</td>
+<td align="center"></td>
+<td><a href="#get-users-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-26">Responses</h4>
+<h5 id="span-idget-users-200span-200---a-list-of-openfire-users."><span id="get-users-200"></span> 200 - A list of Openfire users.</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-users-200-schemaspan-schema"><span id="get-users-200-schema"></span> Schema</h6>
+<h3 id="span-idget-web-push-public-keyspan-web-push---get-the-webpush-vapid-key-getwebpushpublickey"><span id="get-web-push-public-key"></span> Web Push - Get the webpush vapid key (<em>getWebPushPublicKey</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/webpush/vapidkey
+</code></pre>
+<p>This endpoint is used to obtain the vapid key need by the client to sign web push messages</p>
+<h4 id="produces-28">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-27">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="all-responses-27">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#get-web-push-public-key-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#get-web-push-public-key-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-27">Responses</h4>
+<h5 id="span-idget-web-push-public-key-200span-200---successful-operation"><span id="get-web-push-public-key-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idget-web-push-public-key-200-schemaspan-schema"><span id="get-web-push-public-key-200-schema"></span> Schema</h6>
+<p><a href="#public-key">PublicKey</a></p>
+<h3 id="span-idinvite-to-roomspan-invite-another-user-invitetoroom"><span id="invite-to-room"></span> Invite another user (<em>inviteToRoom</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/groupchat/room/{roomName}/{invitedJid}
+</code></pre>
+<p>Invite another user to a groupchat</p>
+<h4 id="produces-29">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-28">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-18">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>invitedJid</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The xmpp address of the person to be invited</td>
+</tr>
+<tr>
+<td>roomName</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The name of the MUC room</td>
+</tr>
+<tr>
+<td>serviceName</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td><code>"conference"</code></td>
+<td>The name of the MUC service.</td>
+</tr>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The reason for the invitation</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-28">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#invite-to-room-200">200</a></td>
+<td>OK</td>
+<td>The invitation has been sent</td>
+<td align="center"></td>
+<td><a href="#invite-to-room-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#invite-to-room-404">404</a></td>
+<td>Not Found</td>
+<td>The chat room (or its service) can not be found or is not accessible.</td>
+<td align="center"></td>
+<td><a href="#invite-to-room-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-28">Responses</h4>
+<h5 id="span-idinvite-to-room-200span-200---the-invitation-has-been-sent"><span id="invite-to-room-200"></span> 200 - The invitation has been sent</h5>
+<p>Status: OK</p>
+<h6 id="span-idinvite-to-room-200-schemaspan-schema"><span id="invite-to-room-200-schema"></span> Schema</h6>
+<h5 id="span-idinvite-to-room-404span-404---the-chat-room-or-its-service-can-not-be-found-or-is-not-accessible."><span id="invite-to-room-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idinvite-to-room-404-schemaspan-schema"><span id="invite-to-room-404-schema"></span> Schema</h6>
+<h3 id="span-idjoin-roomspan-join-groupchat-joinroom"><span id="join-room"></span> Join groupchat (<em>joinRoom</em>)</h3>
+<pre><code>PUT /sparkweb/api/rest/groupchat/room/{roomName}
+</code></pre>
+<p>Join a groupchat by entering a MUC room</p>
+<h4 id="produces-30">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-29">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-19">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>roomName</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The name of the MUC room to join.</td>
+</tr>
+<tr>
+<td>serviceName</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td><code>"conference"</code></td>
+<td>The name of the MUC service.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-29">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#join-room-200">200</a></td>
+<td>OK</td>
+<td>The user has joined groupchat</td>
+<td align="center"></td>
+<td><a href="#join-room-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#join-room-404">404</a></td>
+<td>Not Found</td>
+<td>The chat room (or its service) can not be found or is not accessible.</td>
+<td align="center"></td>
+<td><a href="#join-room-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-29">Responses</h4>
+<h5 id="span-idjoin-room-200span-200---the-user-has-joined-groupchat"><span id="join-room-200"></span> 200 - The user has joined groupchat</h5>
+<p>Status: OK</p>
+<h6 id="span-idjoin-room-200-schemaspan-schema"><span id="join-room-200-schema"></span> Schema</h6>
+<h5 id="span-idjoin-room-404span-404---the-chat-room-or-its-service-can-not-be-found-or-is-not-accessible."><span id="join-room-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idjoin-room-404-schemaspan-schema"><span id="join-room-404-schema"></span> Schema</h6>
+<h3 id="span-idleave-roomspan-leave-groupchat-leaveroom"><span id="leave-room"></span> Leave groupchat (<em>leaveRoom</em>)</h3>
+<pre><code>DELETE /sparkweb/api/rest/groupchat/room/{roomName}
+</code></pre>
+<p>Leave a groupchat by leaving a MUC room</p>
+<h4 id="produces-31">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-30">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-20">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>roomName</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The name of the MUC room to leave.</td>
+</tr>
+<tr>
+<td>serviceName</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td><code>"conference"</code></td>
+<td>The name of the MUC service.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-30">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#leave-room-200">200</a></td>
+<td>OK</td>
+<td>The user has left groupchat</td>
+<td align="center"></td>
+<td><a href="#leave-room-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#leave-room-404">404</a></td>
+<td>Not Found</td>
+<td>The chat room (or its service) can not be found or is not accessible.</td>
+<td align="center"></td>
+<td><a href="#leave-room-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-30">Responses</h4>
+<h5 id="span-idleave-room-200span-200---the-user-has-left-groupchat"><span id="leave-room-200"></span> 200 - The user has left groupchat</h5>
+<p>Status: OK</p>
+<h6 id="span-idleave-room-200-schemaspan-schema"><span id="leave-room-200-schema"></span> Schema</h6>
+<h5 id="span-idleave-room-404span-404---the-chat-room-or-its-service-can-not-be-found-or-is-not-accessible."><span id="leave-room-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idleave-room-404-schemaspan-schema"><span id="leave-room-404-schema"></span> Schema</h6>
+<h3 id="span-idpost-chat-statespan-post-chat-state-indicator-postchatstate"><span id="post-chat-state"></span> Post chat state indicator (<em>postChatState</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/chat/chatstate/{state}/{to}
+</code></pre>
+<p>Post a chat state to an xmpp address.</p>
+<h4 id="produces-32">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-31">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-21">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>state</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The chat state to be posted. It can be ‘composing’, ‘paused’, ‘active’, ‘inactive’, ‘gone’</td>
+</tr>
+<tr>
+<td>to</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The JID of the target xmpp address.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-31">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#post-chat-state-200">200</a></td>
+<td>OK</td>
+<td>The chat state was posted.</td>
+<td align="center"></td>
+<td><a href="#post-chat-state-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#post-chat-state-400">400</a></td>
+<td>Bad Request</td>
+<td>The chat state could not be posted.</td>
+<td align="center"></td>
+<td><a href="#post-chat-state-400-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-31">Responses</h4>
+<h5 id="span-idpost-chat-state-200span-200---the-chat-state-was-posted."><span id="post-chat-state-200"></span> 200 - The chat state was posted.</h5>
+<p>Status: OK</p>
+<h6 id="span-idpost-chat-state-200-schemaspan-schema"><span id="post-chat-state-200-schema"></span> Schema</h6>
+<h5 id="span-idpost-chat-state-400span-400---the-chat-state-could-not-be-posted."><span id="post-chat-state-400"></span> 400 - The chat state could not be posted.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-idpost-chat-state-400-schemaspan-schema"><span id="post-chat-state-400-schema"></span> Schema</h6>
+<h3 id="span-idpost-messagespan-post-chat-message-postmessage"><span id="post-message"></span> Post chat message (<em>postMessage</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/chat/message/{to}
+</code></pre>
+<p>post a chat message to an xmpp address.</p>
+<h4 id="produces-33">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-32">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-22">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>to</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The JID of the target xmpp address.</td>
+</tr>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The text message to be posted</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-32">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#post-message-200">200</a></td>
+<td>OK</td>
+<td>The messages was posted.</td>
+<td align="center"></td>
+<td><a href="#post-message-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#post-message-400">400</a></td>
+<td>Bad Request</td>
+<td>The messages could not be posted.</td>
+<td align="center"></td>
+<td><a href="#post-message-400-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-32">Responses</h4>
+<h5 id="span-idpost-message-200span-200---the-messages-was-posted."><span id="post-message-200"></span> 200 - The messages was posted.</h5>
+<p>Status: OK</p>
+<h6 id="span-idpost-message-200-schemaspan-schema"><span id="post-message-200-schema"></span> Schema</h6>
+<h5 id="span-idpost-message-400span-400---the-messages-could-not-be-posted."><span id="post-message-400"></span> 400 - The messages could not be posted.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-idpost-message-400-schemaspan-schema"><span id="post-message-400-schema"></span> Schema</h6>
+<h3 id="span-idpost-presencespan-set-presence-postpresence"><span id="post-presence"></span> Set Presence (<em>postPresence</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/presence
+</code></pre>
+<p>Update the presence state of the authenticated user.</p>
+<h4 id="produces-34">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-33">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-23">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>show</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>The availability state of the authenticated user</td>
+</tr>
+<tr>
+<td>status</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td>A detailed description of the availability state</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-33">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#post-presence-200">200</a></td>
+<td>OK</td>
+<td>Presence was set</td>
+<td align="center"></td>
+<td><a href="#post-presence-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#post-presence-400">400</a></td>
+<td>Bad Request</td>
+<td>No xmpp connection found for authenticated user.</td>
+<td align="center"></td>
+<td><a href="#post-presence-400-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-33">Responses</h4>
+<h5 id="span-idpost-presence-200span-200---presence-was-set"><span id="post-presence-200"></span> 200 - Presence was set</h5>
+<p>Status: OK</p>
+<h6 id="span-idpost-presence-200-schemaspan-schema"><span id="post-presence-200-schema"></span> Schema</h6>
+<h5 id="span-idpost-presence-400span-400---no-xmpp-connection-found-for-authenticated-user."><span id="post-presence-400"></span> 400 - No xmpp connection found for authenticated user.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-idpost-presence-400-schemaspan-schema"><span id="post-presence-400-schema"></span> Schema</h6>
+<h3 id="span-idpost-to-roomspan-post-a-message-to-a-groupchat-posttoroom"><span id="post-to-room"></span> Post a message to a groupchat (<em>postToRoom</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/groupchat/room/{roomName}
+</code></pre>
+<p>Post a message to a groupchat</p>
+<h4 id="produces-35">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-34">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-24">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>roomName</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The name of the MUC room to post to.</td>
+</tr>
+<tr>
+<td>serviceName</td>
+<td><code>query</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td><code>"conference"</code></td>
+<td>The name of the MUC service.</td>
+</tr>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The text message to be posted</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-34">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#post-to-room-200">200</a></td>
+<td>OK</td>
+<td>The message is posted</td>
+<td align="center"></td>
+<td><a href="#post-to-room-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#post-to-room-404">404</a></td>
+<td>Not Found</td>
+<td>The chat room (or its service) can not be found or is not accessible.</td>
+<td align="center"></td>
+<td><a href="#post-to-room-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-34">Responses</h4>
+<h5 id="span-idpost-to-room-200span-200---the-message-is-posted"><span id="post-to-room-200"></span> 200 - The message is posted</h5>
+<p>Status: OK</p>
+<h6 id="span-idpost-to-room-200-schemaspan-schema"><span id="post-to-room-200-schema"></span> Schema</h6>
+<h5 id="span-idpost-to-room-404span-404---the-chat-room-or-its-service-can-not-be-found-or-is-not-accessible."><span id="post-to-room-404"></span> 404 - The chat room (or its service) can not be found or is not accessible.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idpost-to-room-404-schemaspan-schema"><span id="post-to-room-404-schema"></span> Schema</h6>
+<h3 id="span-idpost-user-configspan-global-and-user-properties---update-user-properties-postuserconfig"><span id="post-user-config"></span> Global and User Properties - Update user properties (<em>postUserConfig</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/config/properties
+</code></pre>
+<p>Endpoint will update user properties from an array of name/value pairs</p>
+<h4 id="produces-36">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-35">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-25">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>A JSON array of name pairs (name/value) to set the value of a property</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-35">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#post-user-config-default">default</a></td>
+<td></td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#post-user-config-default-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-35">Responses</h4>
+<h5 id="span-idpost-user-config-defaultspan-default-response"><span id="post-user-config-default"></span> Default Response</h5>
+<p>successful operation</p>
+<h6 id="span-idpost-user-config-default-schemaspan-schema"><span id="post-user-config-default-schema"></span> Schema</h6>
+<p>empty schema</p>
+<h3 id="span-idpost-web-pushspan-web-push---send-a-text-message-to-all-subscriptions-of-another-user-postwebpush"><span id="post-web-push"></span> Web Push - Send a text message to all subscriptions of another user (<em>postWebPush</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/webpush/publish/{target}
+</code></pre>
+<p>This endpoint is used to push a message with a payload to all subscriptions of the specified user</p>
+<h4 id="produces-37">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-36">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-26">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>target</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>A valid Openfire username</td>
+</tr>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The text message to be pushed to the user</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-36">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#post-web-push-default">default</a></td>
+<td></td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#post-web-push-default-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-36">Responses</h4>
+<h5 id="span-idpost-web-push-defaultspan-default-response"><span id="post-web-push-default"></span> Default Response</h5>
+<p>successful operation</p>
+<h6 id="span-idpost-web-push-default-schemaspan-schema"><span id="post-web-push-default-schema"></span> Schema</h6>
+<p>empty schema</p>
+<h3 id="span-idpost-web-push-subscriptionspan-web-push---store-web-push-subscription-for-this-user-postwebpushsubscription"><span id="post-web-push-subscription"></span> Web Push - Store web push subscription for this user (<em>postWebPushSubscription</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/webpush/subscribe/{resource}
+</code></pre>
+<p>This endpoint is used to save a subscription created by a web client for this user</p>
+<h4 id="produces-38">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-37">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-27">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>resource</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>A resource name to tag the subscription</td>
+</tr>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The subscription as created by the web client</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-37">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#post-web-push-subscription-default">default</a></td>
+<td></td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#post-web-push-subscription-default-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-37">Responses</h4>
+<h5 id="span-idpost-web-push-subscription-defaultspan-default-response"><span id="post-web-push-subscription-default"></span> Default Response</h5>
+<p>successful operation</p>
+<h6 id="span-idpost-web-push-subscription-default-schemaspan-schema"><span id="post-web-push-subscription-default-schema"></span> Schema</h6>
+<p>empty schema</p>
+<h3 id="span-idpreview-linkspan-request-url-preview-previewlink"><span id="preview-link"></span> Request URL preview (<em>previewLink</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/preview/{quality}/{url}
+</code></pre>
+<p>Request for URL preview metadata.</p>
+<h4 id="produces-39">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-38">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-28">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>quality</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The quality of the preview image on a scale 1-9.</td>
+</tr>
+<tr>
+<td>url</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The url to be previewd.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-38">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#preview-link-200">200</a></td>
+<td>OK</td>
+<td>The metadata was obtained.</td>
+<td align="center"></td>
+<td><a href="#preview-link-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#preview-link-400">400</a></td>
+<td>Bad Request</td>
+<td>The preview request failed.</td>
+<td align="center"></td>
+<td><a href="#preview-link-400-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-38">Responses</h4>
+<h5 id="span-idpreview-link-200span-200---the-metadata-was-obtained."><span id="preview-link-200"></span> 200 - The metadata was obtained.</h5>
+<p>Status: OK</p>
+<h6 id="span-idpreview-link-200-schemaspan-schema"><span id="preview-link-200-schema"></span> Schema</h6>
+<h5 id="span-idpreview-link-400span-400---the-preview-request-failed."><span id="preview-link-400"></span> 400 - The preview request failed.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-idpreview-link-400-schemaspan-schema"><span id="preview-link-400-schema"></span> Schema</h6>
+<h3 id="span-idprobe-presencespan-probe-a-target-user-presence-probepresence"><span id="probe-presence"></span> Probe a target user presence (<em>probePresence</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/presence/{target}
+</code></pre>
+<p>Request the presence of an specific user</p>
+<h4 id="produces-40">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-39">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-29">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>target</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The username to be probed.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-39">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#probe-presence-200">200</a></td>
+<td>OK</td>
+<td>Presence of user requested</td>
+<td align="center"></td>
+<td><a href="#probe-presence-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#probe-presence-400">400</a></td>
+<td>Bad Request</td>
+<td>No xmpp connection found for authenticated user or authenticated user is not premitted to probe user presence.</td>
+<td align="center"></td>
+<td><a href="#probe-presence-400-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-39">Responses</h4>
+<h5 id="span-idprobe-presence-200span-200---presence-of-user-requested"><span id="probe-presence-200"></span> 200 - Presence of user requested</h5>
+<p>Status: OK</p>
+<h6 id="span-idprobe-presence-200-schemaspan-schema"><span id="probe-presence-200-schema"></span> Schema</h6>
+<h5 id="span-idprobe-presence-400span-400---no-xmpp-connection-found-for-authenticated-user-or-authenticated-user-is-not-premitted-to-probe-user-presence."><span id="probe-presence-400"></span> 400 - No xmpp connection found for authenticated user or authenticated user is not premitted to probe user presence.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-idprobe-presence-400-schemaspan-schema"><span id="probe-presence-400-schema"></span> Schema</h6>
+<h3 id="span-idupdate-bookmarkspan-bookmark-api---update-a-specific-bookmark-updatebookmark"><span id="update-bookmark"></span> Bookmark API - Update a specific bookmark (<em>updateBookmark</em>)</h3>
+<pre><code>PUT /sparkweb/api/rest/bookmark/{bookmarkID}
+</code></pre>
+<p>This endpoint is used to update a specific bookmark</p>
+<h4 id="produces-41">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-40">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-30">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bookmarkID</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td><a href="#bookmark">Bookmark</a></td>
+<td><code>models.Bookmark</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-40">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#update-bookmark-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#update-bookmark-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-40">Responses</h4>
+<h5 id="span-idupdate-bookmark-200span-200---successful-operation"><span id="update-bookmark-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idupdate-bookmark-200-schemaspan-schema"><span id="update-bookmark-200-schema"></span> Schema</h6>
+<p><a href="#bookmark">Bookmark</a></p>
+<h3 id="span-idupdate-bookmark-propertyspan-bookmark-api---createupdate-a-bookmark-property-updatebookmarkproperty"><span id="update-bookmark-property"></span> Bookmark API - Create/Update a bookmark property (<em>updateBookmarkProperty</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/bookmark/{bookmarkID}/{name}
+</code></pre>
+<p>This endpoint is used to create or update a bookmark property value</p>
+<h4 id="produces-42">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-41">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-31">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bookmarkID</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>name</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-41">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#update-bookmark-property-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#update-bookmark-property-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-41">Responses</h4>
+<h5 id="span-idupdate-bookmark-property-200span-200---successful-operation"><span id="update-bookmark-property-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idupdate-bookmark-property-200-schemaspan-schema"><span id="update-bookmark-property-200-schema"></span> Schema</h6>
+<p><a href="#bookmark">Bookmark</a></p>
+<h3 id="span-idupdate-roster-itemspan-update-roster-entry-updaterosteritem"><span id="update-roster-item"></span> Update roster entry (<em>updateRosterItem</em>)</h3>
+<pre><code>PUT /sparkweb/api/rest/roster/{jid}
+</code></pre>
+<p>Update a roster entry to the roster (buddies / contact list) of a particular user.</p>
+<h4 id="produces-43">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-42">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-32">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>jid</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The JID of the entry/contact to remove.</td>
+</tr>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td><a href="#roster-item-entity">RosterItemEntity</a></td>
+<td><code>models.RosterItemEntity</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The definition of the roster entry that is to be updated.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-42">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#update-roster-item-200">200</a></td>
+<td>OK</td>
+<td>The entry was updated in the roster.</td>
+<td align="center"></td>
+<td><a href="#update-roster-item-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#update-roster-item-400">400</a></td>
+<td>Bad Request</td>
+<td>A roster entry cannot be updated with a ‘shared group’.</td>
+<td align="center"></td>
+<td><a href="#update-roster-item-400-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#update-roster-item-404">404</a></td>
+<td>Not Found</td>
+<td>No user of with this username exists.</td>
+<td align="center"></td>
+<td><a href="#update-roster-item-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-42">Responses</h4>
+<h5 id="span-idupdate-roster-item-200span-200---the-entry-was-updated-in-the-roster."><span id="update-roster-item-200"></span> 200 - The entry was updated in the roster.</h5>
+<p>Status: OK</p>
+<h6 id="span-idupdate-roster-item-200-schemaspan-schema"><span id="update-roster-item-200-schema"></span> Schema</h6>
+<h5 id="span-idupdate-roster-item-400span-400---a-roster-entry-cannot-be-updated-with-a-shared-group."><span id="update-roster-item-400"></span> 400 - A roster entry cannot be updated with a ‘shared group’.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-idupdate-roster-item-400-schemaspan-schema"><span id="update-roster-item-400-schema"></span> Schema</h6>
+<h5 id="span-idupdate-roster-item-404span-404---no-user-of-with-this-username-exists."><span id="update-roster-item-404"></span> 404 - No user of with this username exists.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idupdate-roster-item-404-schemaspan-schema"><span id="update-roster-item-404-schema"></span> Schema</h6>
+<h3 id="span-idupdate-userspan-update-authenticated-user-updateuser"><span id="update-user"></span> Update authenticated user (<em>updateUser</em>)</h3>
+<pre><code>PUT /sparkweb/api/rest/user
+</code></pre>
+<p>Update the authenticated user in Openfire.</p>
+<h4 id="produces-44">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-43">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-33">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td><a href="#user-entity">UserEntity</a></td>
+<td><code>models.UserEntity</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The definition of the authenticated user to update.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-43">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#update-user-200">200</a></td>
+<td>OK</td>
+<td>The Openfire user was updated.</td>
+<td align="center"></td>
+<td><a href="#update-user-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#update-user-404">404</a></td>
+<td>Not Found</td>
+<td>No user with that username was found.</td>
+<td align="center"></td>
+<td><a href="#update-user-404-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-43">Responses</h4>
+<h5 id="span-idupdate-user-200span-200---the-openfire-user-was-updated."><span id="update-user-200"></span> 200 - The Openfire user was updated.</h5>
+<p>Status: OK</p>
+<h6 id="span-idupdate-user-200-schemaspan-schema"><span id="update-user-200-schema"></span> Schema</h6>
+<h5 id="span-idupdate-user-404span-404---no-user-with-that-username-was-found."><span id="update-user-404"></span> 404 - No user with that username was found.</h5>
+<p>Status: Not Found</p>
+<h6 id="span-idupdate-user-404-schemaspan-schema"><span id="update-user-404-schema"></span> Schema</h6>
+<h3 id="span-idupload-requestspan-request-file-upload-uploadrequest"><span id="upload-request"></span> Request file upload (<em>uploadRequest</em>)</h3>
+<pre><code>GET /sparkweb/api/rest/upload/{fileName}/{fileSize}
+</code></pre>
+<p>Request for GET and PUT URLs needed to upload and share a file with other users.</p>
+<h4 id="produces-45">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-44">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-34">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fileName</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The file name to be upload.</td>
+</tr>
+<tr>
+<td>fileSize</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The size of the file to be uploaded.</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-44">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#upload-request-200">200</a></td>
+<td>OK</td>
+<td>The request was accepted.</td>
+<td align="center"></td>
+<td><a href="#upload-request-200-schema">schema</a></td>
+</tr>
+<tr>
+<td><a href="#upload-request-400">400</a></td>
+<td>Bad Request</td>
+<td>The upload request failed.</td>
+<td align="center"></td>
+<td><a href="#upload-request-400-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-44">Responses</h4>
+<h5 id="span-idupload-request-200span-200---the-request-was-accepted."><span id="upload-request-200"></span> 200 - The request was accepted.</h5>
+<p>Status: OK</p>
+<h6 id="span-idupload-request-200-schemaspan-schema"><span id="upload-request-200-schema"></span> Schema</h6>
+<h5 id="span-idupload-request-400span-400---the-upload-request-failed."><span id="upload-request-400"></span> 400 - The upload request failed.</h5>
+<p>Status: Bad Request</p>
+<h6 id="span-idupload-request-400-schemaspan-schema"><span id="upload-request-400-schema"></span> Schema</h6>
+<h3 id="span-idwebauthn-authenticate-finishspan-web-authentication---end-authentication-webauthnauthenticatefinish"><span id="webauthn-authenticate-finish"></span> Web Authentication - End Authentication (<em>webauthnAuthenticateFinish</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/webauthn/authenticate/finish/{username}
+</code></pre>
+<p>This endpoint is used to finish the webauthn authentication proces</p>
+<h4 id="produces-46">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-45">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-35">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>username</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>A valid Openfire username</td>
+</tr>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The assertion generated by the web client</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-45">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#webauthn-authenticate-finish-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#webauthn-authenticate-finish-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-45">Responses</h4>
+<h5 id="span-idwebauthn-authenticate-finish-200span-200---successful-operation"><span id="webauthn-authenticate-finish-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idwebauthn-authenticate-finish-200-schemaspan-schema"><span id="webauthn-authenticate-finish-200-schema"></span> Schema</h6>
+<h3 id="span-idwebauthn-authenticate-startspan-web-authentication---start-authentication-webauthnauthenticatestart"><span id="webauthn-authenticate-start"></span> Web Authentication - Start Authentication (<em>webauthnAuthenticateStart</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/webauthn/authenticate/start/{username}
+</code></pre>
+<p>This endpoint is used to start the webauthn authentication proces</p>
+<h4 id="produces-47">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-46">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-36">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>username</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>A valid Openfire username</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-46">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#webauthn-authenticate-start-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#webauthn-authenticate-start-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-46">Responses</h4>
+<h5 id="span-idwebauthn-authenticate-start-200span-200---successful-operation"><span id="webauthn-authenticate-start-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idwebauthn-authenticate-start-200-schemaspan-schema"><span id="webauthn-authenticate-start-200-schema"></span> Schema</h6>
+<h3 id="span-idwebauthn-register-finishspan-web-authentication---finish-registration-webauthnregisterfinish"><span id="webauthn-register-finish"></span> Web Authentication - Finish Registration (<em>webauthnRegisterFinish</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/webauthn/register/finish/{username}
+</code></pre>
+<p>This endpoint is used to finish the webauthn registration proces</p>
+<h4 id="produces-48">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-47">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-37">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>username</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>A valid Openfire username</td>
+</tr>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The credentials generated by the web client</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-47">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#webauthn-register-finish-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#webauthn-register-finish-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-47">Responses</h4>
+<h5 id="span-idwebauthn-register-finish-200span-200---successful-operation"><span id="webauthn-register-finish-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idwebauthn-register-finish-200-schemaspan-schema"><span id="webauthn-register-finish-200-schema"></span> Schema</h6>
+<h3 id="span-idwebauthn-register-startspan-web-authentication---start-registration-webauthnregisterstart"><span id="webauthn-register-start"></span> Web Authentication - Start Registration (<em>webauthnRegisterStart</em>)</h3>
+<pre><code>POST /sparkweb/api/rest/webauthn/register/start/{username}
+</code></pre>
+<p>This endpoint is used to start the webauthn registration proces</p>
+<h4 id="produces-49">Produces</h4>
+<ul>
+<li>application/json</li>
+</ul>
+<h4 id="security-requirements-48">Security Requirements</h4>
+<ul>
+<li>authorization</li>
+</ul>
+<h4 id="parameters-38">Parameters</h4>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Source</th>
+<th>Type</th>
+<th>Go type</th>
+<th>Separator</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>username</td>
+<td><code>path</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>A valid Openfire username</td>
+</tr>
+<tr>
+<td>body</td>
+<td><code>body</code></td>
+<td>string</td>
+<td><code>string</code></td>
+<td></td>
+<td align="center">✓</td>
+<td></td>
+<td>The current Openfire password for the user</td>
+</tr>
+</tbody>
+</table><h4 id="all-responses-48">All responses</h4>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Status</th>
+<th>Description</th>
+<th align="center">Has headers</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#webauthn-register-start-200">200</a></td>
+<td>OK</td>
+<td>successful operation</td>
+<td align="center"></td>
+<td><a href="#webauthn-register-start-200-schema">schema</a></td>
+</tr>
+</tbody>
+</table><h4 id="responses-48">Responses</h4>
+<h5 id="span-idwebauthn-register-start-200span-200---successful-operation"><span id="webauthn-register-start-200"></span> 200 - successful operation</h5>
+<p>Status: OK</p>
+<h6 id="span-idwebauthn-register-start-200-schemaspan-schema"><span id="webauthn-register-start-200-schema"></span> Schema</h6>
+<h2 id="models">Models</h2>
+<h3 id="span-idarchived-messagespan-archivedmessage"><span id="archived-message"></span> ArchivedMessage</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>body</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>conversationID</td>
+<td>int64 (formatted integer)</td>
+<td><code>int64</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>from</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>fromJID</td>
+<td><a href="#j-id">JID</a></td>
+<td><code>JID</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>roomEvent</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>sentDate</td>
+<td>date-time (formatted string)</td>
+<td><code>strfmt.DateTime</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>stanza</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>to</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>toJID</td>
+<td><a href="#j-id">JID</a></td>
+<td><code>JID</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idbookmarkspan-bookmark"><span id="bookmark"></span> Bookmark</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bookmarkID</td>
+<td>int64 (formatted integer)</td>
+<td><code>int64</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>globalBookmark</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>groups</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>name</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>properties</td>
+<td>[]<a href="#user-property">UserProperty</a></td>
+<td><code>[]*UserProperty</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>propertyNames</td>
+<td><a href="#iterator-string">IteratorString</a></td>
+<td><code>IteratorString</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>type</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>users</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>value</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idbookmarksspan-bookmarks"><span id="bookmarks"></span> Bookmarks</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bookmarks</td>
+<td>[]<a href="#bookmark">Bookmark</a></td>
+<td><code>[]*Bookmark</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idconversationspan-conversation"><span id="conversation"></span> Conversation</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>chatRoom</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>conversationID</td>
+<td>int64 (formatted integer)</td>
+<td><code>int64</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>conversationParticipants</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>external</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>lastActivity</td>
+<td>date-time (formatted string)</td>
+<td><code>strfmt.DateTime</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>messageCount</td>
+<td>int32 (formatted integer)</td>
+<td><code>int32</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>messages</td>
+<td>[]<a href="#archived-message">ArchivedMessage</a></td>
+<td><code>[]*ArchivedMessage</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>participantList</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>participants</td>
+<td>[]<a href="#j-id">JID</a></td>
+<td><code>[]*JID</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>room</td>
+<td><a href="#j-id">JID</a></td>
+<td><code>JID</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>startDate</td>
+<td>date-time (formatted string)</td>
+<td><code>strfmt.DateTime</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idconversationsspan-conversations"><span id="conversations"></span> Conversations</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>conversations</td>
+<td>[]<a href="#conversation">Conversation</a></td>
+<td><code>[]*Conversation</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-iditeratorspan-iterator"><span id="iterator"></span> Iterator</h3>
+<p><a href="#interface">interface{}</a></p>
+<h3 id="span-iditerator-stringspan-iteratorstring"><span id="iterator-string"></span> IteratorString</h3>
+<p><a href="#interface">interface{}</a></p>
+<h3 id="span-idj-idspan-jid"><span id="j-id"></span> JID</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>domain</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>node</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>resource</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idm-u-c-room-entitiesspan-mucroomentities"><span id="m-u-c-room-entities"></span> MUCRoomEntities</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>chatRooms</td>
+<td>[]<a href="#m-u-c-room-entity">MUCRoomEntity</a></td>
+<td><code>[]*MUCRoomEntity</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idm-u-c-room-entityspan-mucroomentity"><span id="m-u-c-room-entity"></span> MUCRoomEntity</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>adminGroups</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>admins</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>allowPM</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>broadcastPresenceRoles</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>canAnyoneDiscoverJID</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>canChangeNickname</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>canOccupantsChangeSubject</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>canOccupantsInvite</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>creationDate</td>
+<td>date-time (formatted string)</td>
+<td><code>strfmt.DateTime</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>description</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>logEnabled</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>loginRestrictedToNickname</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>maxUsers</td>
+<td>int32 (formatted integer)</td>
+<td><code>int32</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>memberGroups</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>members</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>membersOnly</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>moderated</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>modificationDate</td>
+<td>date-time (formatted string)</td>
+<td><code>strfmt.DateTime</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>naturalName</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>outcastGroups</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>outcasts</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>ownerGroups</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>owners</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>password</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>persistent</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>publicRoom</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>registrationEnabled</td>
+<td>boolean</td>
+<td><code>bool</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>roomName</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>subject</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idm-u-c-room-message-entitiesspan-mucroommessageentities"><span id="m-u-c-room-message-entities"></span> MUCRoomMessageEntities</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>messages</td>
+<td>[]<a href="#m-u-c-room-message-entity">MUCRoomMessageEntity</a></td>
+<td><code>[]*MUCRoomMessageEntity</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idm-u-c-room-message-entityspan-mucroommessageentity"><span id="m-u-c-room-message-entity"></span> MUCRoomMessageEntity</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>body</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>delayFrom</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>delayStamp</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>from</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>to</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>type</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idoccupant-entitiesspan-occupantentities"><span id="occupant-entities"></span> OccupantEntities</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>occupants</td>
+<td>[]<a href="#occupant-entity">OccupantEntity</a></td>
+<td><code>[]*OccupantEntity</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idoccupant-entityspan-occupantentity"><span id="occupant-entity"></span> OccupantEntity</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>affiliation</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>jid</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>role</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>userAddress</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idparticipant-entitiesspan-participantentities"><span id="participant-entities"></span> ParticipantEntities</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>participants</td>
+<td>[]<a href="#participant-entity">ParticipantEntity</a></td>
+<td><code>[]*ParticipantEntity</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idparticipant-entityspan-participantentity"><span id="participant-entity"></span> ParticipantEntity</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>affiliation</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>jid</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>role</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idpresence-entityspan-presenceentity"><span id="presence-entity"></span> PresenceEntity</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>show</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>status</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>username</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idpublic-keyspan-publickey"><span id="public-key"></span> PublicKey</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>publicKey</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idroster-entitiesspan-rosterentities"><span id="roster-entities"></span> RosterEntities</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>roster</td>
+<td>[]<a href="#roster-item-entity">RosterItemEntity</a></td>
+<td><code>[]*RosterItemEntity</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-idroster-item-entityspan-rosteritementity"><span id="roster-item-entity"></span> RosterItemEntity</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>groups</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>jid</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>nickname</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>show</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>status</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>subscriptionType</td>
+<td>int32 (formatted integer)</td>
+<td><code>int32</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-iduser-entitiesspan-userentities"><span id="user-entities"></span> UserEntities</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>users</td>
+<td>[]<a href="#user-entity">UserEntity</a></td>
+<td><code>[]*UserEntity</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-iduser-entityspan-userentity"><span id="user-entity"></span> UserEntity</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>email</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>name</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>password</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>properties</td>
+<td>[]<a href="#user-property">UserProperty</a></td>
+<td><code>[]*UserProperty</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>username</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-iduser-groups-entityspan-usergroupsentity"><span id="user-groups-entity"></span> UserGroupsEntity</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>groupnames</td>
+<td>[]string</td>
+<td><code>[]string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table><h3 id="span-iduser-propertyspan-userproperty"><span id="user-property"></span> UserProperty</h3>
+<p><strong>Properties</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Go type</th>
+<th align="center">Required</th>
+<th>Default</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>value</td>
+<td>string</td>
+<td><code>string</code></td>
+<td align="center"></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
     </div>
   </div>
 </body>
