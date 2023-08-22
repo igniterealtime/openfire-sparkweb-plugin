@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type='text/xsl' href='xep.xsl'?>
+<xep xmlns="">
+<header>
+  <title>HTTP Online Meetings</title>
+  <abstract>This specification defines a protocol extension to request permission to host an online meeting from an HTTP entity and recieve a URL which can be used to invite participants to the meeting.</abstract>
+  
+<legal>
+<copyright>This XMPP Extension Protocol is copyright © 1999 – 2023 by the <link url="https://xmpp.org/">XMPP Standards Foundation</link> (XSF).</copyright>
+<permissions>Permission is hereby granted, free of charge, to any person obtaining a copy of this specification (the "Specification"), to make use of the Specification without restriction, including without limitation the rights to implement the Specification in a software program, deploy the Specification in a network service, and copy, modify, merge, publish, translate, distribute, sublicense, or sell copies of the Specification, and to permit persons to whom the Specification is furnished to do so, subject to the condition that the foregoing copyright notice and this permission notice shall be included in all copies or substantial portions of the Specification. Unless separate permission is granted, modified works that are redistributed shall not contain misleading information regarding the authors, title, number, or publisher of the Specification, and shall not claim endorsement of the modified works by the authors, any organization or project to which the authors belong, or the XMPP Standards Foundation.</permissions>
+<warranty>## NOTE WELL: This Specification is provided on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, express or implied, including, without limitation, any warranties or conditions of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE. ##</warranty>
+<liability>In no event and under no legal theory, whether in tort (including negligence), contract, or otherwise, unless required by applicable law (such as deliberate and grossly negligent acts) or agreed to in writing, shall the XMPP Standards Foundation or any author of this Specification be liable for damages, including any direct, indirect, special, incidental, or consequential damages of any character arising from, out of, or in connection with the Specification or the implementation, deployment, or other use of the Specification (including but not limited to damages for loss of goodwill, work stoppage, computer failure or malfunction, or any and all other commercial damages or losses), even if the XMPP Standards Foundation or such author has been advised of the possibility of such damages.</liability>
+<conformance>This XMPP Extension Protocol has been contributed in full conformance with the XSF's Intellectual Property Rights Policy (a copy of which can be found at &lt;<link url="https://xmpp.org/about/xsf/ipr-policy">https://xmpp.org/about/xsf/ipr-policy</link>&gt; or obtained by writing to XMPP Standards Foundation, P.O. Box 787, Parker, CO 80134 USA).</conformance>
+</legal>
+  <number>XXXX</number>
+  <status>ProtoXEP</status>
+  <type>Standards Track</type>
+  <sig>Standards</sig>
+  <approver>Council</approver>
+  <dependencies>
+    <spec>XEP-0066</spec>
+  </dependencies>
+  <supersedes/>
+  <supersededby/>
+  <shortname>http_online-meetingss</shortname>
+  <author>
+    <firstname>Dele</firstname>
+    <surname>Olajide</surname> 
+    <email>dele@olajide.net</email> 
+    <jid>dele.olajide@igniterealtime.org</jid>
+  </author>
+  <revision>
+    <version>0.0.2</version>
+    <date>2023-08-22</date>
+    <initials>do</initials>
+    <remark>
+      <ul>
+        <li>Remove base URL attribute.</li>
+        <li>Add support for a web-based protocol handler in OOB data result.</li>       
+      </ul>
+    </remark>
+  </revision>  
+  <revision>
+    <version>0.0.1</version>
+    <date>2023-08-21</date>
+    <initials>do</initials>
+    <remark>
+      <ul>
+        <li>Initial version.</li>
+      </ul>
+    </remark>
+  </revision>  
+</header>
+<section1 topic="Introduction" anchor="intro">
+  <p>XMPP protocol extensions already defines a method for initiating peer-to-peer media sessions such as <span class="ref"><link url="https://xmpp.org/extensions/xep-0166.html">Jingle (XEP-0166)</link></span> <note>XEP-0166: Jingle &lt;<link url="https://xmpp.org/extensions/xep-0166.html">https://xmpp.org/extensions/xep-0166.html</link>&gt;.</note> however due to its very nature of being peer-to-peer it does not work very well in scenarios with online meetings. It also does not work alongside offline storage, MUC history and <span class="ref"><link url="https://xmpp.org/extensions/xep-0313.html">Message Archive Management (XEP-0313)</link></span> <note>XEP-0313: Message Archive Management &lt;<link url="https://xmpp.org/extensions/xep-0313.html">https://xmpp.org/extensions/xep-0313.html</link>&gt;.</note>.</p>
+  <p>Using a web browser to manually request a URL from an HTTP server and sharing the link has been a workaround for this for a long time now. While users have a variety of services to choose from, the downside of this manual approach is that an XMPP client can not automate this process on behalf of the user since these services don’t share a common API. Furthermore using a third party service would probably require the user to enter additional credentials into their XMPP client specifically for the meeting invitation URL to be created.</p>
+  <p>This XEP defines an approach to request creation of an online meeting via an HTTP server and receive a URL can be used to join and invite others to the meeting.</p>
+</section1>
+
+<section1 topic="Requirements" anchor="reqs">
+  <ul>
+    <li>Be as easy to implement as possible. This is grounded on the idea that most programming languages already have HTTP libraries available.</li>
+    <li>Be agnostic toward the distribution of the actual URL. Users can choose to send the URL in the body of a message stanza, utilize <span class="ref"><link url="https://xmpp.org/extensions/xep-0066.html">Out-of-Band Data (XEP-0066)</link></span> <note>XEP-0066: Out of Band Data &lt;<link url="https://xmpp.org/extensions/xep-0066.html">https://xmpp.org/extensions/xep-0066.html</link>&gt;.</note>, <span class="ref"><link url="https://xmpp.org/extensions/xep-0370.html">Jingle HTTP Transport Method (XEP-0370)</link></span> <note>XEP-0370: Jingle HTTP Transport Method &lt;<link url="https://xmpp.org/extensions/xep-0370.html">https://xmpp.org/extensions/xep-0370.html</link>&gt;.</note>, or even use it as their avatar in <span class="ref"><link url="https://xmpp.org/extensions/xep-0084.html">User Avatar (XEP-0084)</link></span> <note>XEP-0084: User Avatar &lt;<link url="https://xmpp.org/extensions/xep-0084.html">https://xmpp.org/extensions/xep-0084.html</link>&gt;.</note>.</li>
+    <li>Anyone who knows the URL SHOULD be able to access it.</li>
+  </ul>
+</section1>
+<section1 topic="Discovering Support" anchor="disco">
+<p>An entity advertises support for this protocol by including the "urn:xmpp:http:online-meetings:0" in its service discovery information features as specified in <span class="ref"><link url="https://xmpp.org/extensions/xep-0030.html">Service Discovery (XEP-0030)</link></span> <note>XEP-0030: Service Discovery &lt;<link url="https://xmpp.org/extensions/xep-0030.html">https://xmpp.org/extensions/xep-0030.html</link>&gt;.</note> or section 6.3 of <span class="ref"><link url="https://xmpp.org/extensions/xep-0115.html">Entity Capabilities (XEP-0115)</link></span> <note>XEP-0115: Entity Capabilities &lt;<link url="https://xmpp.org/extensions/xep-0115.html">https://xmpp.org/extensions/xep-0115.html</link>&gt;.</note>.</p>
+<p>A user’s server SHOULD include itself as a services provider for this protocol in its service discovery items.</p>
+<example caption="Client sends service discovery request to server"><![CDATA[
+<iq from='romeo@montague.tld/garden' 
+    id='step_01' 
+    to='montague.tld' type='get'>
+    
+  <query xmlns='http://jabber.org/protocol/disco#info'/>
+</iq>]]>
+</example>
+
+<example caption="Server replies to service discovery request and reports online meeting capability for Jitsi and Galene"><![CDATA[
+<iq from='montague.tld' 
+    id='step_01' 
+    to='romeo@montague.tld/garden' 
+    type='result'>
+    
+  <query xmlns='http://jabber.org/protocol/disco#info'>  
+    <identity category='collaboration'
+              type='jitsi'
+              name='Jitsi Meet' />  
+    <feature var='urn:xmpp:http:online-meetings:0' />
+  </query>
+  
+  <query xmlns='http://jabber.org/protocol/disco#info'>
+    <identity category='collaboration'
+              type='galene'
+              name='Galene Lectures' /> 
+    <feature var='urn:xmpp:http:online-meetings:0' />
+  </query>  
+</iq>]]>
+</example>
+
+</section1>
+<section1 topic="Requesting a URL" anchor="request">
+  <p>A client requests an online new meeting URL by sending an IQ-get to the server containing a &lt;request&gt; child element qualified by the urn:xmpp:http:online-meetings:0 namespace. This element MUST include the attributes type and id specifying the type and identity of the online meeting requested.</p>
+  <p>Additional attributes needed to secure permissions can be specified.</p>
+  <example caption="Client requests an online meeting URL from the server"><![CDATA[
+<iq from='romeo@montague.tld/garden' 
+    id='step_02' 
+    to='montague.tld' 
+    type='get'>
+    
+  <request xmlns='urn:xmpp:http:online-meetings:0' 
+           type='jitsi' 
+           id='my-meeting' />
+</iq>]]></example>
+  <p>The server responds with a <span class="ref"><link url="https://xmpp.org/extensions/xep-0066.html">Out-of-Band Data (XEP-0066)</link></span> <note>XEP-0066: Out of Band Data &lt;<link url="https://xmpp.org/extensions/xep-0066.html">https://xmpp.org/extensions/xep-0066.html</link>&gt;.</note> element. The server MAY specify a web-based protocol handler if available and registered by the user. Otherwise, standard HTTPS protocol will be specified. In any case, the fully resolved URL provided by the host MUST provide Transport Layer Security (<span class="ref"><link url="http://tools.ietf.org/html/rfc5246">RFC 5246</link></span> <note>RFC 5246: The Transport Layer Security (TLS) Protocol Version 1.2 &lt;<link url="http://tools.ietf.org/html/rfc5246">http://tools.ietf.org/html/rfc5246</link>&gt;.</note>). The HTTPS URL MUST adhere to <span class="ref"><link url="http://tools.ietf.org/html/rfc3986">RFC 3986</link></span> <note>RFC 3986: Uniform Resource Identifiers (URI): Generic Syntax &lt;<link url="http://tools.ietf.org/html/rfc3986">http://tools.ietf.org/html/rfc3986</link>&gt;.</note>. Non ASCII characters MUST be percent-encoded.</p>
+  <example caption="The server responds with an out of band URI specifying the jitsi web-based protocol handler"><![CDATA[
+<iq from='montague.tld' 
+    id='step_03' 
+    to='romeo@montague.tld/garden' 
+    type='result'>
+
+  <x xmlns='jabber:x:oob'>
+    <url>web+jitsi:https://meet.jit.si/my-meeting-4ba911a9ab321f2d2acd4e67118d5d</url>
+    <desc>My Online Meeting</desc>
+  </x>
+  
+</iq>]]></example>
+  <example caption="The server responds with an out of band URI using standard HTTPS"><![CDATA[
+<iq from='montague.tld' 
+    id='step_03' 
+    to='romeo@montague.tld/garden' 
+    type='result'>
+
+  <x xmlns='jabber:x:oob'>
+    <url>https://meet.jit.si/my-meeting-4ba911a9ab321f2d2acd4e67118d5d</url>
+    <desc>My Online Meeting</desc>
+  </x>
+  
+</iq>]]></example>
+</section1>
+<section1 topic="Error conditions" anchor="errors">
+  <p>Instead of providing the client with a URL the server MAY respond with an error if the request fails. In addition the HTTP entity MAY inform the requester about the reason for the failure.</p>
+  <example caption="Alternative response by the server if the meeting request fails"><![CDATA[
+<iq from='montague.tld' 
+    id='step_03' 
+    to='romeo@montague.tld/garden' 
+    type='error'>
+    
+  <request xmlns='urn:xmpp:http:online-meetings:0' 
+           id='my-meeting' 
+           url='https://meet.jit.si'  />
+  
+  <error type='modify'>
+    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas' />
+    <text xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>Meeting is in use</text>
+  </error>
+  
+</iq>]]></example>
+<p>For any other type of error the service SHOULD respond with appropriate error types to indicate temporary or permanent errors.</p>
+<p>For temporary errors such as exceeding a personal quota the service MAY include a &lt;retry/&gt; element qualified by the urn:xmpp:http:online-meetings:0 namespace as a child of the &lt;error/&gt; element. The retry element MUST include an attribute 'stamp' which indicates the time at which the requesting entity may try again. The format of the timestamp MUST adhere to the date-time format specified in <span class="ref"><link url="https://xmpp.org/extensions/xep-0082.html">XMPP Date and Time Profiles (XEP-0082)</link></span> <note>XEP-0082: XMPP Date and Time Profiles &lt;<link url="https://xmpp.org/extensions/xep-0082.html">https://xmpp.org/extensions/xep-0082.html</link>&gt;.</note> and MUST be expressed in UTC.</p>
+  <example caption="Alternative response by the server to indicate a temporary error after the client exceeded a quota"><![CDATA[
+<iq from='montague.tld' 
+    id='step_03' 
+    to='romeo@montague.tld/garden' 
+    type='error'>
+    
+  <request xmlns='urn:xmpp:http:online-meetings:0' 
+           id='my-meeting' 
+           url='https://meet.jit.si'  /> 
+  
+  <error type='wait'>
+    <resource-constraint xmlns='urn:ietf:params:xml:ns:xmpp-stanzas' />
+    <text xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>Quota reached. You can only request 5 meetings a day</text>
+    <retry xmlns='urn:xmpp:http:online-meetings:0' stamp='2017-12-03T23:42:05Z' />
+  </error>
+  
+</iq>]]></example>
+<example caption="Alternative response by the server to indicate an auth error to a client that is not allowed to create an online meeting"><![CDATA[
+<iq from='montague.tld' id='step_03' 
+    to='romeo@montague.tld/garden' 
+    type='error'>
+    
+  <request xmlns='urn:xmpp:http:online-meetings:0' 
+           id='my-meeting' 
+           url='https://meet.jit.si'  /> 
+  
+  <error type='auth'>
+    <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas' />
+    <text xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>Only premium members are allowed to create meetings</text>
+  </error>
+  
+</iq>]]></example>
+</section1>
+<section1 topic="Online Meeting" anchor="online-meeting">
+  <p>The actual online meeting engagement with the provided URL is out of scope of this document. The registration, configuration and association of a web-based protocol handler with the XMPP server is also out of scope of this document.</p>
+  <p>There is no further XMPP communication required between the server and the client for this request. A HTTP status Code of 201 means that the remote HTTP server is now ready to host the meeting via the provided URL. If the meeting fails for whatever reasons the client MAY request a new URL.</p>
+</section1>
+<section1 topic="Implementation Notes" anchor="impl">
+  <p>The server SHOULD choose an appropriate timeout for the validity of the URL. Since there is no reason for a client to wait between requesting the URL and joining the meeting via the URL before dispatching invitations, relatively low timeout values of around 300s are RECOMMENDED.</p>
+  <p>To make HTTP Online Meetings work in web clients (including those hosted on a different domain) the server SHOULD set appropriate <link url="https://www.w3.org/TR/cors/">CORS</link>-Headers. The exact headers and values are out of scope of this document but may include: <em>Access-Control-Allow-Origin</em>, <em>Access-Control-Allow-Methods</em> and <em>Access-Control-Allow-Headers</em>. For HTTP Online Meetings that use custom <em>Authorization</em> or <em>Cookie</em> request header the CORS-Header <em>Access-Control-Allow-Credentials</em> might also be of importance.</p>
+<code caption="Example for loose CORS Header"><![CDATA[
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: OPTIONS, HEAD, GET, PUT
+Access-Control-Allow-Headers: Authorization, Content-Type
+Access-Control-Allow-Credentials: true
+]]></code>
+  <p>Clients SHOULD NOT interpret headers and treat them as opaque.</p>
+</section1>
+<section1 topic="Security Considerations" anchor="security">
+  <section2 topic="General" anchor="general">
+    <ul>
+      <li>Service implementors SHOULD use long randomized parts in their URLs making it impossible to guess the location of arbitrary meeting url.</li>
+      <li>Implementors should keep in mind, that without additional end-to-end-encryption, online meetings may not be sercure. Client implementors are advised to either use this only for semi public meetings (for example meetings hosted on a public MUC) or implement appropriate end-to-end encryption.</li>
+      <li>Joining an HTTP Online Meeting will leak the client’s IP address to the HTTP service. The HTTP service might not be the same service as the XMPP service the client is currently connected to.</li>
+  </ul>
+  </section2>
+</section1>
+<section1 topic="IANA Considerations" anchor="iana">
+  <p>This document requires no interaction with the Internet Assigned Numbers Authority (IANA).</p>
+</section1>
+<section1 topic="XMPP Registrar Considerations" anchor="registrar">
+  <section2 topic="Protocol Namespaces" anchor="registrar-ns">
+    <p>This specification defines the following XML namespace:</p>
+    <ul>
+      <li>urn:xmpp:http:online-meetings:0</li>
+    </ul>
+    <p>Upon advancement of this specification from a status of Experimental to a status of Draft, the <span class="ref"><link url="https://xmpp.org/registrar/">XMPP Registrar</link></span> <note>The XMPP Registrar maintains a list of reserved protocol namespaces as well as registries of parameters used in the context of XMPP extension protocols approved by the XMPP Standards Foundation. For further information, see &lt;<link url="https://xmpp.org/registrar/">https://xmpp.org/registrar/</link>&gt;.</note> shall add the foregoing namespace to the registry located at &lt;<link url="https://xmpp.org/registrar/namespaces.html">https://xmpp.org/registrar/namespaces.html</link>&gt;, as described in Section 4 of <span class="ref"><link url="https://xmpp.org/extensions/xep-0053.html">XMPP Registrar Function (XEP-0053)</link></span> <note>XEP-0053: XMPP Registrar Function &lt;<link url="https://xmpp.org/extensions/xep-0053.html">https://xmpp.org/extensions/xep-0053.html</link>&gt;.</note>.</p>
+  </section2>
+</section1>
+<section1 topic="XML Schema" anchor="schema">
+  <code><![CDATA[
+<xml version="1.0" encoding="utf8">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="urn:xmpp:http:online-meetings:0"
+    xmlns="urn:xmpp:http:online-meetings:0">
+  <xs:element name="request">
+    <xs:complexType>
+      <xs:attribute name="id" type="xs:string" use="required"/>
+      <xs:attribute name="type" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="slot">
+    <xs:complexType>
+     <xs:sequence>
+       <xs:element name="put" minOccurs="1" maxOccurs="1">
+         <xs:complexType>
+           <xs:attribute name="url" type="xs:string" use="required"/>
+           <xs:sequence>
+             <xs:element name="header" minOccurs="0" maxOccurs="unbounded" type="xs:string">
+               <xs:complexType>
+                 <xs:attribute name="name" use="required">
+                   <xs:simpleType>
+                     <xs:restriction base="xs:string">
+                       <xs:enumeration value="Authorization"/>
+                       <xs:enumeration value="Cookie"/>
+                       <xs:enumeration value="Expires"/>
+                     </xs:restriction>
+                   </xs:simpleType>
+                 </xs:attribute>
+               </xs:complexType>
+             </xs:element>
+           </xs:sequence>
+         </xs:complexType>
+       </xs:element>
+       <xs:element name="get" minOccurs="1" maxOccurs="1">
+         <xs:complexType>
+           <xs:attribute name="url" type="xs:string" use="required"/>
+         </xs:complexType>
+       </xs:element>
+     </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="retry">
+    <xs:complexType>
+      <xs:attribute name="stamp" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+]]></code>
+</section1>
+</xep>
