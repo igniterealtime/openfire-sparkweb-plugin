@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import javax.xml.bind.DatatypeConverter;
 import java.text.SimpleDateFormat;
+import java.nio.charset.StandardCharsets;
 
 import javax.net.ssl.*;
 import javax.security.auth.callback.*;
@@ -86,6 +87,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 
 import org.ifsoft.openfire.*;
 import org.jivesoftware.spark.plugin.fileupload.*;
+import org.jivesoftware.spark.plugin.onlinemeetings.*;
 
 /**
  * A virtual implementation of {@link XMPPConnection}, intended to be used in
@@ -139,13 +141,14 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
     // -------------------------------------------------------
 
     static {
-        ProviderManager.addIQProvider("slot", UploadRequest.NAMESPACE, new UploadRequest.Provider());
+        ProviderManager.addIQProvider("slot", 			UploadRequest.NAMESPACE, new UploadRequest.Provider());
         ProviderManager.addIQProvider("workgroups",     "http://jabber.org/protocol/workgroup", new AgentWorkgroups.Provider());
         ProviderManager.addIQProvider("agent-info",     "http://jabber.org/protocol/workgroup", new AgentInfo.Provider());
         ProviderManager.addIQProvider("offer",          "http://jabber.org/protocol/workgroup", new OfferRequestProvider());
         ProviderManager.addIQProvider("offer-revoke",   "http://jabber.org/protocol/workgroup", new OfferRevokeProvider());
         ProviderManager.addIQProvider("transcript",     "http://jabber.org/protocol/workgroup", new TranscriptProvider());
         ProviderManager.addIQProvider("transcripts",    "http://jabber.org/protocol/workgroup", new TranscriptsProvider());
+        ProviderManager.addIQProvider("x", 				"jabber:x:oob", new OnlineMeetingRequest.Provider());
 
         ProviderManager.addIQProvider(WorkgroupForm.ELEMENT_NAME, WorkgroupForm.NAMESPACE, new WorkgroupForm.InternalProvider());
 
@@ -970,6 +973,64 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
         return new AssistQueues(queues);
     }
 
+    // -------------------------------------------------------
+    //
+    // Online Meetings
+    //
+    // -------------------------------------------------------
+
+    public JSONObject getJitsiMeetRequest(String id) throws XMPPException {
+        Log.debug("getUploadRequest " + id );
+
+        JSONObject resp = new JSONObject();
+        String errorMsg = null;
+
+        try {
+            OnlineMeetingRequest request = new OnlineMeetingRequest(id, "urn:xmpp:http:online-meetings:jitsi:0");
+            request.setTo(JidCreate.fromOrThrowUnchecked(domain));
+            request.setType(IQ.Type.get);
+			
+			IQ result = this.createStanzaCollectorAndSend(request).nextResultOrThrow();
+			OnlineMeetingRequest response = (OnlineMeetingRequest) result;
+			String url = URLDecoder.decode(response.url, StandardCharsets.UTF_8.toString());
+			Log.debug("handleUpload response: url=" + url);
+
+			resp.put("url", url);
+			return resp;
+			
+        } catch (Exception e) {
+            Log.error("getJitsiMeetRequest error", e);
+            resp.put("error", e.toString());
+            return resp;
+        }
+    }
+
+    public JSONObject getGaleneRequest(String id) throws XMPPException {
+        Log.debug("getUploadRequest " + id );
+
+        JSONObject resp = new JSONObject();
+        String errorMsg = null;
+
+        try {
+            OnlineMeetingRequest request = new OnlineMeetingRequest(id, "urn:xmpp:http:online-meetings:galene:0");
+            request.setTo(JidCreate.fromOrThrowUnchecked(domain));
+            request.setType(IQ.Type.get);
+			
+			IQ result = this.createStanzaCollectorAndSend(request).nextResultOrThrow();
+			OnlineMeetingRequest response = (OnlineMeetingRequest) result;
+			String url = URLDecoder.decode(response.url, StandardCharsets.UTF_8.toString());
+			Log.debug("handleUpload response: url=" + url);
+
+			resp.put("url", url);
+			return resp;
+			
+        } catch (Exception e) {
+            Log.error("getGaleneRequest error", e);
+            resp.put("error", e.toString());
+            return resp;
+        }
+    }
+	
     // -------------------------------------------------------
     //
     // Upload

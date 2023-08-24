@@ -133,7 +133,7 @@ public class SparkWebAPI {
 	//-------------------------------------------------------
 
 	@ApiOperation(tags = {"User Management"}, value="Get users", notes="Retrieve all users defined in Openfire (with optional filtering).")	
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "A list of Openfire users.")})
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "A list of Openfire users.", response = UserEntities.class)})
     @Path("/users")
     @GET
     public UserEntities getUsers(@ApiParam(value = "Search/Filter by username. This act like the wildcard search %String%", required = false) @QueryParam("search") String userSearch, @ApiParam(value = "Filter by a user property name.", required = false) @QueryParam("propertyKey") String propertyKey, @ApiParam(value = "Filter by user property value. Note: This can only be used in combination with a property name parameter", required = false) @QueryParam("propertyValue") String propertyValue) throws ServiceException {
@@ -141,7 +141,7 @@ public class SparkWebAPI {
     }
 
 	@ApiOperation(tags = {"User Management"}, value="Get authenticated user", notes="Retrieve a user that is defined in Openfire.")		
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "The Openfire user was retrieved."), @ApiResponse(code = 404, message = "No user with that username was found.") })	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The Openfire user was retrieved.", response = UserEntity.class), @ApiResponse(code = 404, message = "No user with that username was found.") })	
     @Path("/user")
     @GET
     public UserEntity getUser() throws ServiceException    {
@@ -170,7 +170,7 @@ public class SparkWebAPI {
     }	
 
 	@ApiOperation(tags = {"User Management"}, value="Get user's groups", notes="Retrieve names of all groups that a particular user is in.")		
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "The names of the groups that the user is in.") })	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The names of the groups that the user is in.", response = UserGroupsEntity.class) })	
     @Path("/user/groups")
     @GET
     public UserGroupsEntity getUserGroups() throws ServiceException    {
@@ -225,7 +225,7 @@ public class SparkWebAPI {
 	//-------------------------------------------------------
 	
 	@ApiOperation(tags = {"Contact Management"}, value="Retrieve user roster", notes="Get a list of all roster entries (buddies / contact list) of a authenticated user.")	
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "All roster entries"), @ApiResponse(code = 404, message = "No user with that username was found.") })	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "All roster entries", response = RosterEntities.class), @ApiResponse(code = 404, message = "No user with that username was found.") })	
     @Path("/roster")
     @GET
     public RosterEntities getUserRoster() throws ServiceException {
@@ -293,7 +293,7 @@ public class SparkWebAPI {
 	//-------------------------------------------------------
 
 	@ApiOperation(tags = {"Chat"}, value="Get chat messages", notes="Retrieves chat messages from Openfire messages archive")	
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "The messages were retrieved."), @ApiResponse(code = 400, message = "The messages could not be retrieved.")})	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The messages were retrieved.", response = Conversations.class), @ApiResponse(code = 400, message = "The messages could not be retrieved.")})	
     @Path("/chat/messages")
     @GET
     public Conversations getChatConversations(@ApiParam(value = "Search keywords", required = false) @QueryParam("keywords") String keywords, @ApiParam(value = "The message target", required = false) @QueryParam("to") String to, @ApiParam(value = "The start date in MM/dd/yy format", required = false) @QueryParam("start") String start, @ApiParam(value = "The end date in MM/dd/yy format", required = false) @QueryParam("end") String end ) throws ServiceException   {
@@ -355,7 +355,7 @@ public class SparkWebAPI {
     //-------------------------------------------------------
 
 	@ApiOperation(tags = {"Group Chat"}, value="Get groupchat messages", notes="Retrieves chat groupchat messages from Openfire messages archive")	
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "The messages were retrieved."), @ApiResponse(code = 400, message = "The messages could not be retrieved.")})	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The messages were retrieved.", response = Conversations.class), @ApiResponse(code = 400, message = "The messages could not be retrieved.")})	
     @Path("/groupchat/messages")
     @GET
     public Conversations getGroupChatConversations(@ApiParam(value = "Search keywords", required = false) @QueryParam("keywords") String keywords, @ApiParam(value = "The start date in MM/dd/yy format", required = false) @QueryParam("start") String start, @ApiParam(value = "The end date in MM/dd/yy format", required = false) @QueryParam("end") String end, @ApiParam(value = "The groupchat room used", required = false) @QueryParam("room") String room, @ApiParam(value = "The groupchat service name", required = false) @DefaultValue("conference") @QueryParam("service") String service) throws ServiceException   {
@@ -363,7 +363,7 @@ public class SparkWebAPI {
     }
 	
 	@ApiOperation(tags = {"Group Chat"}, value="Get chat rooms", notes="Get a list of all multi-user chat rooms of a particular chat room service.")	
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "All chat rooms."), @ApiResponse(code = 404, message = "MUC service does not exist or is not accessible.")})	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "All chat rooms.", response = MUCRoomEntities.class), @ApiResponse(code = 404, message = "MUC service does not exist or is not accessible.")})	
     @Path("/groupchat/rooms")
     @GET
     public MUCRoomEntities getMUCRooms(@ApiParam(value = "The name of the MUC service for which to return all chat rooms.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName, @ApiParam(value = "Room type-based filter: 'all' or 'public'", required = false) @DefaultValue(MUCChannelType.PUBLIC) @QueryParam("type") String channelType, @ApiParam(value = "Search/Filter by room name.\nThis act like the wildcard search %String%", required = false) @QueryParam("search") String roomSearch, @ApiParam(value = "For all groups defined in owners, admins, members and outcasts, list individual members instead of the group name.", required = false) @DefaultValue("false") @QueryParam("expandGroups") Boolean expand)  throws ServiceException   {
@@ -371,7 +371,7 @@ public class SparkWebAPI {
     }
 
 	@ApiOperation(tags = {"Group Chat"}, value="Get chat room", notes="Get information of a specific multi-user chat room.")	
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat room"), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat room", response = MUCRoomEntity.class), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
     @Path("/groupchat/room/{roomName}")
     @GET
     public MUCRoomEntity getMUCRoomJSON2(@ApiParam(value = "The name of the MUC room", required = true) @PathParam("roomName") String roomName, @ApiParam(value = "The name of the MUC service.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName, @ApiParam(value = "For all groups defined in owners, admins, members and outcasts, list individual members instead of the group name.", required = false) @DefaultValue("false") @QueryParam("expandGroups") Boolean expand) throws ServiceException    {
@@ -388,7 +388,7 @@ public class SparkWebAPI {
     }
 
 	@ApiOperation(tags = {"Group Chat"}, value="Get room occupants", notes="Get all occupants of a specific multi-user chat room.")	
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat room occupants"), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat room occupants", response = OccupantEntities.class), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
     @Path("/groupchat/room/{roomName}/occupants")
     @GET
     public OccupantEntities getMUCRoomOccupants(@ApiParam(value = "The name of the MUC room", required = true) @PathParam("roomName") String roomName, @ApiParam(value = "The name of the MUC service.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName)  throws ServiceException   {
@@ -396,7 +396,7 @@ public class SparkWebAPI {
     }
 
 	@ApiOperation(tags = {"Group Chat"}, value="Get room history", notes="Get messages that have been exchanged in a specific multi-user chat room.")	
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat room message history"), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat room message history", response = MUCRoomMessageEntities.class), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible.")})	
     @Path("/groupchat/room/{roomName}/chathistory")
     @GET
     public MUCRoomMessageEntities getMUCRoomHistory(@ApiParam(value = "The name of the MUC room", required = true) @PathParam("roomName") String roomName, @ApiParam(value = "The name of the MUC service.", required = false) @DefaultValue("conference") @QueryParam("serviceName") String serviceName)  throws ServiceException  {
@@ -515,6 +515,41 @@ public class SparkWebAPI {
 	//
 	//-------------------------------------------------------
 
+	@ApiOperation(tags = {"Collaboration"}, value="Request meeting URL", notes="Request for online meeting URL needed to join and share with other users.")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The request was accepted.", response = OnlineMeetingEntity.class), @ApiResponse(code = 400, message = "The meeting url request failed.")})	
+    @Path("/meet/{service}/{id}")
+    @GET
+    public OnlineMeetingEntity onlineMeetingRequest(@ApiParam(value = "The online meeting service required Only 'jitsi' and 'galene' are supported.", required = true) @PathParam("service") String service, @ApiParam(value = "The online meeting room, group or identity requested for.", required = true) @PathParam("id") String id) throws ServiceException  {
+		String username = getEndUser();	
+        try {
+            OpenfireConnection connection = OpenfireConnection.getConnection(username);
+
+            if (connection == null) {
+                throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+			
+            JSONObject response = null;
+			
+			if ("jitsi".equals(service)) {
+				response = connection.getJitsiMeetRequest(id);
+			}
+			else
+
+			if ("galene".equals(service)) {
+				response = connection.getGaleneRequest(id);
+			}				
+
+            if (response == null || response.has("error")) {
+                throw new ServiceException("Exception", response.getString("error"), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+            return new OnlineMeetingEntity(response.getString("url"));
+
+        } catch (Exception e) {
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+    }
+	
 	@ApiOperation(tags = {"Collaboration"}, value="Request file upload", notes="Request for GET and PUT URLs needed to upload and share a file with other users.")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The request was accepted."), @ApiResponse(code = 400, message = "The upload request failed.")})	
     @Path("/upload/{fileName}/{fileSize}")
@@ -577,7 +612,7 @@ public class SparkWebAPI {
 	//-------------------------------------------------------
 
 	@ApiOperation(tags = {"Presence"}, value="Get contacts presence", notes="Retrieve a list of all roster entries (buddies / contact list) with presence of a authenticated user.")	
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "All roster entries with presence"), @ApiResponse(code = 400, message = "No xmpp connection found for authenticated user.") })	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "All roster entries with presence", response = RosterEntities.class), @ApiResponse(code = 400, message = "No xmpp connection found for authenticated user.") })	
     @Path("/presence/roster")
     @GET
     public RosterEntities getUserRosterWithPresence() throws ServiceException {
@@ -597,7 +632,7 @@ public class SparkWebAPI {
     }
 	
 	@ApiOperation(tags = {"Presence"}, value="Probe a target user presence", notes="Request the presence of an specific user")	
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "Presence of user requested"), @ApiResponse(code = 400, message = "No xmpp connection found for authenticated user or authenticated user is not premitted to probe user presence.") })	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Presence of user requested", response = PresenceEntity.class), @ApiResponse(code = 400, message = "No xmpp connection found for authenticated user or authenticated user is not premitted to probe user presence.") })	
     @Path("/presence/{target}")
     @GET
     public PresenceEntity probePresence(@ApiParam(value = "The username to be probed.", required = true) @PathParam("target") String target) throws ServiceException {

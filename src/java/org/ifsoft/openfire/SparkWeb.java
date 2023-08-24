@@ -152,6 +152,9 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 	
 	private long startTime = System.currentTimeMillis();
     private WebAppContext context;
+	private XMPPServer server;
+    private JitsiIQHandler jitsiIQHandler;	
+    private GaleneIQHandler galeneIQHandler;	
     private MultiUserChatService mucService;		
 	
     public Map<String, ArrayList<WebEventSourceServlet.WebEventSource>> webSources;		
@@ -172,7 +175,13 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 			
 			ClusterManager.removeListener(this);
             MUCEventDispatcher.removeListener(this);
-			InterceptorManager.getInstance().removeInterceptor(this);					
+			InterceptorManager.getInstance().removeInterceptor(this);
+
+            server.getIQRouter().removeHandler(jitsiIQHandler);
+			jitsiIQHandler.stopHandler();
+
+            server.getIQRouter().removeHandler(galeneIQHandler);
+			galeneIQHandler.stopHandler();		
 		
 		} catch (Exception e) {
 			Log.error(e.getMessage(), e);
@@ -181,7 +190,7 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 
     public void initializePlugin(final PluginManager manager, final File pluginDirectory) {
         self = this;
-		XMPPServer server = XMPPServer.getInstance();
+		server = XMPPServer.getInstance();
 		userManager = server.getUserManager();
 		presenceManager = server.getPresenceManager();
 		
@@ -190,7 +199,8 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 		
 		InterceptorManager.getInstance().addInterceptor(this);
 		ClusterManager.addListener(this);
-        MUCEventDispatcher.addListener(this);	
+        MUCEventDispatcher.addListener(this);
+
 		mucService = server.getMultiUserChatManager().getMultiUserChatService(MUC_NAME);
 
 		try {
@@ -200,7 +210,17 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 			
 		} catch (Exception e) {
 			Log.error("initializePlugin", e);
-		}
+		}		
+		
+		galeneIQHandler = new GaleneIQHandler();
+		galeneIQHandler.startHandler();		
+		XMPPServer.getInstance().getIQRouter().addHandler(galeneIQHandler);	
+		XMPPServer.getInstance().getIQDiscoInfoHandler().addServerFeature("urn:xmpp:http:online-meetings:galene:0");			
+
+		jitsiIQHandler = new JitsiIQHandler();
+		jitsiIQHandler.startHandler();		
+		server.getIQRouter().addHandler(jitsiIQHandler);	
+		server.getIQDiscoInfoHandler().addServerFeature("urn:xmpp:http:online-meetings:jitsi:0");					
 
 		Log.info("SparkWeb plugin enabled");
 		startTime = System.currentTimeMillis();
@@ -351,7 +371,7 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
                 PushService pushService = new PushService()
                     .setPublicKey(publicKey)
                     .setPrivateKey(privateKey)
-                    .setSubject("mailto:admin@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+                    .setSubject("mailto:admin@" + server.getServerInfo().getXMPPDomain());
 
                 Log.debug("postWebPush keys \n"  + publicKey + "\n" + privateKey);
 
@@ -459,11 +479,11 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 
 		String username = user.getUsername();	
 		jwtPayload.put("sub", username);
-		jwtPayload.put("aud", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+		jwtPayload.put("aud", server.getServerInfo().getXMPPDomain());
 		jwtPayload.put("permissions", permissions);			
 		jwtPayload.put("iat", iat.toEpochSecond(ZoneOffset.UTC));
 		jwtPayload.put("exp", ldt.toEpochSecond(ZoneOffset.UTC));
-		jwtPayload.put("iss", "https://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + JiveGlobals.getProperty("httpbind.port.secure", "7443"));			
+		jwtPayload.put("iss", "https://" + server.getServerInfo().getHostname() + ":" + JiveGlobals.getProperty("httpbind.port.secure", "7443"));			
 				
 		String token = new JWebToken(jwtPayload).toString();	
 		tokens.put(token, user);
@@ -496,7 +516,7 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 		String response = null;
 		
 		try {
-			JID jid = XMPPServer.getInstance().createJID(username, null);
+			JID jid = server.createJID(username, null);
 			ArrayList<String> groups = new ArrayList<String>();
 			
 			if (roster.isRosterItem(jid) == false) {
@@ -529,8 +549,8 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
         Log.debug("checkNatives galene executable path " + path);
     }
 	
-    public static String getIpAddress()  {
-        String ourHostname = XMPPServer.getInstance().getServerInfo().getHostname();
+    public String getIpAddress()  {
+        String ourHostname = server.getServerInfo().getHostname();
         String ourIpAddress = "127.0.0.1";
 
         try {

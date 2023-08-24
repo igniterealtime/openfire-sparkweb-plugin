@@ -65,7 +65,7 @@
   </ul>
 </section1>
 <section1 topic="Discovering Support" anchor="disco">
-<p>An entity advertises support for this protocol by including the "urn:xmpp:http:online-meetings:0" in its service discovery information features as specified in <span class="ref"><link url="https://xmpp.org/extensions/xep-0030.html">Service Discovery (XEP-0030)</link></span> <note>XEP-0030: Service Discovery &lt;<link url="https://xmpp.org/extensions/xep-0030.html">https://xmpp.org/extensions/xep-0030.html</link>&gt;.</note> or section 6.3 of <span class="ref"><link url="https://xmpp.org/extensions/xep-0115.html">Entity Capabilities (XEP-0115)</link></span> <note>XEP-0115: Entity Capabilities &lt;<link url="https://xmpp.org/extensions/xep-0115.html">https://xmpp.org/extensions/xep-0115.html</link>&gt;.</note>.</p>
+<p>An entity advertises support for this protocol by including the "urn:xmpp:http:online-meetings:xxxxxx:0" (where xxxxx is the name of the meeting service) in its service discovery information features as specified in <span class="ref"><link url="https://xmpp.org/extensions/xep-0030.html">Service Discovery (XEP-0030)</link></span> <note>XEP-0030: Service Discovery &lt;<link url="https://xmpp.org/extensions/xep-0030.html">https://xmpp.org/extensions/xep-0030.html</link>&gt;.</note> or section 6.3 of <span class="ref"><link url="https://xmpp.org/extensions/xep-0115.html">Entity Capabilities (XEP-0115)</link></span> <note>XEP-0115: Entity Capabilities &lt;<link url="https://xmpp.org/extensions/xep-0115.html">https://xmpp.org/extensions/xep-0115.html</link>&gt;.</note>.</p>
 <p>A user’s server SHOULD include itself as a services provider for this protocol in its service discovery items.</p>
 <example caption="Client sends service discovery request to server"><![CDATA[
 <iq from='romeo@montague.tld/garden' 
@@ -82,25 +82,19 @@
     to='romeo@montague.tld/garden' 
     type='result'>
     
-  <query xmlns='http://jabber.org/protocol/disco#info'>  
-    <identity category='collaboration'
-              type='jitsi'
-              name='Jitsi Meet' />  
-    <feature var='urn:xmpp:http:online-meetings:0' />
-  </query>
-  
-  <query xmlns='http://jabber.org/protocol/disco#info'>
-    <identity category='collaboration'
-              type='galene'
-              name='Galene Lectures' /> 
-    <feature var='urn:xmpp:http:online-meetings:0' />
+  <query xmlns='http://jabber.org/protocol/disco#info'>   
+    <identity category='server'
+              type='im'
+              name='Openfire Server' />   
+    <feature var='urn:xmpp:http:online-meetings:jitsi:0' /> 
+    <feature var='urn:xmpp:http:online-meetings:galene:0' />	
   </query>  
 </iq>]]>
 </example>
 
 </section1>
 <section1 topic="Requesting a URL" anchor="request">
-  <p>A client requests an online new meeting URL by sending an IQ-get to the server containing a &lt;request&gt; child element qualified by the urn:xmpp:http:online-meetings:0 namespace. This element MUST include the attributes type and id specifying the type and identity of the online meeting requested.</p>
+  <p>A client requests an online new meeting URL by sending an IQ-get to the server containing a &lt;request&gt; child element qualified by the urn:xmpp:http:online-meetings:jitsi:0 or urn:xmpp:http:online-meetings:galene:0 namespace. This element MUST include the id attribute specifying the identity of the online meeting requested.</p>
   <p>Additional attributes needed to secure permissions can be specified.</p>
   <example caption="Client requests an online meeting URL from the server"><![CDATA[
 <iq from='romeo@montague.tld/garden' 
@@ -108,7 +102,7 @@
     to='montague.tld' 
     type='get'>
     
-  <request xmlns='urn:xmpp:http:online-meetings:0' 
+  <request xmlns='urn:xmpp:http:online-meetings:jitsi:0' 
            type='jitsi' 
            id='my-meeting' />
 </iq>]]></example>
@@ -146,7 +140,7 @@
     to='romeo@montague.tld/garden' 
     type='error'>
     
-  <request xmlns='urn:xmpp:http:online-meetings:0' 
+  <request xmlns='urn:xmpp:http:online-meetings:jitsi:0' 
            id='my-meeting' 
            url='https://meet.jit.si'  />
   
@@ -157,21 +151,21 @@
   
 </iq>]]></example>
 <p>For any other type of error the service SHOULD respond with appropriate error types to indicate temporary or permanent errors.</p>
-<p>For temporary errors such as exceeding a personal quota the service MAY include a &lt;retry/&gt; element qualified by the urn:xmpp:http:online-meetings:0 namespace as a child of the &lt;error/&gt; element. The retry element MUST include an attribute 'stamp' which indicates the time at which the requesting entity may try again. The format of the timestamp MUST adhere to the date-time format specified in <span class="ref"><link url="https://xmpp.org/extensions/xep-0082.html">XMPP Date and Time Profiles (XEP-0082)</link></span> <note>XEP-0082: XMPP Date and Time Profiles &lt;<link url="https://xmpp.org/extensions/xep-0082.html">https://xmpp.org/extensions/xep-0082.html</link>&gt;.</note> and MUST be expressed in UTC.</p>
+<p>For temporary errors such as exceeding a personal quota the service MAY include a &lt;retry/&gt; element qualified by the urn:xmpp:http:online-meetings:jitsi:0 namespace as a child of the &lt;error/&gt; element. The retry element MUST include an attribute 'stamp' which indicates the time at which the requesting entity may try again. The format of the timestamp MUST adhere to the date-time format specified in <span class="ref"><link url="https://xmpp.org/extensions/xep-0082.html">XMPP Date and Time Profiles (XEP-0082)</link></span> <note>XEP-0082: XMPP Date and Time Profiles &lt;<link url="https://xmpp.org/extensions/xep-0082.html">https://xmpp.org/extensions/xep-0082.html</link>&gt;.</note> and MUST be expressed in UTC.</p>
   <example caption="Alternative response by the server to indicate a temporary error after the client exceeded a quota"><![CDATA[
 <iq from='montague.tld' 
     id='step_03' 
     to='romeo@montague.tld/garden' 
     type='error'>
     
-  <request xmlns='urn:xmpp:http:online-meetings:0' 
+  <request xmlns='urn:xmpp:http:online-meetings:jitsi:0' 
            id='my-meeting' 
            url='https://meet.jit.si'  /> 
   
   <error type='wait'>
     <resource-constraint xmlns='urn:ietf:params:xml:ns:xmpp-stanzas' />
     <text xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>Quota reached. You can only request 5 meetings a day</text>
-    <retry xmlns='urn:xmpp:http:online-meetings:0' stamp='2017-12-03T23:42:05Z' />
+    <retry xmlns='urn:xmpp:http:online-meetings:jitsi:0' stamp='2017-12-03T23:42:05Z' />
   </error>
   
 </iq>]]></example>
@@ -180,7 +174,7 @@
     to='romeo@montague.tld/garden' 
     type='error'>
     
-  <request xmlns='urn:xmpp:http:online-meetings:0' 
+  <request xmlns='urn:xmpp:http:online-meetings:jitsi:0' 
            id='my-meeting' 
            url='https://meet.jit.si'  /> 
   
@@ -220,9 +214,10 @@ Access-Control-Allow-Credentials: true
 </section1>
 <section1 topic="XMPP Registrar Considerations" anchor="registrar">
   <section2 topic="Protocol Namespaces" anchor="registrar-ns">
-    <p>This specification defines the following XML namespace:</p>
+    <p>This specification defines the following XML namespaces:</p>
     <ul>
-      <li>urn:xmpp:http:online-meetings:0</li>
+      <li>urn:xmpp:http:online-meetings:jitsi:0</li>
+      <li>urn:xmpp:http:online-meetings:galene:0</li>	  
     </ul>
     <p>Upon advancement of this specification from a status of Experimental to a status of Draft, the <span class="ref"><link url="https://xmpp.org/registrar/">XMPP Registrar</link></span> <note>The XMPP Registrar maintains a list of reserved protocol namespaces as well as registries of parameters used in the context of XMPP extension protocols approved by the XMPP Standards Foundation. For further information, see &lt;<link url="https://xmpp.org/registrar/">https://xmpp.org/registrar/</link>&gt;.</note> shall add the foregoing namespace to the registry located at &lt;<link url="https://xmpp.org/registrar/namespaces.html">https://xmpp.org/registrar/namespaces.html</link>&gt;, as described in Section 4 of <span class="ref"><link url="https://xmpp.org/extensions/xep-0053.html">XMPP Registrar Function (XEP-0053)</link></span> <note>XEP-0053: XMPP Registrar Function &lt;<link url="https://xmpp.org/extensions/xep-0053.html">https://xmpp.org/extensions/xep-0053.html</link>&gt;.</note>.</p>
   </section2>
@@ -231,8 +226,8 @@ Access-Control-Allow-Credentials: true
   <code><![CDATA[
 <xml version="1.0" encoding="utf8">
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-    targetNamespace="urn:xmpp:http:online-meetings:0"
-    xmlns="urn:xmpp:http:online-meetings:0">
+    targetNamespace="urn:xmpp:http:online-meetings:jitsi:0"
+    xmlns="urn:xmpp:http:online-meetings:jitsi:0">
   <xs:element name="request">
     <xs:complexType>
       <xs:attribute name="id" type="xs:string" use="required"/>
