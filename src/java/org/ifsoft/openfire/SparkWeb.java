@@ -72,6 +72,7 @@ import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.plugin.rest.BasicAuth;
 import org.jivesoftware.openfire.plugin.spark.*;
+import org.jivesoftware.openfire.plugin.rest.entity.*;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
@@ -135,7 +136,8 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 
 import org.jsoup.Jsoup;
-
+import nl.martijndwars.webpush.Utils;
+import nl.martijndwars.webpush.*;
 
 public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, MUCEventListener, PacketInterceptor
 {
@@ -321,6 +323,63 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
     //
     // -------------------------------------------------------		
 
+    public boolean postWebPush(User user, NotificationEntity notificationEntity) {
+		Log.debug("postWebPush " + user.getName() + "\n" + notificationEntity.getBody());
+
+        try {
+			String token = null;
+			OpenfireConnection connection = OpenfireConnection.users.get(user.getUsername());
+			
+			if (connection != null) token = connection.token;			
+			if (token == null) token = makeAccessToken(user);
+			
+			notificationEntity.setToken(token);
+			
+			String payload = (new Gson()).toJson(notificationEntity);
+			boolean ok = true;
+			
+			String publicKey = user.getProperties().get("vapid.public.key");
+			String privateKey = user.getProperties().get("vapid.private.key");
+
+			if (publicKey == null || privateKey == null) {
+				publicKey = JiveGlobals.getProperty("vapid.public.key", null);
+				privateKey = JiveGlobals.getProperty("vapid.private.key", null);
+			}
+
+
+            if (publicKey != null && privateKey != null) {
+                PushService pushService = new PushService()
+                    .setPublicKey(publicKey)
+                    .setPrivateKey(privateKey)
+                    .setSubject("mailto:admin@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+
+                Log.debug("postWebPush keys \n"  + publicKey + "\n" + privateKey);
+
+                for (String key : user.getProperties().keySet())
+                {
+                    if (key.startsWith("webpush.subscribe.")) {
+                        try {
+                            Subscription subscription = new Gson().fromJson(user.getProperties().get(key), Subscription.class);
+                            Notification notification = new Notification(subscription, payload);
+                            HttpResponse response = pushService.send(notification);
+                            int statusCode = response.getStatusLine().getStatusCode();
+
+							Log.debug("postWebPush delivery response "  + statusCode + "\n" + response);
+                            ok = ok && (200 == statusCode) || (201 == statusCode);
+							return ok;
+							
+                        } catch (Exception e) {
+                            Log.error("postWebPush failed "  + user.getUsername() + "\n" + payload, e);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e1) {
+            Log.error("postWebPush failed "+ e1, e1);
+        }
+        return false;
+    }
+
 	public void broadcast(String username, String topic, String event) {
 		if ((event.startsWith("{") || event.startsWith("[")) && (event.endsWith("]") || event.endsWith("}"))) {
 			emitEvent(username, topic, new JSONObject(event));
@@ -408,7 +467,7 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 				
 		String token = new JWebToken(jwtPayload).toString();	
 		tokens.put(token, user);
-		OpenfireConnection.createConnection(username);		
+		OpenfireConnection.createConnection(username, token);		
 		return token;
 	}
 	

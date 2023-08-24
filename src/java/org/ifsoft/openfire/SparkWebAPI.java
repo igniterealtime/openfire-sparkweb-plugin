@@ -930,7 +930,7 @@ public class SparkWebAPI {
 
 	@ApiOperation(tags = {"Web Push"}, value="Web Push - Store web push subscription for this user", notes="This endpoint is used to save a subscription created by a web client for this user")
     @Path("/webpush/subscribe/{resource}")	
-    @POST
+    @PUT
     public Response postWebPushSubscription(@ApiParam(value = "A resource name to tag the subscription", required = true) @PathParam("resource") String resource, @ApiParam(value = "The subscription as created by the web client", required = true) String subscription) throws ServiceException {
 		String username = getEndUser();
         Log.debug("postWebPushSubscription " + username + " " + resource + "\n" + subscription);
@@ -945,67 +945,58 @@ public class SparkWebAPI {
         return Response.status(Response.Status.BAD_REQUEST).build();
     }	
 
-	@ApiOperation(tags = {"Web Push"}, value="Web Push - Send a text message to all subscriptions of another user", notes="This endpoint is used to push a message with a payload to all subscriptions of the specified user")	
+	@ApiOperation(tags = {"Web Push"}, value="Web Push - Send a notification to all subscriptions of another user", notes="This endpoint is used to push a notification to all subscriptions of the specified user")	
     @POST
-    @Path("/webpush/publish/{target}")
-    public Response postWebPush(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("target") String target, @ApiParam(value = "The text message to be pushed to the user", required = true) String text) throws ServiceException {
+    @Path("/webpush/notify/{target}")
+    public Response postWebPushNotification(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("target") String target, @ApiParam(value = "The notification to be pushed to the user", required = true) NotificationEntity notification) throws ServiceException {
 		String username = getEndUser(); 
-		Log.debug("postWebPush " + username + " " + target + "\n" + text);
+		Log.debug("postWebPush " + username + " " + target + "\n" + notification.getBody());
 
+		User self = SparkWeb.self.getUser(username);
         User user = SparkWeb.self.getUser(target);
         
-		if (user == null) {
+		if (user == null || self == null) {
 			return Response.status(Response.Status.BAD_REQUEST).build();
 		}
-		
-		JSONObject payload = new JSONObject();
-		payload.put("subject", username);
-		payload.put("body", text);
-		
-        boolean ok = true;
-        String publicKey = user.getProperties().get("vapid.public.key");
-        String privateKey = user.getProperties().get("vapid.private.key");
 
-        if (publicKey == null || privateKey == null) {
-			publicKey = JiveGlobals.getProperty("vapid.public.key", null);
-			privateKey = JiveGlobals.getProperty("vapid.private.key", null);
+		if (SparkWeb.self.postWebPush(user, notification)) {
+			return Response.status(Response.Status.OK).build();	
+		}	
+
+        return Response.status(Response.Status.BAD_REQUEST).build();
+    }
+	
+	@ApiOperation(tags = {"Web Push"}, value="Web Push - Send a text message to all subscriptions of another user", notes="This endpoint is used to push a text message to all subscriptions of the specified user")	
+    @POST
+    @Path("/webpush/message/{target}")
+    public Response postWebPushText(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("target") String target, @ApiParam(value = "The text message to be pushed to the user", required = true) String text) throws ServiceException {
+		String username = getEndUser(); 
+		Log.debug("postWebPush " + username + " " + target + "\n" + text);
+		
+		if (sendWebPushMessage(username, target, text)) {
+			return Response.status(Response.Status.OK).build();	
 		}
-
-        try {
-            if (publicKey != null && privateKey != null) {
-                PushService pushService = new PushService()
-                    .setPublicKey(publicKey)
-                    .setPrivateKey(privateKey)
-                    .setSubject("mailto:admin@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain());
-
-                Log.debug("postWebPush keys \n"  + publicKey + "\n" + privateKey);
-
-                for (String key : user.getProperties().keySet())
-                {
-                    if (key.startsWith("webpush.subscribe.")) {
-                        try {
-                            Subscription subscription = new Gson().fromJson(user.getProperties().get(key), Subscription.class);
-                            Notification notification = new Notification(subscription, payload.toString());
-                            HttpResponse response = pushService.send(notification);
-                            int statusCode = response.getStatusLine().getStatusCode();
-
-							Log.debug("postWebPush delivery response "  + statusCode + "\n" + response);
-                            ok = ok && (200 == statusCode) || (201 == statusCode);
-
-							if (ok) {
-								return Response.status(Response.Status.BAD_REQUEST).build();
-							}		
-                        } catch (Exception e) {
-                            Log.error("postWebPush failed "  + target + "\n" + payload, e);
-                        }
-                    }
-                }
-            }
-        } catch (Exception e1) {
-            Log.error("postWebPush failed "+ e1, e1);
-        }
+		
         return Response.status(Response.Status.BAD_REQUEST).build();
     }	
+
+	@ApiOperation(tags = {"Web Push"}, value="Web Push - Send a notification action", notes="This endpoint is used to post the user action of a web push notification")	
+    @POST
+    @Path("/webpush/action")
+    public Response handleNotificationAction(@ApiParam(value = "A notification action", required = true)  NotificationActionEntity notificationAction) throws ServiceException {
+		String username = getEndUser(); 
+		//String payload = (new Gson()).toJson(notificationAction);		
+		Log.debug("handleNotificationAction " + username + " " + notificationAction.getAction() + " " + notificationAction.getValue());		
+
+		if ("webpush.message".equals(notificationAction.getAction())) 
+		{			
+			if (sendWebPushMessage(username, notificationAction.getData(), notificationAction.getValue())) {
+				return Response.status(Response.Status.OK).build();	
+			}
+		}
+		
+		return Response.status(Response.Status.BAD_REQUEST).build();		
+    }
 	
 	//-------------------------------------------------------
     //
@@ -1126,9 +1117,38 @@ public class SparkWebAPI {
 		
 	//-------------------------------------------------------
 	//
-	//	Utitlities
+	//	Utilities
 	//
 	//-------------------------------------------------------
+
+	private boolean sendWebPushMessage(String from, String to, String message) {
+		Log.debug("sendWebPushMessage " + from + " " + to + " " + message);
+		
+		try {
+			User self = SparkWeb.self.getUser(from);
+			User targetUser = SparkWeb.self.getUser(to);
+			
+			if (targetUser == null || self == null) {
+				return false;
+			}	
+
+			NotificationEntity notification = new NotificationEntity();
+			notification.setBody(message);
+			notification.setData(from);
+			notification.setSubject(self.getName());		
+			
+			List<NotificationActionEntity> actions = new ArrayList<>();
+			actions.add(new NotificationActionEntity("webpush.message", "text", "Reply"));
+			notification.setActions(actions);
+			
+			if (SparkWeb.self.postWebPush(targetUser, notification)) {
+				return true;
+			}
+		} catch (Exception e) {
+			Log.error("sendWebPushMessage " + e, e);
+		}
+		return false;
+	}
 
     public Conversations getConversations(String keywords, String to, String start, String end, String room, String service) throws ServiceException   {
 		String username = getEndUser();	 
@@ -1449,6 +1469,7 @@ public class SparkWebAPI {
 				}
 
 				String auth = httpRequest.getHeader("authorization");
+				Log.debug("found authorization " + auth);				
 
 				if (!isNull(auth)) 	{	
 					User user = SparkWeb.self.tokens.get(auth);

@@ -95,6 +95,7 @@ public class AuthFilter implements ContainerRequestFilter {
 
         // Get the authentification passed in HTTP headers parameters
         String auth = request.getHeader("authorization");
+		Log.debug("found Authentication header " + auth);		
 
         if (auth == null) {
             throw new WebApplicationException(Status.UNAUTHORIZED);
@@ -125,6 +126,7 @@ public class AuthFilter implements ContainerRequestFilter {
         }
 
         String[] usernameAndPassword = BasicAuth.decode(auth);
+		Log.debug("found Authentication basic digest " + usernameAndPassword);			
 
         // If no username nor password, fail
         if (usernameAndPassword == null || usernameAndPassword.length != 2) {

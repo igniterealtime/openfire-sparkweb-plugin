@@ -99,7 +99,7 @@ import org.jivesoftware.spark.plugin.fileupload.*;
 public class OpenfireConnection extends AbstractXMPPConnection implements RosterListener, InvitationListener, InvitationRejectionListener, OfferListener {
     private static Logger Log = LoggerFactory.getLogger( "OpenfireConnection" );
 	
-    private static final ConcurrentHashMap<String, OpenfireConnection> users = new ConcurrentHashMap<String, OpenfireConnection>();
+    public static final ConcurrentHashMap<String, OpenfireConnection> users = new ConcurrentHashMap<String, OpenfireConnection>();
     private static final ConcurrentHashMap<String, AssistEntity> assits = new ConcurrentHashMap<String, AssistEntity>();
     private static final ConcurrentHashMap<String, Presence> workgroupPresence = new ConcurrentHashMap<String, Presence>();
     private static final ConcurrentHashMap<String, Workgroup> assistWorkgroups = new ConcurrentHashMap<String, Workgroup>();
@@ -129,8 +129,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
 
     private StanzaListener stanzaListener;
     private ChatManager chatManager;
-
-	public String username;
+	public String token;
     public boolean anonymous = false;
 
     // -------------------------------------------------------
@@ -159,9 +158,13 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
         JivePropertiesManager.setJavaObjectEnabled(false);
     }
 
-    public static OpenfireConnection createConnection(String username)    {
+    public static OpenfireConnection createConnection(String username, String token)    {
 		OpenfireConnection connection = users.get(username);
-		if (connection != null) return connection;
+		
+		if (connection != null) {
+			connection.token = token;
+			return connection;
+		}
 		
 		try {
 			OpenfireConfiguration config = OpenfireConfiguration.builder()
@@ -174,7 +177,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
 
 			connection = new OpenfireConnection(config);
 			connection.anonymous = false;
-			connection.username = username;
+			connection.token = token;
 
 			Roster.getInstanceFor(connection).setSubscriptionMode(Roster.SubscriptionMode.accept_all);
 
@@ -240,7 +243,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
 				}
 			}
 
-			users.remove(connection.getUsername());
+			users.remove(connection.getUsername());			
 			connection.removeAsyncStanzaListener(connection.stanzaListener);
 			connection.disconnect(new Presence(Presence.Type.unavailable));
 		}
@@ -559,7 +562,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
 
                 if (nq != null) {
                     QueueOverview notifyQueue = (QueueOverview) nq;
-                    SparkWeb.self.broadcast(username, "chatapi.ask", "{\"type\": \"notify-queue\", \"to\":\"" + presence.getTo() + "\", \"from\":\"" + presence.getFrom() + "\", \"averageWaitTime\":\"" + notifyQueue.getAverageWaitTime() + "\", \"userCount\":\"" + notifyQueue.getUserCount() + "\", \"status\":\"" + notifyQueue.getStatus() + "\", \"oldestEntry\": \"" + dateFormat.format(notifyQueue.getOldestEntry()) + "\"}");
+                    SparkWeb.self.broadcast(getUsername(), "chatapi.ask", "{\"type\": \"notify-queue\", \"to\":\"" + presence.getTo() + "\", \"from\":\"" + presence.getFrom() + "\", \"averageWaitTime\":\"" + notifyQueue.getAverageWaitTime() + "\", \"userCount\":\"" + notifyQueue.getUserCount() + "\", \"status\":\"" + notifyQueue.getStatus() + "\", \"oldestEntry\": \"" + dateFormat.format(notifyQueue.getOldestEntry()) + "\"}");
                 }
 
                 ExtensionElement nqd = presence.getExtension("notify-queue-details", "http://jabber.org/protocol/workgroup");
@@ -577,12 +580,12 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
                             int timeRemaining = user.getEstimatedRemainingTime();
                             Date timestamp = user.getQueueJoinTimestamp();
 
-                            SparkWeb.self.broadcast(username, "chatapi.ask", "{\"type\": \"notify-queue-details\", \"to\":\"" + presence.getTo() + "\", \"from\":\"" + presence.getFrom() + "\", \"userid\":\"" + user.getUserID() + "\", \"postion\":\"" + position + "\", \"timeRemaining\":\"" + timeRemaining + "\", \"timestamp\": \"" + dateFormat.format(timestamp) + "\"}");
+                            SparkWeb.self.broadcast(getUsername(), "chatapi.ask", "{\"type\": \"notify-queue-details\", \"to\":\"" + presence.getTo() + "\", \"from\":\"" + presence.getFrom() + "\", \"userid\":\"" + user.getUserID() + "\", \"postion\":\"" + position + "\", \"timeRemaining\":\"" + timeRemaining + "\", \"timestamp\": \"" + dateFormat.format(timestamp) + "\"}");
                         }
                     }
                 }
 
-                SparkWeb.self.broadcast(username, "chatapi.presence", "{\"type\": \"presence\", \"to\":\"" + presence.getTo() + "\", \"from\":\"" + presence.getFrom() + "\", \"status\":\"" + presence.getStatus() + "\", \"show\": \"" + presence.getMode() + "\"}");
+                SparkWeb.self.broadcast(getUsername(), "chatapi.presence", "{\"type\": \"presence\", \"to\":\"" + presence.getTo() + "\", \"from\":\"" + presence.getFrom() + "\", \"status\":\"" + presence.getStatus() + "\", \"show\": \"" + presence.getMode() + "\"}");
                 return;
             }
         } catch (Exception e) {}
@@ -597,20 +600,20 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
                 ExtensionElement element = message.getExtension("http://jabber.org/protocol/chatstates");
 
                 if (departQueue != null) {
-                    SparkWeb.self.broadcast(username, "chatapi.ask", "{\"type\": \"depart-queue\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\"}");
+                    SparkWeb.self.broadcast(getUsername(), "chatapi.ask", "{\"type\": \"depart-queue\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\"}");
                 }
                 else
 
                 if (queueStatus != null)
                 {
                     QueueUpdate queueUpdate = (QueueUpdate) queueStatus;
-                    SparkWeb.self.broadcast(username, "chatapi.ask", "{\"type\": \"update-queue\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"remaingTime\":\"" + queueUpdate.getRemaingTime() + "\", \"position\": \"" + queueUpdate.getPosition() + "\"}");
+                    SparkWeb.self.broadcast(getUsername(), "chatapi.ask", "{\"type\": \"update-queue\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"remaingTime\":\"" + queueUpdate.getRemaingTime() + "\", \"position\": \"" + queueUpdate.getPosition() + "\"}");
                 }
                 else
 
                 if (element != null)
                 {
-                    SparkWeb.self.broadcast(username, "chatapi.chat", "{\"type\": \"" + message.getType() + "\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"state\": \"" + element.getElementName() + "\"}");
+                    SparkWeb.self.broadcast(getUsername(), "chatapi.chat", "{\"type\": \"" + message.getType() + "\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"state\": \"" + element.getElementName() + "\"}");
                 }
 
                 if (message.getType() == Message.Type.groupchat)
@@ -618,7 +621,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
                     if (message.getBody() != null)
                     {
                         String data = (String) JivePropertiesManager.getProperty(message, "data");
-                        SparkWeb.self.broadcast(username, "chatapi.muc", "{\"type\": \"" + message.getType() + "\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"data\":" + data + ", \"body\": \"" + message.getBody() + "\"}");
+                        SparkWeb.self.broadcast(getUsername(), "chatapi.muc", "{\"type\": \"" + message.getType() + "\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"data\":" + data + ", \"body\": \"" + message.getBody() + "\"}");
                     }
                 }
                 else {
@@ -626,7 +629,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
                     if (message.getBody() != null)
                     {
                         String data = (String) JivePropertiesManager.getProperty(message, "data");
-                        SparkWeb.self.broadcast(username, "chatapi.chat", "{\"type\": \"" + message.getType() + "\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"data\":" + data + ", \"body\": \"" + message.getBody() + "\"}");
+                        SparkWeb.self.broadcast(getUsername(), "chatapi.chat", "{\"type\": \"" + message.getType() + "\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"data\":" + data + ", \"body\": \"" + message.getBody() + "\"}");
 
                     } else {
 
@@ -637,7 +640,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
                             try {
                                 String room = invitation.getRoomAddress();
                                 String url = JiveGlobals.getProperty("ofmeet.root.url.secure", "https://" + hostname + ":" + JiveGlobals.getProperty("httpbind.port.secure", "7443")) + "/meet/" + room.split("@")[0];
-                                SparkWeb.self.broadcast(username, "chatapi.muc", "{\"type\": \"invitationReceived\", \"room\":\"" + room + "\", \"inviter\":\"" + message.getFrom() + "\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"url\":\"" + url + "\", \"reason\": \"" + message.getBody() + "\"}");
+                                SparkWeb.self.broadcast(getUsername(), "chatapi.muc", "{\"type\": \"invitationReceived\", \"room\":\"" + room + "\", \"inviter\":\"" + message.getFrom() + "\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"url\":\"" + url + "\", \"reason\": \"" + message.getBody() + "\"}");
 
                             } catch (Exception e) {
                                 Log.error("invitationReceived", e);
@@ -648,7 +651,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
 
                             if (data != null)
                             {
-                                SparkWeb.self.broadcast(username, "chatapi.notify", "{\"type\": \"notify\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"data\":" + data + "}");
+                                SparkWeb.self.broadcast(getUsername(), "chatapi.notify", "{\"type\": \"notify\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"data\":" + data + "}");
                             }
                         }
                     }
@@ -687,7 +690,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
         try {
             String room = multiUserChat.getRoom().toString();
             String url = JiveGlobals.getProperty("ofmeet.root.url.secure", "https://" + hostname + ":" + JiveGlobals.getProperty("httpbind.port.secure", "7443")) + "/meet/" + room.split("@")[0];
-            SparkWeb.self.broadcast(username, "chatapi.muc", "{\"type\": \"invitationReceived\", \"password\":\"" + password + "\", \"room\":\"" + room + "\", \"inviter\":\"" + inviter + "\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"url\":\"" + url + "\", \"reason\": \"" + reason + "\"}");
+            SparkWeb.self.broadcast(getUsername(), "chatapi.muc", "{\"type\": \"invitationReceived\", \"password\":\"" + password + "\", \"room\":\"" + room + "\", \"inviter\":\"" + inviter + "\", \"to\":\"" + message.getTo() + "\", \"from\":\"" + message.getFrom() + "\", \"url\":\"" + url + "\", \"reason\": \"" + reason + "\"}");
 
         } catch (Exception e) {
             Log.error("invitationReceived", e);
@@ -906,14 +909,14 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
             jsonMetadata.put(parameter, values.get(0));
         }
 
-        SparkWeb.self.broadcast(username, "chatapi.assist", "{\"type\": \"offerReceived\", \"workgroup\":\"" + offer.getWorkgroupName() + "\", \"id\":\"" + offer.getSessionID() + "\", \"from\":\"" + offer.getUserJID() + "\", \"metaData\": " + jsonMetadata.toString() + "}");
+        SparkWeb.self.broadcast(getUsername(), "chatapi.assist", "{\"type\": \"offerReceived\", \"workgroup\":\"" + offer.getWorkgroupName() + "\", \"id\":\"" + offer.getSessionID() + "\", \"from\":\"" + offer.getUserJID() + "\", \"metaData\": " + jsonMetadata.toString() + "}");
     }
 
     public void offerRevoked(final RevokedOffer offer)    {
         Log.debug("offerRevoked " + offer.getSessionID());
 
         offerMap.remove(offer.getSessionID());
-        SparkWeb.self.broadcast(username, "chatapi.assist", "{\"type\": \"offerRevoked\", \"workgroup\":\"" + offer.getWorkgroupName() + "\", \"id\":\"" + offer.getSessionID() + "\", \"from\":\"" + offer.getUserJID() + "\", \"reason\": \"" + offer.getReason() + "\"}");
+        SparkWeb.self.broadcast(getUsername(), "chatapi.assist", "{\"type\": \"offerRevoked\", \"workgroup\":\"" + offer.getWorkgroupName() + "\", \"id\":\"" + offer.getSessionID() + "\", \"from\":\"" + offer.getUserJID() + "\", \"reason\": \"" + offer.getReason() + "\"}");
     }
 
     public WorkgroupEntities getWorkgroups(String jid, String service) {
@@ -1431,9 +1434,9 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
                 text = text.substring(0, pos + 9) + "xmlns=\"jabber:client\"" + text.substring(pos + 8);
             }
 
-            Log.debug("SmackConnection - deliverRawText " + connection.username + "\n" + text);
+            Log.debug("SmackConnection - deliverRawText " + connection.getUsername() + "\n" + text);
 
-            SparkWeb.self.broadcast(connection.username, "chatapi.xmpp", "{\"xmpp\": \"" + DatatypeConverter.printBase64Binary(text.getBytes()) + "\"}");
+            SparkWeb.self.broadcast(connection.getUsername(), "chatapi.xmpp", "{\"xmpp\": \"" + DatatypeConverter.printBase64Binary(text.getBytes()) + "\"}");
 
             Stanza stanza = connection.handleParser(text);
 

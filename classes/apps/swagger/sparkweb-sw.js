@@ -49,16 +49,13 @@ self.addEventListener('push', function (event) {
    
    const options = {
         body: data.body,
-        icon: './icon.png',
-        requireInteraction: true,
-        persistent: true,
-        sticky: true,
+        icon: data.icon ? data.icon : './icon.png',
+        requireInteraction: data.requireInteraction,
+        persistent: data.persistent,
+        sticky: data.sticky,
         vibrate: [100, 50, 100],
         data: data,
-        actions: [
-          {action: 'reply', type: 'text', title: 'Reply', icon: './check-solid.png', placeholder: 'Type a reply here..'},
-          {action: 'ignore', type: 'button', title: 'Ignore', icon: './times-solid.png'},
-        ]
+        actions: data.actions
     };
 	
     event.waitUntil(
@@ -74,11 +71,15 @@ self.addEventListener('notificationclose', function(event) {
     console.debug('notificationclose', event.notification);
 });
 
-self.addEventListener('notificationclick', function(event) {
-    console.debug('notificationclick', event);
+self.addEventListener('notificationclick', async function(event) {
+	const data = event.notification.data;	
+    console.debug('notificationclick', data, event.action, event.reply);
 	
-	const actionChannel = new BroadcastChannel("sparkweb.notification.action");	
-	actionChannel.postMessage({data: event.notification.data, action: event.action, reply: event.reply});		
-	
+	const reply = {data: data.data, action: event.action, value: event.reply}
+	const url = "/sparkweb/api/rest/webpush/action";	
+	const options = {method: "POST", body: JSON.stringify(reply), headers: {"Authorization": data.token, "Accept":"application/json", "Content-Type":"application/json"}};	
+	const response = await fetch(url, options);	
+		
+    console.debug('notificationclick - response', response);	
 	event.notification.close();	
 });

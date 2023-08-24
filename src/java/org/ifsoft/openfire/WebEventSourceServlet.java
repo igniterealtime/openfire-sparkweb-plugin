@@ -110,7 +110,8 @@ public class WebEventSourceServlet extends EventSourceServlet {
 				SparkWeb.self.webSources.remove(username);
 				
 				try {
-					OpenfireConnection.removeConnection(username);
+					OpenfireConnection connection = OpenfireConnection.removeConnection(username);
+					SparkWeb.self.tokens.remove(connection.token);					
 				} catch (Exception e) {
 					Log.error("WebEventSource onClose", e);
 				}					

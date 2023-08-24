@@ -176,25 +176,36 @@ window.onload = function() {
 
 		registration.pushManager.getSubscription().then(function (subscription) {
 			if (subscription) {
-				subscription.unsubscribe();
-				subscription = null;
+			  subscription.unsubscribe().then((successful) => {
+				registerSubscription(baseUrl, publicKey, token, registration);
+			  })
+			  .catch((e) => {
+				console.error('Unable to unsubscribe to push.', e);
+				registerSubscription(baseUrl, publicKey, token, registration);				
+			  });
+			} else {
+				registerSubscription(baseUrl, publicKey, token, registration);				
 			}
-                  		
-			registration.pushManager.subscribe({
-				userVisibleOnly: true,
-				applicationServerKey: base64UrlToUint8Array(publicKey)
-			})
-			.then(function (subscription) {
-				return sendSubscriptionToServer(baseUrl, subscription, token);
-			})
-			.catch(function (e) {
-				if (Notification.permission === 'denied') {
-					console.warn('Permission for Notifications was denied');
-				} else {
-					console.error('Unable to subscribe to push.', e);
-				}
-			});
 		});  			
+	}
+	
+	function registerSubscription(baseUrl, publicKey, token, registration) {
+		console.debug("registerSubscription", baseUrl, publicKey, token);	
+		
+		registration.pushManager.subscribe({
+			userVisibleOnly: true,
+			applicationServerKey: base64UrlToUint8Array(publicKey)
+		})
+		.then(function (subscription) {
+			return sendSubscriptionToServer(baseUrl, subscription, token);
+		})
+		.catch(function (e) {
+			if (Notification.permission === 'denied') {
+				console.warn('Permission for Notifications was denied');
+			} else {
+				console.error('Unable to subscribe to push.', e);
+			}
+		});		
 	}
 
 	function base64UrlToUint8Array(base64UrlData) {
@@ -226,7 +237,7 @@ window.onload = function() {
 
 		const resource = "sparkweb-swagger";
 		const url = baseUrl + "/sparkweb/api/rest/webpush/subscribe/" + resource;
-		const options = {method: "POST", body: JSON.stringify(subscription), headers: {"Authorization": token, "Accept":"application/json", "Content-Type":"application/json"}};
+		const options = {method: "PUT", body: JSON.stringify(subscription), headers: {"Authorization": token, "Accept":"application/json", "Content-Type":"application/json"}};
 
 		return fetch(url, options).then(function(response) {
 			console.debug("sendSubscriptionToServer - subscribe response", response);
