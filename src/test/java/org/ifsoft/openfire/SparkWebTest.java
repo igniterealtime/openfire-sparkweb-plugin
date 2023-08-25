@@ -1,4 +1,4 @@
-package com.comitfs.openfire;
+package org.ifsoft.openfire;
 
 import org.jivesoftware.util.cache.CacheFactory;
 import org.junit.After;
@@ -22,7 +22,7 @@ import static org.junit.Assert.*;
 public class SparkWebTest
 {
 	@Test
-	public void test_CallPartyGetName() {
+	public void test_Dummy() {
 		
 	}
 }
