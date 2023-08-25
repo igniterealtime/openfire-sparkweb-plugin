@@ -98,7 +98,7 @@ import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
-@SwaggerDefinition(tags = { @Tag(name = "Chat", description = "provides chat services for the authenticated user."), @Tag(name = "Group Chat", description = "provides groupchat services to manage contacts"), @Tag(name = "Presence", description = "provides presence services"), @Tag(name = "Collaboration", description = "provides meeting and other collaboration services"), @Tag(name = "User Management", description = "provides user services for the authenticated user."), @Tag(name = "Contact Management", description = "provides user roster services to manage contacts"), @Tag(name = "Web Authentication", description = "provides server-side Web Authentication services"), @Tag(name = "Web Push", description = "provides server-side Web Push services"), @Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
+@SwaggerDefinition(tags = { @Tag(name = "Chat", description = "provides chat services for the authenticated user."), @Tag(name = "Group Chat", description = "provides groupchat services to manage contacts"), @Tag(name = "Presence", description = "provides presence services"), @Tag(name = "Collaboration", description = "provides meeting and other collaboration services"), @Tag(name = "User Management", description = "provides user services for the authenticated user."), @Tag(name = "Contact Management", description = "provides user roster services to manage contacts"), @Tag(name = "Authentication", description = "provides server-side authentication services"), @Tag(name = "Web Push", description = "provides server-side Web Push services"), @Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
 @Api(authorizations = {@Authorization("authorization")})
 @Path("rest")
 @Produces(MediaType.APPLICATION_JSON)
@@ -1035,11 +1035,86 @@ public class SparkWebAPI {
 	
 	//-------------------------------------------------------
     //
-    //  Web Authentication
+    //  Authentication
     //
     //-------------------------------------------------------
 
-	@ApiOperation(tags = {"Web Authentication"}, value="Web Authentication - Start Registration", notes="This endpoint is used to start the webauthn registration proces")
+	@ApiOperation(tags = {"Authentication"}, value="Login with Username/Password", notes="This endpoint is used to login a user with a username and password")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The authentication token.", response = TokenEntity.class), @ApiResponse(code = 500, message = "Authentication failed.")})	
+    @POST
+    @Path("/login/{username}")
+    public TokenEntity loginUser(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "The current Openfire password for the user", required = true) String password) throws ServiceException    {
+		JSONObject json = new JSONObject();				
+        Log.debug("registerUser " + username + "\n" + password);
+			
+        try {
+			AuthFactory.authenticate(username, password);
+			
+			User user = SparkWeb.self.getUser(username);
+			return new TokenEntity(SparkWeb.self.makeAccessToken(user));				
+
+        } catch (Exception e) {
+            Log.error("loginUser", e);
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+    }
+
+	@ApiOperation(tags = {"Authentication"}, value="Logout user", notes="This end point is used to logout the authenticated user")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The user was logged out."), @ApiResponse(code = 400, message = "The user not be logged out.")})	
+    @Path("/logout")
+    @POST
+    public Response logoutUser() throws ServiceException   {
+		String username = getEndUser();	
+        Log.debug("logoffUser " + username);
+
+        try {
+            OpenfireConnection connection = OpenfireConnection.removeConnection(username);
+
+            if (connection == null) {
+                throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+        } catch (Exception e) {
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+
+        return Response.status(Response.Status.OK).build();
+    }
+	
+	@ApiOperation(tags = {"Authentication"}, value="Register a new user with username/password", notes="This endpoint is used to register a new user")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The authentication token.", response = TokenEntity.class), @ApiResponse(code = 500, message = "Authentication failed.")})	
+    @POST
+    @Path("/register/{username}")
+    public TokenEntity registerUser(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "The password for the user", required = true) String password) throws ServiceException    {
+		JSONObject json = new JSONObject();				
+        Log.debug("registerUser " + username + "\n" + password);
+			
+        try {
+ 			User user = SparkWeb.self.getUser(username);	
+			
+			if (user == null) {	// create a new user if in-band reg is allowed
+				IQRegisterHandler regHandler = XMPPServer.getInstance().getIQRegisterHandler();
+				
+				if (regHandler.isInbandRegEnabled()) {
+					String name = username.substring(0, 1).toUpperCase() + username.substring(1);
+					String email = username + "@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+					user = SparkWeb.userManager.createUser( username, password, name, email);
+					return new TokenEntity(SparkWeb.self.makeAccessToken(user));				
+				} else {
+					throw new ServiceException("Exception", "user cannot be created", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);					
+				}
+			} else {
+				throw new ServiceException("Exception", "user exists", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);					
+			}			
+
+        } catch (Exception e) {
+            Log.error("registerUser", e);
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+    }
+	
+	@ApiOperation(tags = {"Authentication"}, value="Start Web Registration", notes="This endpoint is used to start the webauthn registration proces")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "WebAuthn data to registration."), @ApiResponse(code = 500, message = "Authentication failed.")})	
     @POST
     @Path("/webauthn/register/start/{username}")
     public String webauthnRegisterStart(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "The current Openfire password for the user", required = true) String password) throws ServiceException     {	
@@ -1056,7 +1131,7 @@ public class SparkWebAPI {
 					String email = username + "@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 					user = SparkWeb.userManager.createUser( username, password, name, email);
 				} else {
-					throw new ServiceException("Exception", "user does not exist", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);					
+					throw new ServiceException("Exception", "user cannot be created", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);					
 				}
 			} else {
 				AuthFactory.authenticate(username, password);		// authenticate user first before creating credentials	
@@ -1074,18 +1149,18 @@ public class SparkWebAPI {
 		return json.toString();
     }	
 
-	@ApiOperation(tags = {"Web Authentication"}, value="Web Authentication - Finish Registration", notes="This endpoint is used to finish the webauthn registration proces")	
+	@ApiOperation(tags = {"Authentication"}, value="Finish Web Registration", notes="This endpoint is used to finish the webauthn registration proces")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The authentication token.", response = TokenEntity.class), @ApiResponse(code = 500, message = "Authentication failed.")})	
     @POST
     @Path("/webauthn/register/finish/{username}")
-    public String webauthnRegisterFinish(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "The credentials generated by the web client", required = true) String credentials) throws ServiceException    {
+    public TokenEntity webauthnRegisterFinish(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "The credentials generated by the web client", required = true) String credentials) throws ServiceException    {
 		JSONObject json = new JSONObject();				
         Log.debug("webauthnRegisterFinish " + username + "\n" + credentials);
 			
         try {
 			if (finishRegisterWebAuthn(credentials, username) != null) {
 				User user = SparkWeb.self.getUser(username);
-				json.put("token", SparkWeb.self.makeAccessToken(user));
-				return json.toString();	
+				return new TokenEntity(SparkWeb.self.makeAccessToken(user));
 			}			
 
         } catch (Exception e) {
@@ -1096,7 +1171,8 @@ public class SparkWebAPI {
        throw new ServiceException("Exception", "WebAuthn registration failed", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
     }	
 
-	@ApiOperation(tags = {"Web Authentication"}, value="Web Authentication - Start Authentication", notes="This endpoint is used to start the webauthn authentication proces")	
+	@ApiOperation(tags = {"Authentication"}, value="Start Web Authentication", notes="This endpoint is used to start the webauthn authentication proces")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "WebAuthn data to start authentication."), @ApiResponse(code = 500, message = "Authentication failed.")})	
     @POST
     @Path("/webauthn/authenticate/start/{username}")
     public String webauthnAuthenticateStart(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username) throws ServiceException  {		
@@ -1128,18 +1204,18 @@ public class SparkWebAPI {
 		return json.toString();
     }	
 
-	@ApiOperation(tags = {"Web Authentication"}, value="Web Authentication - End Authentication", notes="This endpoint is used to finish the webauthn authentication proces")	
+	@ApiOperation(tags = {"Authentication"}, value="End Web Authentication", notes="This endpoint is used to finish the webauthn authentication proces")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The authentication token.", response = TokenEntity.class), @ApiResponse(code = 500, message = "Authentication failed.")})	
     @POST
     @Path("/webauthn/authenticate/finish/{username}")
-    public String webauthnAuthenticateFinish(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "The assertion generated by the web client", required = true) String assertion) throws ServiceException     {
+    public TokenEntity webauthnAuthenticateFinish(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("username") String username, @ApiParam(value = "The assertion generated by the web client", required = true) String assertion) throws ServiceException     {
 		JSONObject json = new JSONObject();		
         Log.debug("webauthnAuthenticateFinish " + username + "\n" + assertion);
 			
         try {
 			if (finishAuthentication(assertion, username)) {
 				User user = SparkWeb.self.getUser(username);
-				json.put("token", SparkWeb.self.makeAccessToken(user));
-				return json.toString();								
+				return new TokenEntity(SparkWeb.self.makeAccessToken(user));							
 			}			
 
         } catch (Exception e) {

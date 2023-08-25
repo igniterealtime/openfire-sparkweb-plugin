@@ -37,18 +37,19 @@ public class AuthFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext containerRequest) throws IOException {
+		String path = containerRequest.getUriInfo().getRequestUri().getPath();
         Log.debug("authenticating " + containerRequest.getUriInfo().getRequestUri().getPath());
 
-        if (containerRequest.getUriInfo().getRequestUri().getPath().endsWith("swagger.json") || containerRequest.getUriInfo().getRequestUri().getPath().endsWith("swagger.yaml")) {
+        if (path.endsWith("swagger.json") || path.endsWith("swagger.yaml")) {
             Log.debug("AuthFilter swagger definition");
             return;
 		
-        } else if (containerRequest.getUriInfo().getRequestUri().getPath().contains("rest/config/global")) {
+        } else if (path.contains("rest/config/global")) {
             Log.debug("AuthFilter global config pass-thru");
             return;
 			
-        } else if (containerRequest.getUriInfo().getRequestUri().getPath().contains("rest/webauthn")) {
-            Log.debug("AuthFilter webauthn pass-thru");
+        } else if (path.contains("rest/webauthn") || path.contains("rest/login")  || path.contains("rest/register")) {
+            Log.debug("AuthFilter authentication pass-thru");
             return;
         }
 
