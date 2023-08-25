@@ -99,7 +99,7 @@ import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
-@SwaggerDefinition(tags = { @Tag(name = "Authentication", description = "provides server-side authentication services"), @Tag(name = "Chat", description = "provides chat services for the authenticated user"), @Tag(name = "Group Chat", description = "provides groupchat services to manage contacts"), @Tag(name = "Presence", description = "provides presence services"), @Tag(name = "Collaboration", description = "provides meeting and other collaboration services"), @Tag(name = "User Management", description = "provides user services for the authenticated user"), @Tag(name = "Contact Management", description = "provides user roster services to manage contacts"), @Tag(name = "Web Push", description = "provides server-side Web Push services"), @Tag(name = "Global and User Properties", description = "Access global and user properties"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
+@SwaggerDefinition(tags = { @Tag(name = "Authentication", description = "provides server-side authentication services"), @Tag(name = "Chat", description = "provides chat services for the authenticated user"), @Tag(name = "Group Chat", description = "provides groupchat services to manage contacts"), @Tag(name = "Presence", description = "provides presence services"), @Tag(name = "Collaboration", description = "provides meeting and other collaboration services"), @Tag(name = "User Management", description = "provides user services for the authenticated user"), @Tag(name = "Contact Management", description = "provides user roster services to manage contacts"), @Tag(name = "Web Push", description = "provides server-side Web Push services"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
 @Api(authorizations = {@Authorization("authorization")})
 @Path("rest")
 @Produces(MediaType.APPLICATION_JSON)
@@ -218,6 +218,131 @@ public class SparkWebAPI {
 		userServiceController.deleteUserFromGroups(username, userGroupsEntity);
         return Response.status(Response.Status.OK).build();	
     }	
+
+	@ApiOperation(tags = {"User Management"}, value="List global properties affecting this user", notes="Endpoint will retrieve all Openfire Global properties that are used by this authenticated user")	
+    @GET
+    @Path("/config/global")
+    public String getGlobalConfig() throws ServiceException 	{
+		JSONObject json = new JSONObject();		
+		json.put("version", PluginMetadataHelper.getVersion( SparkWeb.self ).getVersionString());	
+		json.put("about", PluginMetadataHelper.getName( SparkWeb.self ));				
+        return json.toString();
+    }
+
+	@ApiOperation(tags = {"User Management"}, value="Update user properties", notes="Endpoint will update user properties from an array of name/value pairs")
+    @POST
+    @Path("/config/properties")
+    public Response postUserConfig(@ApiParam(value = "A JSON array of name pairs (name/value) to set the value of a property", required = true) String json) throws ServiceException 	{
+		String username = getEndUser();
+		String blockList = "";
+		
+		if (username != null) {
+			User user = ensureUserExists(username);		
+			
+			if (user != null) {
+				Map<String, String> properties = user.getProperties();
+				JSONArray props = new JSONArray(json);	
+
+				for (int i=0; i<props.length(); i++)
+				{
+					JSONObject property = props.getJSONObject(i);
+					String name = property.getString("name");
+					String value = property.getString("value");
+					
+					if (!blockList.contains(name)) {
+						
+						if ("name".equals(name)) {
+							user.setName(value);
+						}
+						else
+							
+						if ("email".equals(name)) {
+							user.setEmail(value);
+						}
+						else {												
+							properties.put(name, value);
+						}
+					}
+				}
+				return Response.status(Response.Status.OK).build();					
+			}				
+		}
+        return Response.status(Response.Status.BAD_REQUEST).build();		
+	}
+
+	@ApiOperation(tags = {"User Management"}, value="List User Properties", notes="Endpoint to retrieve a list of all config properties for the authenticated user")
+    @GET
+    @Path("/config/properties")
+    public String getUserConfig() throws ServiceException 	{
+		JSONObject json = new JSONObject();			
+		String username = getEndUser();
+		
+		if (username != null) {
+			json.put("domain", XMPPServer.getInstance().getServerInfo().getXMPPDomain());				
+			
+			User user = ensureUserExists(username);					
+			
+			if (user != null) {	
+				json.put("username", username);				
+				json.put("name", user.getName());	
+				json.put("email", user.getEmail());				
+				
+				Map<String, String> properties = user.getProperties();
+				
+				for (String key : properties.keySet()) {
+					json.put(key, properties.get(key));	
+				}	
+
+				Collection<Group> userGroups = SparkWeb.groupManager.getGroups(user);
+				JSONArray jsonGroups = new JSONArray();	
+				int i = 0;
+
+				for (Group userGroup : userGroups) {
+					String groupName = userGroup.getName();
+					
+					JSONObject jsonUserGroup = new JSONObject();						
+					jsonUserGroup.put("group", groupName);					
+					Map<String, String> groupProperties = userGroup.getProperties();
+					
+					for (String key : groupProperties.keySet()) {
+						jsonUserGroup.put(key, groupProperties.get(key));	
+					}	
+
+					JSONArray jsonMembers = new JSONArray();	
+					int j = 0;					
+
+					for (JID memberJID : userGroup.getMembers()) {
+						JSONObject jsonMember = new JSONObject();	
+						String memberName = memberJID.getNode();
+						
+						User memberUser = ensureUserExists(memberName);		
+						
+						if (memberUser != null) {
+							jsonMember.put("username", memberName);								
+							jsonMember.put("name", memberUser.getName());	
+							jsonMember.put("email", memberUser.getEmail());							
+							
+							Map<String, String> memberProperties = memberUser.getProperties();
+							
+							for (String key : memberProperties.keySet()) {
+								jsonMember.put(key, memberProperties.get(key));	
+							}
+
+							jsonMembers.put(j++, jsonMember);	
+						}							
+					}
+					
+					jsonUserGroup.put("members", jsonMembers);
+					jsonGroups.put(i++, jsonUserGroup);	
+				}
+				
+				json.put("groups", jsonGroups);	
+			}
+		}
+		
+        return json.toString();
+    }	
+
 
 	//-------------------------------------------------------
 	//
@@ -684,10 +809,11 @@ public class SparkWebAPI {
 	//
 	//-------------------------------------------------------
 
-	@ApiOperation(tags = {"Bookmarks"}, value="Bookmark API - Create a new bookmark", notes="This endpoint is used to create a new bookmark")
+	@ApiOperation(tags = {"Bookmarks"}, value="Create a new bookmark", notes="This endpoint is used to create a new bookmark")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Bookmark was created", response = Bookmark.class), @ApiResponse(code = 400, message = "Bookmark could not be created")})	
     @Path("/bookmark")
     @POST	
-    public Bookmark createBookmark(Bookmark newBookmark) throws ServiceException     {
+    public Bookmark createBookmark(@ApiParam(value = "The bookmark definition", required = true) Bookmark newBookmark) throws ServiceException     {
         Log.debug("createBookmark " + newBookmark);
 
         try {
@@ -698,7 +824,8 @@ public class SparkWebAPI {
         }
     }
 	
-	@ApiOperation(tags = {"Bookmarks"}, value="Bookmark API - Get all bookmark", notes="This endpoint is used to retrieve all bookmarks")
+	@ApiOperation(tags = {"Bookmarks"}, value="Get all bookmark", notes="This endpoint is used to retrieve all bookmarks")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "List of bookmarks", response = Bookmarks.class), @ApiResponse(code = 400, message = "Bookmarks could not be retrieved")})	
     @Path("/bookmarks")	
     @GET
     public Bookmarks getBookmarks() throws ServiceException     {
@@ -711,7 +838,8 @@ public class SparkWebAPI {
         }
     }	
 	
-	@ApiOperation(tags = {"Bookmarks"}, value="Bookmark API - Get a specific bookmark", notes="This endpoint is used to retrieve a specific bookmark")
+	@ApiOperation(tags = {"Bookmarks"}, value="Get a specific bookmark", notes="This endpoint is used to retrieve a specific bookmark")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Bookmark was retrieved", response = Bookmark.class), @ApiResponse(code = 400, message = "Bookmark could not be retrieved")})	
     @Path("/bookmark/{bookmarkID}")	
     @GET
     public Bookmark getBookmark(@PathParam("bookmarkID") String bookmarkID) throws ServiceException     {
@@ -725,7 +853,7 @@ public class SparkWebAPI {
         }
     }
 	
-	@ApiOperation(tags = {"Bookmarks"}, value="Bookmark API - Delete a specific bookmark", notes="This endpoint is used to delete a specific bookmark")
+	@ApiOperation(tags = {"Bookmarks"}, value="Delete a specific bookmark", notes="This endpoint is used to delete a specific bookmark")
     @Path("/bookmark/{bookmarkID}")		
     @DELETE
     public Response deleteBookmark(@PathParam("bookmarkID") String bookmarkID) throws ServiceException    {
@@ -741,7 +869,8 @@ public class SparkWebAPI {
         return Response.status(Response.Status.OK).build();
     }
 	
-	@ApiOperation(tags = {"Bookmarks"}, value="Bookmark API - Update a specific bookmark", notes="This endpoint is used to update a specific bookmark")
+	@ApiOperation(tags = {"Bookmarks"}, value="Update a specific bookmark", notes="This endpoint is used to update a specific bookmark")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Bookmark was updated", response = Bookmark.class), @ApiResponse(code = 400, message = "Bookmark could not be updated")})	
     @Path("/bookmark/{bookmarkID}")			
     @PUT
     public Bookmark updateBookmark(@PathParam("bookmarkID") String bookmarkID, Bookmark newBookmark) throws ServiceException    {
@@ -761,7 +890,8 @@ public class SparkWebAPI {
         }
     }
 	
-	@ApiOperation(tags = {"Bookmarks"}, value="Bookmark API - Create/Update a bookmark property", notes="This endpoint is used to create or update a bookmark property value")
+	@ApiOperation(tags = {"Bookmarks"}, value="Create/Update a bookmark property", notes="This endpoint is used to create or update a bookmark property value")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Bookmark was updated", response = Bookmark.class), @ApiResponse(code = 400, message = "Bookmark could not be updated")})	
     @Path("/bookmark/{bookmarkID}/{name}")		
     @POST
     public Bookmark updateBookmarkProperty(@PathParam("bookmarkID") String bookmarkID, @PathParam("name") String name, String value) throws ServiceException    {
@@ -777,7 +907,8 @@ public class SparkWebAPI {
         }
     }	
 	
-	@ApiOperation(tags = {"Bookmarks"}, value="Bookmark API - Delete a bookmark property", notes="This endpoint is used to delete a bookmark property")
+	@ApiOperation(tags = {"Bookmarks"}, value="Delete a bookmark property", notes="This endpoint is used to delete a bookmark property")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Bookmark was updated", response = Bookmark.class), @ApiResponse(code = 400, message = "Bookmark could not be updated")})	
     @Path("/bookmark/{bookmarkID}/{name}")	
     @DELETE
     public Bookmark deleteBookmarkProperty(@PathParam("bookmarkID") String bookmarkID, @PathParam("name") String name) throws ServiceException    {
@@ -793,143 +924,13 @@ public class SparkWebAPI {
         }
     }	
 
-	//-------------------------------------------------------
-	//
-	//	Global and User Properties
-	//
-	//-------------------------------------------------------
-
-	@ApiOperation(tags = {"Global and User Properties"}, value="Global and User Properties - List global properties affecting this user", notes="Endpoint will retrieve all Openfire Global properties that are used by this authenticated user")	
-    @GET
-    @Path("/config/global")
-    public String getGlobalConfig() throws ServiceException 	{
-		JSONObject json = new JSONObject();		
-		json.put("version", PluginMetadataHelper.getVersion( SparkWeb.self ).getVersionString());	
-		json.put("about", PluginMetadataHelper.getName( SparkWeb.self ));				
-        return json.toString();
-    }
-
-	@ApiOperation(tags = {"Global and User Properties"}, value="Global and User Properties - Update user properties", notes="Endpoint will update user properties from an array of name/value pairs")
-    @POST
-    @Path("/config/properties")
-    public Response postUserConfig(@ApiParam(value = "A JSON array of name pairs (name/value) to set the value of a property", required = true) String json) throws ServiceException 	{
-		String username = getEndUser();
-		String blockList = "";
-		
-		if (username != null) {
-			User user = ensureUserExists(username);		
-			
-			if (user != null) {
-				Map<String, String> properties = user.getProperties();
-				JSONArray props = new JSONArray(json);	
-
-				for (int i=0; i<props.length(); i++)
-				{
-					JSONObject property = props.getJSONObject(i);
-					String name = property.getString("name");
-					String value = property.getString("value");
-					
-					if (!blockList.contains(name)) {
-						
-						if ("name".equals(name)) {
-							user.setName(value);
-						}
-						else
-							
-						if ("email".equals(name)) {
-							user.setEmail(value);
-						}
-						else {												
-							properties.put(name, value);
-						}
-					}
-				}
-				return Response.status(Response.Status.OK).build();					
-			}				
-		}
-        return Response.status(Response.Status.BAD_REQUEST).build();		
-	}
-
-	@ApiOperation(tags = {"Global and User Properties"}, value="Global and User Properties - List User Properties", notes="Endpoint to retrieve a list of all config properties for the authenticated user")
-    @GET
-    @Path("/config/properties")
-    public String getUserConfig() throws ServiceException 	{
-		JSONObject json = new JSONObject();			
-		String username = getEndUser();
-		
-		if (username != null) {
-			json.put("domain", XMPPServer.getInstance().getServerInfo().getXMPPDomain());				
-			
-			User user = ensureUserExists(username);					
-			
-			if (user != null) {	
-				json.put("username", username);				
-				json.put("name", user.getName());	
-				json.put("email", user.getEmail());				
-				
-				Map<String, String> properties = user.getProperties();
-				
-				for (String key : properties.keySet()) {
-					json.put(key, properties.get(key));	
-				}	
-
-				Collection<Group> userGroups = SparkWeb.groupManager.getGroups(user);
-				JSONArray jsonGroups = new JSONArray();	
-				int i = 0;
-
-				for (Group userGroup : userGroups) {
-					String groupName = userGroup.getName();
-					
-					JSONObject jsonUserGroup = new JSONObject();						
-					jsonUserGroup.put("group", groupName);					
-					Map<String, String> groupProperties = userGroup.getProperties();
-					
-					for (String key : groupProperties.keySet()) {
-						jsonUserGroup.put(key, groupProperties.get(key));	
-					}	
-
-					JSONArray jsonMembers = new JSONArray();	
-					int j = 0;					
-
-					for (JID memberJID : userGroup.getMembers()) {
-						JSONObject jsonMember = new JSONObject();	
-						String memberName = memberJID.getNode();
-						
-						User memberUser = ensureUserExists(memberName);		
-						
-						if (memberUser != null) {
-							jsonMember.put("username", memberName);								
-							jsonMember.put("name", memberUser.getName());	
-							jsonMember.put("email", memberUser.getEmail());							
-							
-							Map<String, String> memberProperties = memberUser.getProperties();
-							
-							for (String key : memberProperties.keySet()) {
-								jsonMember.put(key, memberProperties.get(key));	
-							}
-
-							jsonMembers.put(j++, jsonMember);	
-						}							
-					}
-					
-					jsonUserGroup.put("members", jsonMembers);
-					jsonGroups.put(i++, jsonUserGroup);	
-				}
-				
-				json.put("groups", jsonGroups);	
-			}
-		}
-		
-        return json.toString();
-    }	
-
     //-------------------------------------------------------
     //
     //  Web Push
     //
     //-------------------------------------------------------
 
-	@ApiOperation(tags = {"Web Push"}, value="Web Push - Get all web push subscribers", notes="This endpoint is used to obtain all web push subscribers")
+	@ApiOperation(tags = {"Web Push"}, value="Get all web push subscribers", notes="This endpoint is used to obtain all web push subscribers")
     @Path("/webpush/subscribers")	
     @GET	
     public UserEntities getPushSubscribers()  throws ServiceException {
@@ -945,7 +946,7 @@ public class SparkWebAPI {
         return userEntities;
     }
 
-	@ApiOperation(tags = {"Web Push"}, value="Web Push - Get the webpush vapid key", notes="This endpoint is used to obtain the vapid key need by the client to sign web push messages")
+	@ApiOperation(tags = {"Web Push"}, value="Get the webpush vapid key", notes="This endpoint is used to obtain the vapid key need by the client to sign web push messages")
     @Path("/webpush/vapidkey")
     @GET
     public PublicKey getWebPushPublicKey() throws ServiceException {
@@ -964,7 +965,7 @@ public class SparkWebAPI {
         return new PublicKey(publicKey);
     }	
 
-	@ApiOperation(tags = {"Web Push"}, value="Web Push - Store web push subscription for this user", notes="This endpoint is used to save a subscription created by a web client for this user")
+	@ApiOperation(tags = {"Web Push"}, value="Store web push subscription for this user", notes="This endpoint is used to save a subscription created by a web client for this user")
     @Path("/webpush/subscribe/{resource}")	
     @PUT
     public Response postWebPushSubscription(@ApiParam(value = "A resource name to tag the subscription", required = true) @PathParam("resource") String resource, @ApiParam(value = "The subscription as created by the web client", required = true) String subscription) throws ServiceException {
@@ -981,7 +982,7 @@ public class SparkWebAPI {
         return Response.status(Response.Status.BAD_REQUEST).build();
     }	
 
-	@ApiOperation(tags = {"Web Push"}, value="Web Push - Send a notification to all subscriptions of another user", notes="This endpoint is used to push a notification to all subscriptions of the specified user")	
+	@ApiOperation(tags = {"Web Push"}, value="Send a notification to all subscriptions of another user", notes="This endpoint is used to push a notification to all subscriptions of the specified user")	
     @POST
     @Path("/webpush/notify/{target}")
     public Response postWebPushNotification(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("target") String target, @ApiParam(value = "The notification to be pushed to the user", required = true) NotificationEntity notification) throws ServiceException {
@@ -1002,7 +1003,7 @@ public class SparkWebAPI {
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
 	
-	@ApiOperation(tags = {"Web Push"}, value="Web Push - Send a text message to all subscriptions of another user", notes="This endpoint is used to push a text message to all subscriptions of the specified user")	
+	@ApiOperation(tags = {"Web Push"}, value="Send a text message to all subscriptions of another user", notes="This endpoint is used to push a text message to all subscriptions of the specified user")	
     @POST
     @Path("/webpush/message/{target}")
     public Response postWebPushText(@ApiParam(value = "A valid Openfire username", required = true) @PathParam("target") String target, @ApiParam(value = "The text message to be pushed to the user", required = true) String text) throws ServiceException {
@@ -1016,7 +1017,7 @@ public class SparkWebAPI {
         return Response.status(Response.Status.BAD_REQUEST).build();
     }	
 
-	@ApiOperation(tags = {"Web Push"}, value="Web Push - Send a notification action", notes="This endpoint is used to post the user action of a web push notification")	
+	@ApiOperation(tags = {"Web Push"}, value="Send a notification action", notes="This endpoint is used to post the user action of a web push notification")	
     @POST
     @Path("/webpush/action")
     public Response handleNotificationAction(@ApiParam(value = "A notification action", required = true)  NotificationActionEntity notificationAction) throws ServiceException {
