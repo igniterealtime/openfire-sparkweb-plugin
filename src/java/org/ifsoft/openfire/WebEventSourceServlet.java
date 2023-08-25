@@ -105,7 +105,7 @@ public class WebEventSourceServlet extends EventSourceServlet {
 			ArrayList sources = SparkWeb.self.webSources.get(username);
 			sources.remove(this);
 
-			if (sources.size() == 0) {
+			if (sources.size() == 0) { // token expires when last SSE is removed by user
 				closed = true;
 				SparkWeb.self.webSources.remove(username);
 				

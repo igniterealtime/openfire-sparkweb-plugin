@@ -48,7 +48,7 @@ public class AuthFilter implements ContainerRequestFilter {
             Log.debug("AuthFilter global config pass-thru");
             return;
 			
-        } else if (path.contains("rest/webauthn") || path.contains("rest/login")  || path.contains("rest/register")) {
+        } else if (path.contains("rest/webauthn") || path.contains("rest/login") || path.contains("rest/totp/")  || path.contains("rest/register")) {
             Log.debug("AuthFilter authentication pass-thru");
             return;
         }
