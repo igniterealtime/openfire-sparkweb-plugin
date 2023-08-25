@@ -61,16 +61,6 @@
                 JiveGlobals.deleteProperty( "sparkweb.config.default_domain" );
             }
 
-            JiveGlobals.setProperty( "sparkweb.config.locked_domain", Boolean.toString( ParamUtils.getBooleanParameter( request, "locked_domain" ) ) );
-
-            if ( ParamUtils.getParameter( request, "view_mode" ) != null )
-            {
-                JiveGlobals.setProperty( "sparkweb.config.view_mode", URLEncoder.encode( ParamUtils.getParameter( request, "view_mode" ) ) );
-            }
-            else
-            {
-                JiveGlobals.deleteProperty( "sparkweb.config.view_mode" );
-            }
             response.sendRedirect("sparkweb-config.jsp?success=update");
             return;
         }
@@ -86,27 +76,13 @@
             return;
         }
 
-        if ( "loglevel".equals( update ) )
-        {
-            if ( ParamUtils.getParameter( request, "currentLoglevel" ) != null )
-            {
-                JiveGlobals.setProperty( "sparkweb.config.loglevel", URLEncoder.encode( ParamUtils.getParameter( request, "currentLoglevel" ) , "UTF-8" ) );
-            }
-
-            response.sendRedirect("sparkweb-config.jsp?success=update");
-            return;
-        }
-
         // Should not happen. Indicates that a form wasn't processed above.
         response.sendRedirect("sparkweb-config.jsp?noupdate");
         return;
     }
 
     // Read all updated values from the properties.
-    final String currentLoglevel= JiveGlobals.getProperty( "sparkweb.config.loglevel", "info" );
     final String defaultDomain = JiveGlobals.getProperty( "sparkweb.config.default_domain", XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
-    final boolean lockedDomain = JiveGlobals.getBooleanProperty( "sparkweb.config.locked_domain", false );
-    final String viewMode = JiveGlobals.getProperty( "sparkweb.config.view_mode", "overlayed" );
 %>
 <html>
 <head>
@@ -218,14 +194,6 @@
                     <input type="text" name="default_domain" id="default_domain" size="30" value="<%=defaultDomain%>">
                 </td>
             </tr>
-            <tr valign="top">
-                <td colspan="2" style="padding-top: 1em;">
-                    <input type="checkbox" name="locked_domain" id="locked_domain" <%= lockedDomain ? "checked" : "" %>/>&nbsp;
-                    <label for="locked_domain">
-                        <b><fmt:message key="config.page.locked_domain.label"/></b> - <fmt:message key="config.page.locked_domain.description"/>
-                    </label>
-                </td>
-            </tr>
             </tbody>
         </table>
 
@@ -265,78 +233,6 @@
             <%
                 }
             %>
-            </tbody>
-        </table>
-
-        <br>
-
-        <input type="submit" value="<fmt:message key="global.save_settings" />">
-
-    </form>
-
-</div>
-
-<div class="jive-contentBoxHeader"><fmt:message key="config.page.loglevel.header" /></div>
-<div class="jive-contentBox">
-
-    <p><fmt:message key="config.page.loglevel.description" /></p>
-
-    <form action="sparkweb-config.jsp">
-        <input type="hidden" name="csrf" value="${csrf}">
-        <input type="hidden" name="update" value="loglevel"/>
-
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tbody>
-            <tr valign="top">
-                <td width="1%" nowrap>
-                    <input type="radio" name="currentLoglevel" value="info" id="rb01" <%= (currentLoglevel == "info" ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="rb01">
-                        <b><fmt:message key="config.page.loglevel.info" /></b> - <fmt:message key="config.page.loglevel.info_info" />
-                    </label>
-                </td>
-            </tr>
-            <tr valign="top">
-                <td width="1%" nowrap>
-                    <input type="radio" name="currentLoglevel" value="debug" id="rb02" <%= (currentLoglevel == "debug" ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="rb02">
-                        <b><fmt:message key="config.page.loglevel.debug" /></b> - <fmt:message key="config.page.loglevel.debug_info" />
-                    </label>
-                </td>
-            </tr>
-            <tr valign="top">
-                <td width="1%" nowrap>
-                    <input type="radio" name="currentLoglevel" value="warn" id="rb03" <%= (currentLoglevel == "warn" ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="rb03">
-                        <b><fmt:message key="config.page.loglevel.warn" /></b> - <fmt:message key="config.page.loglevel.warn_info" />
-                    </label>
-                </td>
-            </tr>
-            <tr valign="top">
-                <td width="1%" nowrap>
-                    <input type="radio" name="currentLoglevel" value="error" id="rb04" <%= (currentLoglevel == "error" ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="rb04">
-                        <b><fmt:message key="config.page.loglevel.error" /></b> - <fmt:message key="config.page.loglevel.error_info" />
-                    </label>
-                </td>
-            </tr>
-            <tr valign="top">
-                <td width="1%" nowrap>
-                    <input type="radio" name="currentLoglevel" value="fatal" id="rb05" <%= (currentLoglevel == "fatal" ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="rb05">
-                        <b><fmt:message key="config.page.loglevel.fatal" /></b> - <fmt:message key="config.page.loglevel.fatal_info" />
-                    </label>
-                </td>
-            </tr>
             </tbody>
         </table>
 
