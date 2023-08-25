@@ -190,7 +190,7 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 
     public void initializePlugin(final PluginManager manager, final File pluginDirectory) {
         self = this;
-		server = XMPPServer.getInstance();
+		server = server;
 		userManager = server.getUserManager();
 		presenceManager = server.getPresenceManager();
 		
@@ -214,8 +214,8 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 		
 		galeneIQHandler = new GaleneIQHandler();
 		galeneIQHandler.startHandler();		
-		XMPPServer.getInstance().getIQRouter().addHandler(galeneIQHandler);	
-		XMPPServer.getInstance().getIQDiscoInfoHandler().addServerFeature("urn:xmpp:http:online-meetings:galene:0");			
+		server.getIQRouter().addHandler(galeneIQHandler);	
+		server.getIQDiscoInfoHandler().addServerFeature("urn:xmpp:http:online-meetings:galene:0");			
 
 		jitsiIQHandler = new JitsiIQHandler();
 		jitsiIQHandler.startHandler();		
@@ -749,10 +749,53 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 
     public void messageReceived(JID roomJID, JID user, String nickname, Message message) {
 		final String body = message.getBody();
-		MUCRoom mucRoom = mucService.getChatRoom(roomJID.getNode());
-		
-		if (mucRoom != null) {
+		final String roomJid = roomJID.toString();
+		final String userJid = user.toBareJID();
 
+		if (body != null)
+		{
+			Log.debug("MUC messageReceived " + roomJID + " " + user + " " + nickname + "\n" + message.getBody());
+
+			try {
+				for ( MultiUserChatService mucService : server.getMultiUserChatManager().getMultiUserChatServices() )
+				{
+					MUCRoom room = mucService.getChatRoom(roomJID.getNode());
+
+					if (room != null)
+					{
+						for (JID jid : room.getOwners())
+						{
+							Log.debug("notifyRoomSubscribers owners " + jid + " " + roomJID);
+							notifyRoomSubscribers(jid, room, roomJID, message, nickname, userJid);
+						}
+
+						for (JID jid : room.getAdmins())
+						{
+							Log.debug("notifyRoomSubscribers admins " + jid + " " + roomJID);
+							notifyRoomSubscribers(jid, room, roomJID, message, nickname, userJid);
+						}
+
+						for (JID jid : room.getMembers())
+						{
+							Log.debug("notifyRoomSubscribers members " + jid + " " + roomJID);
+							notifyRoomSubscribers(jid, room, roomJID, message, nickname, userJid);
+						}
+
+						for (MUCRole role : room.getModerators())
+						{
+							Log.debug("notifyRoomSubscribers moderators " + role.getUserAddress() + " " + roomJID, message);
+						}
+
+						for (MUCRole role : room.getParticipants())
+						{
+							Log.debug("notifyRoomSubscribers participants " + role.getUserAddress() + " " + roomJID, message);
+						}
+					}
+
+				}
+			} catch (Exception e) {
+				Log.error("messageReceived", e);
+			}
 		}
     }
 
@@ -771,6 +814,88 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
     public void occupantLeft(JID roomJID, JID user, String nickname) {
 		
 	}
+
+    private void notifyRoomSubscribers(JID subscriberJID, MUCRoom room, JID roomJID, Message message, String nickname, String senderJid)    {
+        try {
+            if (GroupJID.isGroup(subscriberJID)) {
+                Group group = GroupManager.getInstance().getGroup(subscriberJID);
+
+                for (JID groupMemberJID : group.getAll()) {
+                    notifyRoomActivity(groupMemberJID, room, roomJID, message, nickname, senderJid);
+                }
+            } else {
+                notifyRoomActivity(subscriberJID, room, roomJID, message, nickname, senderJid);
+            }
+
+        } catch (GroupNotFoundException gnfe) {
+            Log.warn("Invalid group JID in the member list: " + subscriberJID);
+        }
+    }
+
+    private void notifyRoomActivity(JID subscriberJID, MUCRoom room, JID roomJID, Message message, String nickname, String senderJid)    {
+        if (room.getAffiliation(subscriberJID) != MUCRole.Affiliation.none && !senderJid.equals(subscriberJID.toBareJID()))
+        {
+            Log.debug("notifyRoomActivity checking " + subscriberJID + " " + roomJID);
+            boolean inRoom = false;
+
+            try {
+                for (MUCRole role : room.getOccupants())
+                {
+                    if (role.getUserAddress().asBareJID().toString().equals(subscriberJID.toString())) inRoom = true;
+                }
+
+            } catch (Exception e) {
+                inRoom = false;
+                Log.error("notifyRoomActivity error", e);
+            }
+
+            Log.debug("notifyRoomActivity confirmed " + subscriberJID + " " + roomJID + " " + inRoom);
+
+            if (!inRoom)
+            {
+                if (server.getRoutingTable().getRoutes(subscriberJID, null).size() > 0)
+                {
+                    Log.debug("notifyRoomActivity notifying " + subscriberJID + " " + roomJID);
+                    Message notification = new Message();
+                    notification.setFrom(roomJID);
+                    notification.setTo(subscriberJID);
+                    Element rai = notification.addChildElement("rai", "urn:xmpp:rai:0");
+                    rai.addElement("activity").setText(roomJID.toString());
+                    server.getRoutingTable().routePacket(subscriberJID, notification, true);
+                }
+                else {
+                    // user is offline, send web push notification if user mentioned
+                    // <reference xmlns='urn:xmpp:reference:0' uri='xmpp:juliet@capulet.lit' begin='72' end='78' type='mention' />
+
+                    Element referenceElement = message.getChildElement("reference", "urn:xmpp:reference:0");
+                    boolean mentioned = message.getBody().indexOf(subscriberJID.getNode()) > -1;
+
+                    if (referenceElement != null)
+                    {
+                        String uri = referenceElement.attribute("uri").getStringValue();
+
+                        if (uri.startsWith("xmpp:") && uri.substring(5).equals(subscriberJID.toString())) {
+                            mentioned = true;
+                        }
+                    }
+
+                    if (mentioned) {
+                        try
+                        {
+                            User user = server.getUserManager().getUser(subscriberJID.getNode());
+							// TODO web push
+                            //interceptor.webPush(user, message.getBody(), roomJID, Message.Type.groupchat, nickname );
+                            Log.debug( "notifyRoomActivity - notifying mention of " + user.getName());
+                        }
+                        catch ( UserNotFoundException e )
+                        {
+                            Log.debug( "notifyRoomActivity - Not a recognized user.", e );
+                        }
+                    }
+                }
+            }
+        }
+    }
 	
     // -------------------------------------------------------
     //

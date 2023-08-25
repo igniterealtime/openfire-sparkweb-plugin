@@ -504,7 +504,6 @@ public class SparkWebAPI {
         return mucRoomController.getChatRoom(roomName, serviceName, expand);
     }
 
-
 	@ApiOperation(tags = {"Group Chat"}, value="Get room participants", notes="Get all participants of a specific multi-user chat room")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The chat room participants"), @ApiResponse(code = 404, message = "The chat room (or its service) can not be found or is not accessible")})	
     @Path("/groupchat/room/{roomName}/participants")
@@ -633,7 +632,6 @@ public class SparkWebAPI {
 
         return Response.status(Response.Status.OK).build();
     }
-
 
 	//-------------------------------------------------------
 	//
