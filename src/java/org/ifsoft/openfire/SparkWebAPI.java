@@ -728,6 +728,30 @@ public class SparkWebAPI {
             throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
         }
     }
+
+	@ApiOperation(tags = {"Collaboration"}, value="Send XMPP Stanza", notes="send an XMPP stanza from aunthenticated user to server")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "XMPP stanza was set"), @ApiResponse(code = 400, message = "No xmpp connection found for authenticated user")})	
+    @POST
+    @Path("/xmpp")
+    public Response postXmppMessage(@ApiParam(value = "XMPP stanza to be sent to server", required = true) String xmpp) throws ServiceException {
+		String username = getEndUser();			
+        Log.debug("postXmppMessage " + username + "\n" + xmpp);
+
+        try {
+            OpenfireConnection connection = OpenfireConnection.getConnection(username);
+
+            if (connection == null) {
+                throw new ServiceException("Exception", "xmpp connection not found", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+            }
+
+            connection.sendPacket(xmpp);
+
+        } catch (Exception e) {
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+
+        return Response.status(Response.Status.OK).build();
+    }
 	
 	//-------------------------------------------------------
 	//

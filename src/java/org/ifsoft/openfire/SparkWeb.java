@@ -190,7 +190,7 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 
     public void initializePlugin(final PluginManager manager, final File pluginDirectory) {
         self = this;
-		server = server;
+		server = XMPPServer.getInstance();
 		userManager = server.getUserManager();
 		presenceManager = server.getPresenceManager();
 		
