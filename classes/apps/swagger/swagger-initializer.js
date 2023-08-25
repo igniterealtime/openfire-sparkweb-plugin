@@ -154,7 +154,13 @@ window.onload = function() {
 		
 		actionChannel.addEventListener('message', event => {
 			console.debug("setupListeners - notication action", event.data);
-		});		
+
+		});	
+
+		window.addEventListener('beforeunload', function() {
+			console.debug("setupListeners - before unload", url, token);
+			fetch(url + "/sparkweb/api/rest/logout", {method: "POST", headers: {"Authorization": token}});
+		});	
 	}
 	
 	function setupPushNotifications(baseUrl, token, registration) {		
