@@ -144,10 +144,15 @@ window.onload = function() {
 			document.getElementById("status").innerHTML = msg.type + " " + msg.from + " - " + msg.body;				
 			console.debug("EventSource - chatapi.muc", msg);	
 		});	
-		
+
 		source.addEventListener('chatapi.xmpp', async event => {
 			const msg = JSON.parse(event.data);	
 			console.debug("EventSource - chatapi.xmpp", atob(msg.xmpp));	
+		});	
+		
+		source.addEventListener('pubsub.item', async event => {
+			const msg = JSON.parse(event.data);	
+			console.debug("EventSource - pubsub.item", msg);	
 		});		
 
 		const actionChannel = new BroadcastChannel('sparkweb.notification.action');

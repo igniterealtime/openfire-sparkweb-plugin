@@ -76,6 +76,7 @@ import org.jivesoftware.openfire.plugin.rest.entity.*;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.PubSubInfo;
 import org.jivesoftware.openfire.pubsub.PubSubServiceInfo;
 import org.jivesoftware.openfire.pubsub.Node;
@@ -155,7 +156,8 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 	private XMPPServer server;
     private JitsiIQHandler jitsiIQHandler;	
     private GaleneIQHandler galeneIQHandler;	
-    private MultiUserChatService mucService;		
+    private MultiUserChatService mucService;	
+	private PubSubServiceInfo pubSubServiceInfo;	
 	
     public Map<String, ArrayList<WebEventSourceServlet.WebEventSource>> webSources;		
     public Map<String, User> tokens;		
@@ -201,6 +203,7 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 		ClusterManager.addListener(this);
         MUCEventDispatcher.addListener(this);
 
+		pubSubServiceInfo = new PubSubInfo();
 		mucService = server.getMultiUserChatManager().getMultiUserChatService(MUC_NAME);
 
 		try {
@@ -342,7 +345,126 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
     //  Utilitiy functions
     //
     // -------------------------------------------------------		
+    public List<Node> getPubSubNodes(String username)    {	
+        Log.debug("getPubSubNodes - " + username);
+		return pubSubServiceInfo.getLeafNodes();
+    }
+	
+    public List<User> getPubSubscriptions(String username, String interestNode)    {
+		Node node = pubSubServiceInfo.getNode( interestNode );		
+        Log.debug("getPubSubscriptions - " + username + " " + interestNode + " " + node);
 
+		List<User> users = new ArrayList<>();
+			
+		if (node != null) 
+		{
+			for (NodeSubscription subscription : node.getAllSubscriptions()) {
+				JID subscriber = subscription.getJID();
+				
+				if (subscriber.getNode() != null) {
+					User user = getUser(subscriber.getNode());
+					if (user != null) users.add(user);
+				}
+			}
+		}
+		return users;
+    }
+	
+    public boolean publishPubSubEvent(String username, String interestNode, JSONObject payload)    {
+		Node node = pubSubServiceInfo.getNode( interestNode );		
+        Log.debug("publishPubSubEvent - " + username + " " + interestNode + " " + node + "\n" + payload);
+				
+		if (node != null) {
+			String domain = server.getServerInfo().getXMPPDomain();		
+			IQ iq = new IQ(IQ.Type.set);
+			iq.setFrom(username + "@" + domain);
+			iq.setTo("pubsub." + domain);
+			Element pubsub = iq.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
+			Element publish = pubsub.addElement("publish").addAttribute("node", interestNode);
+			Element item = publish.addElement("item").addAttribute("id", interestNode + "-" + System.currentTimeMillis());			
+			Element json = item.addElement("json", "urn:xmpp:json:0");			
+			json.setText(payload.toString());
+			
+			Log.debug("publishPubSubEvent " + iq.toString());			
+			XMPPServer.getInstance().getIQRouter().route(iq);
+			return true;
+		}
+		return false;
+    }
+	
+    public boolean publishPepEvent(String username, String interestNode, JSONObject payload)    {	
+        Log.debug("publishPepEvent - " + username + " " + interestNode + "\n" + payload);
+				
+		String domain = server.getServerInfo().getXMPPDomain();		
+		IQ iq = new IQ(IQ.Type.set);
+		iq.setFrom(username + "@" + domain);
+		iq.setTo(domain);
+		Element pubsub = iq.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
+		Element publish = pubsub.addElement("publish").addAttribute("node", interestNode);
+		Element item = publish.addElement("item").addAttribute("id", interestNode + "-" + System.currentTimeMillis());			
+		Element json = item.addElement("json", "urn:xmpp:json:0");			
+		json.setText(payload.toString());
+		
+		Log.debug("publishPepEvent " + iq.toString());			
+		XMPPServer.getInstance().getIQRouter().route(iq);
+		return true;
+    }	
+
+    public boolean subscribePubSubNode(String username, String interestNode)    {
+		Node node = pubSubServiceInfo.getNode( interestNode );		
+        Log.debug("subscribePubSubNode - " + username + " " + interestNode + " " + node);
+				
+		if (node != null) {
+			String domain = server.getServerInfo().getXMPPDomain();
+
+			IQ iq1 = new IQ(IQ.Type.set);
+			iq1.setFrom(username + "@" + domain);
+			iq1.setTo("pubsub." + domain);
+			Element pubsub1 = iq1.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
+			Element subscribe = pubsub1.addElement("subscribe").addAttribute("node", interestNode).addAttribute("jid", username + "@" + domain);
+			Log.debug("subscribePubSubNode " + iq1.toString());
+			server.getIQRouter().route(iq1);
+			return true;			
+		}
+		return false;
+    }
+	
+    public boolean createPubSubNode(String username, String interestNode)    {
+		Node node = pubSubServiceInfo.getNode( interestNode );		
+        Log.debug("createPubsubNode - " + username + " " + interestNode + " " + node);
+				
+		if (node == null) {
+			String domain = server.getServerInfo().getXMPPDomain();
+
+			IQ iq1 = new IQ(IQ.Type.set);
+			iq1.setFrom(username + "@" + domain);
+			iq1.setTo("pubsub." + domain);
+			Element pubsub1 = iq1.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
+			Element create = pubsub1.addElement("create").addAttribute("node", interestNode);
+
+			Element configure = pubsub1.addElement("configure");
+			Element x = configure.addElement("x", "jabber:x:data").addAttribute("type", "submit");
+
+			Element field1 = x.addElement("field");
+			field1.addAttribute("var", "FORM_TYPE");
+			field1.addAttribute("type", "hidden");
+			field1.addElement("value").setText("http://jabber.org/protocol/pubsub#node_config");
+
+			//Element field2 = x.addElement("field");
+			//field2.addAttribute("var", "pubsub#persist_items");
+			//field2.addElement("value").setText("1");
+
+			Element field3 = x.addElement("field");
+			field3.addAttribute("var", "pubsub#max_items");
+			field3.addElement("value").setText("1");
+
+			Log.debug("createPubsubNode " + iq1.toString());
+			server.getIQRouter().route(iq1);
+			return true;			
+		}
+		return false;
+    }
+	
     public boolean postWebPush(User user, NotificationEntity notificationEntity) {
 		Log.debug("postWebPush " + user.getName() + "\n" + notificationEntity.getBody());
 
@@ -904,16 +1026,53 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
     // -------------------------------------------------------	
 
 	public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
-    if (!processed && incoming && packet.getTo() != null && packet instanceof IQ) {
-		IQ iq = (IQ)packet;
-		if (iq.getType() != IQ.Type.set) return; 	
-
-		Element eIq = iq.getElement();
-		String to = eIq.attributeValue("to");
-		String from = eIq.attributeValue("from");		
+		// IQ handling
 		
-	}
-  }	
+		if (!processed && incoming && packet.getTo() != null && packet instanceof IQ) {
+			IQ iq = (IQ)packet;
+
+			if (iq.getType() != IQ.Type.set) return; 	
+
+			String username = packet.getTo().getNode();	
+			if (username == null) return;			
+
+			Element eIq = iq.getElement();
+			String to = eIq.attributeValue("to");
+			String from = eIq.attributeValue("from");	
+
+			if (to != null && !"".equals(to)) {
+				if (!to.toLowerCase().startsWith("pubsub.")) return; 
+			} else {
+				return;
+			}			
+
+			Element pubsub = iq.getChildElement();
+			boolean parsed = true;
+			
+			try {
+				if (pubsub != null && pubsub.getNamespaceURI().equals("http://jabber.org/protocol/pubsub")) {
+					parsed = false;
+					Element publish = pubsub.element("publish");
+					
+					if (publish != null) {
+						Element item = publish.element("item");
+						
+						if (item != null) {
+							String json = item.element("json").getText();
+							OpenfireConnection connection = OpenfireConnection.users.get(username);
+							
+							if (connection != null)	{
+								broadcast(username, "pubsub.item", json);
+							}								
+						}
+					}
+				}
+			} catch (Exception e) {
+				Log.error("interceptPacket error", e);
+				parsed = false;
+			}
+		}
+	}	
 		
 	public class ColorHelper {
 		public final int MAX = 200;

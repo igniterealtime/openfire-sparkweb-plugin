@@ -1488,10 +1488,8 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
 
         public void deliverRawText(String text)
         {
-            int pos = text.indexOf("<message ");
-
-            if (pos > -1)
-            {
+            if ( text.contains("<message ") && !text.contains("jabber:client")) {
+				int pos = text.indexOf("<message ");				
                 text = text.substring(0, pos + 9) + "xmlns=\"jabber:client\"" + text.substring(pos + 8);
             }
 
@@ -1501,8 +1499,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
 
             Stanza stanza = connection.handleParser(text);
 
-            if (stanza != null)
-            {
+            if (stanza != null) {
                 processMessageStanza(stanza);
             }
         }

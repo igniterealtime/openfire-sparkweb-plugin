@@ -68,6 +68,10 @@ import org.jivesoftware.openfire.plugin.spark.Bookmark;
 import org.jivesoftware.openfire.plugin.spark.Bookmarks;
 import org.jivesoftware.openfire.plugin.spark.BookmarkManager;
 import org.jivesoftware.openfire.vcard.VCardManager;
+import org.jivesoftware.openfire.pubsub.NodeSubscription;
+import org.jivesoftware.openfire.pubsub.PubSubInfo;
+import org.jivesoftware.openfire.pubsub.PubSubServiceInfo;
+import org.jivesoftware.openfire.pubsub.Node;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -657,6 +661,115 @@ public class SparkWebAPI {
 	//
 	//-------------------------------------------------------
 
+	@ApiOperation(tags = {"Collaboration"}, value="Get all pubsub nodes", notes="This endpoint is used to obtain pubsub nodes")
+ 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The request was accepted", response = NodeEntities.class), @ApiResponse(code = 400, message = "The request was rejected")})	
+    @Path("/pubsub/nodes")	
+    @GET	
+    public NodeEntities getPubSubNodes()  throws ServiceException {
+		String username = getEndUser();			
+        List<NodeEntity> nodes = new ArrayList<NodeEntity>();
+
+        for (Node node : SparkWeb.self.getPubSubNodes(username)) {
+			Collection<JID> jids = node.getOwners();
+			ArrayList<String> users = new ArrayList<>();
+			
+			for (JID jid : jids) {
+				users.add(jid.toString());
+			}
+            nodes.add(new NodeEntity(node.getNodeID(), node.getName(), node.getDescription(), users));			
+        }
+
+        NodeEntities nodeEntities = new NodeEntities();
+        nodeEntities.setNodes(nodes);		
+        return nodeEntities;
+    }
+
+	@ApiOperation(tags = {"Collaboration"}, value="Create a pubsub node", notes="This endpoint is used to create a pubsub node")
+ 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The node was created"), @ApiResponse(code = 400, message = "The node could not be created")})	
+    @Path("/pubsub/create/{node}")	
+    @POST	
+    public Response createPubSubNode(@ApiParam(value = "The pubsub node to be created", required = true) @PathParam("node") String node)  throws ServiceException {
+		String username = getEndUser();			
+
+		if (SparkWeb.self.createPubSubNode(username, node)) {			
+			return Response.status(Response.Status.OK).build();
+		}
+		
+        throw new ServiceException("Exception", "pubsub node could not be created", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);		
+    }
+	
+	@ApiOperation(tags = {"Collaboration"}, value="Subscribe to pubsub node", notes="This endpoint is used to subscribe to a pubsub node")
+ 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The subscription was made"), @ApiResponse(code = 400, message = "The subscription fails")})	
+    @Path("/pubsub/subscribe/{node}")	
+    @POST	
+    public Response subscribePubSubEvent(@ApiParam(value = "The pubsub node to be published", required = true) @PathParam("node") String node)  throws ServiceException {
+		String username = getEndUser();			
+		
+		try {
+			if (SparkWeb.self.subscribePubSubNode(username, node)) {			
+				return Response.status(Response.Status.OK).build();
+			}
+		} catch (Exception e) {
+			throw new ServiceException("Exception", e.toString(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);					
+		}
+		
+        throw new ServiceException("Exception", "subscription to pubsub node could not be achieved", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);		
+    }
+	
+	@ApiOperation(tags = {"Collaboration"}, value="Publish to pubsub node", notes="This endpoint is used to publish a JSON payload to pubsub node")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The payload was published"), @ApiResponse(code = 400, message = "The payload could not be published")})	    
+	@Path("/pubsub/publish/{node}")	
+    @POST	
+    public Response publishPubSubEvent(@ApiParam(value = "The pubsub node to be published to", required = true) @PathParam("node") String node, @ApiParam(value = "The JSON payload to be published", required = true) String payload)  throws ServiceException {
+		String username = getEndUser();			
+		
+		try {
+			if (SparkWeb.self.publishPubSubEvent(username, node, new JSONObject(payload))) {			
+				return Response.status(Response.Status.OK).build();
+			}
+		} catch (Exception e) {
+			throw new ServiceException("Exception", e.toString(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);					
+		}
+		
+        throw new ServiceException("Exception", "pubsub node could not be published", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);		
+    }
+	
+	@ApiOperation(tags = {"Collaboration"}, value="Get all pubsub subscribers", notes="This endpoint is used to obtain pubsub subscribers for a specific node")
+ 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The request was accepted", response = UserEntities.class), @ApiResponse(code = 400, message = "The request was rejected")})	
+    @Path("/pubsub/subscribers/{node}")	
+    @GET	
+    public UserEntities getPubSubscribers(@ApiParam(value = "The pubsub node of interest", required = true) @PathParam("node") String node)  throws ServiceException {
+		String username = getEndUser();			
+        List<UserEntity> users = new ArrayList<UserEntity>();
+        List<User> usernames = SparkWeb.self.getPubSubscriptions(username, node);
+
+        for (User user : usernames) {
+            users.add(new UserEntity(user.getUsername(), user.getName(), user.getEmail()));			
+        }
+
+        UserEntities userEntities = new UserEntities();
+        userEntities.setUsers(users);		
+        return userEntities;
+    }
+	
+	@ApiOperation(tags = {"Collaboration"}, value="Publish to pep node", notes="This endpoint is used to publish a JSON payload to personal eventing protocol (PEP) node")
+ 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The payload was published"), @ApiResponse(code = 400, message = "The payload could not be published")})	
+    @Path("/pep/publish/{node}")	
+    @POST	
+    public Response publishPepEvent(@ApiParam(value = "The pep node to be published", required = true) @PathParam("node") String node, @ApiParam(value = "The JSON payload to be published", required = true) String payload)  throws ServiceException {
+		String username = getEndUser();			
+		
+		try {
+			if (SparkWeb.self.publishPepEvent(username, node, new JSONObject(payload))) {			
+				return Response.status(Response.Status.OK).build();
+			}
+		} catch (Exception e) {
+			throw new ServiceException("Exception", e.toString(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);					
+		}
+		
+        throw new ServiceException("Exception", "pep node could not be published to", ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);		
+    }	
+	
 	@ApiOperation(tags = {"Collaboration"}, value="Request meeting URL", notes="Request for online meeting URL needed to join and share with other users")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The request was accepted", response = OnlineMeetingEntity.class), @ApiResponse(code = 400, message = "The meeting url request failed")})	
     @Path("/meet/{service}/{id}")
