@@ -34,7 +34,8 @@ public class UserEntity {
 
     /** The username. */
     private String username;
-
+    private String vcard;
+	
     /** The name. */
     private String name;
 
@@ -69,6 +70,15 @@ public class UserEntity {
         this.name = name;
         this.email = email;
     }
+	
+    @XmlElement
+    public String getVcard() {
+        return vcard;
+    }	
+	
+    public void setVcard(String vcard) {
+        this.vcard = vcard;
+    }	
 
     /**
      * Gets the username.

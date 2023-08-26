@@ -32,6 +32,10 @@ import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.xmpp.packet.JID;
 
+import org.dom4j.Element;
+import org.dom4j.DocumentHelper;
+import org.jivesoftware.openfire.vcard.VCardManager;
+
 /**
  * The Class UserUtils.
  */
@@ -81,7 +85,9 @@ public class UserUtils {
             userProperties.add(new UserProperty(property.getKey(), property.getValue()));
         }
         userEntity.setProperties(userProperties);
-
+		Element vcard = VCardManager.getInstance().getVCard(user.getUsername());
+		if (vcard != null) userEntity.setVcard(java.util.Base64.getEncoder().encodeToString(vcard.asXML().getBytes()));
+		
         return userEntity;
     }
 

@@ -67,12 +67,14 @@ import org.jivesoftware.openfire.archive.*;
 import org.jivesoftware.openfire.plugin.spark.Bookmark;
 import org.jivesoftware.openfire.plugin.spark.Bookmarks;
 import org.jivesoftware.openfire.plugin.spark.BookmarkManager;
+import org.jivesoftware.openfire.vcard.VCardManager;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
+import org.jivesoftware.smackx.vcardtemp.packet.VCard;
 import org.jivesoftware.smack.OpenfireConnection;
 import org.ifsoft.webauthn.UserRegistrationStorage;
 
@@ -80,6 +82,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.dom4j.Element;
+import org.dom4j.DocumentHelper;
 import net.sf.json.*;
 import org.jitsi.util.OSUtils;
 import org.ifsoft.openfire.SparkWeb;
@@ -259,6 +263,16 @@ public class SparkWebAPI {
 						if ("email".equals(name)) {
 							user.setEmail(value);
 						}
+						else
+							
+						if ("vcard".equals(name)) {
+							try {
+								VCardManager.getInstance().setVCard(username, DocumentHelper.parseText(new String(java.util.Base64.getDecoder().decode(value))).getRootElement());
+							} catch (Exception e) {
+								Log.error("postUserConfig " + e, e);
+							}
+				
+						}
 						else {												
 							properties.put(name, value);
 						}
@@ -278,7 +292,11 @@ public class SparkWebAPI {
 		String username = getEndUser();
 		
 		if (username != null) {
-			json.put("domain", XMPPServer.getInstance().getServerInfo().getXMPPDomain());				
+			json.put("domain", XMPPServer.getInstance().getServerInfo().getXMPPDomain());			
+			try {
+				Element vcard = VCardManager.getInstance().getVCard(username);
+				if (vcard != null) json.put("vcard", java.util.Base64.getEncoder().encodeToString(vcard.asXML().getBytes()));
+			} catch (Exception e) {}
 			
 			User user = ensureUserExists(username);					
 			

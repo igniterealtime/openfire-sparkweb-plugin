@@ -47,6 +47,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.dom4j.Element;
+import org.dom4j.DocumentHelper;
+import org.jivesoftware.openfire.vcard.VCardManager;
+
+
 /**
  * The Class UserServiceController.
  */
@@ -119,11 +124,18 @@ public class UserServiceController {
             }
             log("Create a new user: " + userEntity.getUsername());
             try {
-                userManager.createUser(userEntity.getUsername(), userEntity.getPassword(), userEntity.getName(),
-                        userEntity.getEmail());
+                userManager.createUser(userEntity.getUsername(), userEntity.getPassword(), userEntity.getName(), userEntity.getEmail());
+				
+				if (userEntity.getVcard() != null) {
+					try {
+						VCardManager.getInstance().setVCard(userEntity.getUsername(), DocumentHelper.parseText(new String(java.util.Base64.getDecoder().decode(userEntity.getVcard()))).getRootElement());
+					} catch (Exception e1) {
+						throw new ServiceException("Could not create vcard", userEntity.getUsername(),  ExceptionType.USER_ALREADY_EXISTS_EXCEPTION, Response.Status.CONFLICT);						
+					}
+				}
+			
             } catch (UserAlreadyExistsException e) {
-                throw new ServiceException("Could not create new user", userEntity.getUsername(),
-                        ExceptionType.USER_ALREADY_EXISTS_EXCEPTION, Response.Status.CONFLICT);
+                throw new ServiceException("Could not create new user", userEntity.getUsername(),  ExceptionType.USER_ALREADY_EXISTS_EXCEPTION, Response.Status.CONFLICT);
             }
             addProperties(userEntity.getUsername(), userEntity.getProperties());
         } else {
@@ -164,6 +176,13 @@ public class UserServiceController {
             }
             if (userEntity.getEmail() != null) {
                 user.setEmail(userEntity.getEmail());
+            }			
+            if (userEntity.getVcard() != null) {
+				try {
+					VCardManager.getInstance().setVCard(username, DocumentHelper.parseText(new String(java.util.Base64.getDecoder().decode(userEntity.getVcard()))).getRootElement());
+				} catch (Exception e) {
+					throw new ServiceException("Could not create vcard", userEntity.getUsername(),  ExceptionType.USER_ALREADY_EXISTS_EXCEPTION, Response.Status.CONFLICT);											
+				}
             }
 
             addProperties(username, userEntity.getProperties());
