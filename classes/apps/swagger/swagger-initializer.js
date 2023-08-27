@@ -61,9 +61,21 @@ window.onload = function() {
 				console.debug("getUrlParam", value);				
 				return value;
 			}		
+			const url = location.protocol + "//" + location.host;
 
-			const url = location.protocol + "//" + location.host;		
-			const username = getUrlParam("username", "Username");
+			let username = sessionStorage.getItem("sparkweb.config.username");
+			let password = sessionStorage.getItem("sparkweb.config.password");
+			
+			if (!username) {
+				let credentials = await navigator.credentials.get({password: true});
+				console.debug("web credentials get", credentials);	
+				
+				if (credentials?.id) {
+					username = credentials.id.split("@")[0];
+				} else {
+					username = getUrlParam("username", "Username");
+				}
+			}
 			
 			if (username) {
 				try {
@@ -73,7 +85,15 @@ window.onload = function() {
 					console.error("web authenticate fails", e);	
 
 					if (confirm("Create and register new credentials for " + username + "?")) {
-						const password = getUrlParam("password", "Password");	
+						
+						if (credentials?.password) {
+							password = credentials.password;
+						} else {
+							password = getUrlParam("password", "Password");
+							credentials = await navigator.credentials.create({password: {id: username, password: password}});
+							await navigator.credentials.store(credentials);							
+						}
+							
 						const token = await webRegister(username, password);
 						setupListeners(username, url, token);	
 					}						
@@ -147,7 +167,7 @@ window.onload = function() {
 
 		source.addEventListener('chatapi.xmpp', async event => {
 			const msg = JSON.parse(event.data);	
-			console.debug("EventSource - chatapi.xmpp", atob(msg.xmpp));	
+			console.debug("EventSource - chatapi.xmpp", msg, atob(msg.xmpp));	
 		});	
 		
 		source.addEventListener('pubsub.item', async event => {
