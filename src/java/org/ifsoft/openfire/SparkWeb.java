@@ -80,6 +80,7 @@ import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.PubSubInfo;
 import org.jivesoftware.openfire.pubsub.PubSubServiceInfo;
 import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pep.PEPServiceInfo;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
@@ -345,10 +346,18 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
     //  Utilitiy functions
     //
     // -------------------------------------------------------		
+    public List<Node> getPepNodes(String username)    {	
+		JID owner = server.createJID( username, null );	
+		PubSubServiceInfo service = new PEPServiceInfo( owner );	
+        Log.debug("getPepNodes - " + username);
+		return service.getLeafNodes();
+    } 
+
     public List<Node> getPubSubNodes(String username)    {	
         Log.debug("getPubSubNodes - " + username);
 		return pubSubServiceInfo.getLeafNodes();
-    }
+    } 
+
 	
     public List<User> getPubSubscriptions(String username, String interestNode)    {
 		Node node = pubSubServiceInfo.getNode( interestNode );		
@@ -380,7 +389,7 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 			iq.setFrom(username + "@" + domain);
 			iq.setTo("pubsub." + domain);
 			Element pubsub = iq.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
-			Element publish = pubsub.addElement("publish").addAttribute("node", interestNode);
+			Element publish = pubsub.addElement("publish").addAttribute("node", interestNode).addAttribute("jid", username + "@" + domain);
 			Element item = publish.addElement("item").addAttribute("id", interestNode + "-" + System.currentTimeMillis());			
 			Element json = item.addElement("json", "urn:xmpp:json:0");			
 			json.setText(payload.toString());
@@ -398,7 +407,7 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 		String domain = server.getServerInfo().getXMPPDomain();		
 		IQ iq = new IQ(IQ.Type.set);
 		iq.setFrom(username + "@" + domain);
-		iq.setTo(domain);
+		//iq.setTo(domain);
 		Element pubsub = iq.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
 		Element publish = pubsub.addElement("publish").addAttribute("node", interestNode);
 		Element item = publish.addElement("item").addAttribute("id", interestNode + "-" + System.currentTimeMillis());			

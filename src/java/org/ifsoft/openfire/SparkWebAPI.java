@@ -751,6 +751,29 @@ public class SparkWebAPI {
         userEntities.setUsers(users);		
         return userEntities;
     }
+
+	@ApiOperation(tags = {"Collaboration"}, value="Get user pep nodes", notes="This endpoint is used to obtain user pep nodes")
+ 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The request was accepted", response = NodeEntities.class), @ApiResponse(code = 400, message = "The request was rejected")})	
+    @Path("/pep/nodes")	
+    @GET	
+    public NodeEntities getPepNodes()  throws ServiceException {
+		String username = getEndUser();			
+        List<NodeEntity> nodes = new ArrayList<NodeEntity>();
+
+        for (Node node : SparkWeb.self.getPepNodes(username)) {
+			Collection<JID> jids = node.getOwners();
+			ArrayList<String> users = new ArrayList<>();
+			
+			for (JID jid : jids) {
+				users.add(jid.toString());
+			}
+            nodes.add(new NodeEntity(node.getNodeID(), node.getName(), node.getDescription(), users));			
+        }
+
+        NodeEntities nodeEntities = new NodeEntities();
+        nodeEntities.setNodes(nodes);		
+        return nodeEntities;
+    }
 	
 	@ApiOperation(tags = {"Collaboration"}, value="Publish to pep node", notes="This endpoint is used to publish a JSON payload to personal eventing protocol (PEP) node")
  	@ApiResponses(value = { @ApiResponse(code = 200, message = "The payload was published"), @ApiResponse(code = 400, message = "The payload could not be published")})	
@@ -1128,7 +1151,7 @@ public class SparkWebAPI {
 		User user = SparkWeb.self.getUser(username);
 		
 		if (user != null) {
-			user.getProperties().put("webpush.subscribe" + resource, subscription);
+			user.getProperties().put("webpush.subscribe." + resource, subscription);
 			return Response.status(Response.Status.OK).build();
 		}
 
@@ -1194,6 +1217,14 @@ public class SparkWebAPI {
     //
     //-------------------------------------------------------
 
+	@ApiOperation(tags = {"Authentication"}, value="Server Sent Events (EventSource)", notes="# Server Sent Events (EventSource)\n These are the different types of events that can be sent by the server:\n\n ## chatapi.xmpp - raw xmpp messages\n The XML is encoded as a base64 string\n\n ```JSON\n {\n     \"xmpp\": \"PG1lc3NhZ2UgeG1sbnM9Imp.....mxkPC9ib2R5PjwvbWVzc2FnZT4=\"\n }\n ``` \n ## chatapi.presence - presence broadcasts\n ```JSON\n {\n 	 'type':'presence',\n 	 'to':'user@domain',\n 	 'from':'user@domain',\n 	 'status':'I am busy right now',\n 	 'show':'dnd'\n }\n ``` \n ## chatapi.chat - one to one chat messages\n\n ```JSON\n {\n 	 'type':'chat',\n 	 'body':'hello',\n 	 'to':'user@domain',\n 	 'from':'user@domain'\n }\n ``` \n ## chatapi.muc - multi-user groupchat messages\n\n ```JSON\n {\n 	 'type':'groupchat',\n 	 'to':'user@domain',\n 	 'from':'room@conference.domain',\n 	 'body':'hello'\n }\n ``` \n\n ```JSON\n {\n 	 'type':'invitationReceived',\n 	 'password':'',\n 	 'room':'room',\n 	 'inviter':'deleo',\n 	 'to':'user@domain',\n 	 'from':'user@domain',\n 	 'reason':'Please join me'\n }\n ``` \n ## chatapi.openlink - openlink callstatus messages\n\n ```JSON\n {\n 	 'type':'callstatus',\n 	 'to':'user@domain',\n 	 'from':'room@conference.domain',\n 	 'json':'openlink json payload'\n }\n ``` \n\n ## chatapi.fastpath - offer received by agent\n\n ```JSON\n {\n 	 'type':'offerReceived',\n 	 'workgroup':'string',\n 	 'from':'group@workgroup.domain',\n 	 'metadata':'string,string...',\n 	 'id':'string'\n }\n ``` \n\n ## chatapi.fastpath - offer revoked by agent\n\n ```JSON\n {\n 	 'type':'offerRevoked',\n 	 'workgroup':'string',\n 	 'from':'group@workgroup.domain',\n 	 'reason':'string',\n 	 'id':'string'\n }\n ``` \n\n ## chatapi.fastpath - groupchat messages\n\n ```JSON\n {\n 	 'type':'offer',\n 	 'to':'user@domain',\n 	 'from':'workgroup@workgroup.domain',\n 	 'mucRoom':'room@conference.domain',\n 	 'url':'https://server/ofmeet/r/room'\n }\n ``` \n\n ```JSON\n {\n 	 'type':'groupchat',\n 	 'to':'user@domain',\n 	 'from':'room@conference.domain',\n 	 'body':'hello'\n }\n ``` \n This is for documentation only. This SSE endpoint should be used in JavaScript as follows :\n\n ```js \n const source = new EventSource('./sse?token=' + token);\n\n source.onerror = async event => { \n\n	 };\n\n source.addEventListener('chatapi.chat', async event => {\n\n });	\n ``` \n                       ")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "SSE connected"), @ApiResponse(code = 500, message = "SSE failed to connect")})	
+	@Path("../sse")
+	@GET
+	public Response sseListener(@ApiParam(value = "JWT Token issued by WebAuthn", required = false) @QueryParam("token") String token) {
+        return Response.status(Response.Status.OK).build();		
+	}
+	
 	@ApiOperation(tags = {"Authentication"}, value="Login with Username/Password", notes="This endpoint is used to login a user with a username and password")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The authentication token", response = TokenEntity.class), @ApiResponse(code = 500, message = "Authentication failed")})	
     @POST
