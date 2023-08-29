@@ -62,6 +62,12 @@ class ConverseMuc extends ConverseAbstract{
 	} 
 }
 
+class ConverseChat extends ConverseAbstract{
+	constructor(){  
+		super('converse-chat');		
+	} 
+}
+
 class ConverseControlBox extends ConverseAbstract{
 	constructor(){  
 		super('converse-controlbox');		
@@ -77,4 +83,5 @@ window.customElements.define('converse-chat-content', 		ConverseChatContent);
 window.customElements.define('converse-muc-chatarea', 		ConverseMucChatArea);
 window.customElements.define('converse-controlbox', 		ConverseControlBox);
 window.customElements.define('converse-muc', 				ConverseMuc);
+window.customElements.define('converse-chat', 				ConverseChat);
 window.customElements.define('converse-root', 				ConverseRoot);
