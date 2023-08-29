@@ -1,75 +1,80 @@
-class ConverseRoot extends HTMLElement{
-  constructor(id){
-    super();
-	if (!id) id = "converse-root";
-	this.loadTemplate(id);
- } 
+class ConverseAbstract extends HTMLElement{
+	constructor(name){
+		super();
+		this.loadTemplate(name);
+	} 
  
- async loadTemplate(id) {
-	const response = await fetch("./templates/" + id + ".html");
-	const html = await response.text();
-	console.debug("loadTemplate", id);
-	this.template = document.createElement('template');
-	this.template.innerHTML = html;	
-	document.querySelector(id).appendChild(this.template.content.cloneNode(true));		
- }
+	async loadTemplate(name) {
+		const response = await fetch("./templates/" + name + ".html");
+		const html = await response.text();
+		console.debug("loadTemplate", name);
+		this.template = document.createElement('template');
+		this.template.innerHTML = html;	
+		this.appendChild(this.template.content.cloneNode(true));		
+	}
 }
 
-class ConverseFontAwesome extends ConverseRoot{
-  constructor(){  
-    super('converse-fontawesome');			
- } 
+class ConverseRoot extends ConverseAbstract{
+	constructor(){  
+		super('converse-root');			
+	} 
 }
 
-class ConverseMucSidebar extends ConverseRoot{
-  constructor(){  
-    super('converse-muc-sidebar');		
- } 
+class ConverseFontAwesome extends ConverseAbstract{
+	constructor(){  
+		super('converse-fontawesome');			
+	} 
 }
 
-class ConverseMucBottomPanel extends ConverseRoot{
-  constructor(){  
-    super('converse-muc-bottom-panel');		
- } 
+class ConverseMucSidebar extends ConverseAbstract{
+	constructor(){  
+		super('converse-muc-sidebar');		
+	} 
 }
 
-class ConverseChatContent extends ConverseRoot{
-  constructor(){  
-    super('converse-chat-content');		
- } 
+class ConverseMucBottomPanel extends ConverseAbstract{
+	constructor(){  
+	super('converse-muc-bottom-panel');		
+	} 
 }
 
-class ConverseMucChatArea extends ConverseRoot{
-  constructor(){  
-    super('converse-muc-chatarea');		
- } 
+class ConverseChatContent extends ConverseAbstract{
+	constructor(){  
+		super('converse-chat-content');		
+	} 
 }
 
-class ConverseMucHeading extends ConverseRoot{
-  constructor(){  
-    super('converse-muc-heading');		
- } 
+class ConverseMucChatArea extends ConverseAbstract{
+	constructor(){  
+		super('converse-muc-chatarea');		
+	} 
 }
 
-class ConverseMuc extends ConverseRoot{
-  constructor(){  
-    super('converse-muc');		
- } 
+class ConverseMucHeading extends ConverseAbstract{
+	constructor(){  
+		super('converse-muc-heading');		
+	} 
 }
 
-class ConverseControlBox extends ConverseRoot{
-  constructor(){  
-    super('converse-controlbox');		
- } 
+class ConverseMuc extends ConverseAbstract{
+	constructor(){  
+		super('converse-muc');		
+	} 
+}
+
+class ConverseControlBox extends ConverseAbstract{
+	constructor(){  
+		super('converse-controlbox');		
+	} 
 }
 
 
-window.customElements.define('converse-fontawesome', ConverseFontAwesome);
-window.customElements.define('converse-muc-sidebar', ConverseMucSidebar);
-window.customElements.define('converse-muc-bottom-panel', ConverseMucBottomPanel);
-window.customElements.define('converse-muc-heading', ConverseMucHeading);
-window.customElements.define('converse-chat-content', ConverseChatContent);
-window.customElements.define('converse-muc-chatarea', ConverseMucChatArea);
-window.customElements.define('converse-controlbox', ConverseControlBox);
-window.customElements.define('converse-muc', ConverseMuc);
-window.customElements.define('converse-root', ConverseRoot);
+window.customElements.define('converse-fontawesome', 		ConverseFontAwesome);
+window.customElements.define('converse-muc-sidebar', 		ConverseMucSidebar);
+window.customElements.define('converse-muc-bottom-panel', 	ConverseMucBottomPanel);
+window.customElements.define('converse-muc-heading', 		ConverseMucHeading);
+window.customElements.define('converse-chat-content', 		ConverseChatContent);
+window.customElements.define('converse-muc-chatarea', 		ConverseMucChatArea);
+window.customElements.define('converse-controlbox', 		ConverseControlBox);
+window.customElements.define('converse-muc', 				ConverseMuc);
+window.customElements.define('converse-root', 				ConverseRoot);
