@@ -1,23 +1,24 @@
 class ConverseAbstract extends HTMLElement{
 	constructor(name){
 		super();
-		this.loadTemplate(name);
-	} 
+		this.setTemplate(name)		
+	} 	
  
-	async loadTemplate(name) {
-		const response = await fetch("./templates/" + name + ".html");
-		const html = await response.text();
-		console.debug("loadTemplate", name);
-		this.template = document.createElement('template');
-		this.template.innerHTML = html;	
-		this.appendChild(this.template.content.cloneNode(true));		
+	setTemplate(name) {
+		console.debug("setTemplate", name);
+		const template = document.getElementById(name);
+		
+		if (template) {
+			this.appendChild(template.content.cloneNode(true));
+		}			
 	}
 }
 
 class ConverseRoot extends ConverseAbstract{
 	constructor(){  
-		super('converse-root');			
+		super("converse-root");	
 	} 
+	
 }
 
 class ConverseFontAwesome extends ConverseAbstract{
@@ -74,14 +75,54 @@ class ConverseControlBox extends ConverseAbstract{
 	} 
 }
 
+class ConverseDragResize extends ConverseAbstract{
+	constructor(){  
+		super('converse-dragresize');		
+	} 
+}
 
-window.customElements.define('converse-fontawesome', 		ConverseFontAwesome);
-window.customElements.define('converse-muc-sidebar', 		ConverseMucSidebar);
-window.customElements.define('converse-muc-bottom-panel', 	ConverseMucBottomPanel);
-window.customElements.define('converse-muc-heading', 		ConverseMucHeading);
-window.customElements.define('converse-chat-content', 		ConverseChatContent);
-window.customElements.define('converse-muc-chatarea', 		ConverseMucChatArea);
-window.customElements.define('converse-controlbox', 		ConverseControlBox);
-window.customElements.define('converse-muc', 				ConverseMuc);
-window.customElements.define('converse-chat', 				ConverseChat);
-window.customElements.define('converse-root', 				ConverseRoot);
+class ConverseChatHeading extends ConverseAbstract{
+	constructor(){  
+		super('converse-chat-heading');		
+	} 
+}
+
+class ConverseChatBottomPanel extends ConverseAbstract{
+	constructor(){  
+		super('converse-chat-bottom-panel');		
+	} 
+}
+
+class ConverseChats extends ConverseAbstract{
+	constructor(){  
+		super('converse-chats');		
+	} 
+}
+
+async function setupWebComponents() {
+	const response = await fetch("./converse.html");
+	const html = await response.text();
+	const template = document.createElement('div');
+	template.innerHTML = html;	
+	document.body.appendChild(template);	
+
+	window.customElements.define('converse-controlbox', 		ConverseControlBox);
+	window.customElements.define('converse-dragresize', 		ConverseDragResize);
+	
+	window.customElements.define('converse-chat', 				ConverseChat);
+	window.customElements.define('converse-chat-bottom-panel', 	ConverseChatBottomPanel);	
+	window.customElements.define('converse-chat-heading', 		ConverseChatHeading);
+	window.customElements.define('converse-chat-content', 		ConverseChatContent);	
+	
+	window.customElements.define('converse-muc-sidebar', 		ConverseMucSidebar);	
+	window.customElements.define('converse-muc-bottom-panel', 	ConverseMucBottomPanel);
+	window.customElements.define('converse-muc-heading', 		ConverseMucHeading);
+	window.customElements.define('converse-muc-chatarea', 		ConverseMucChatArea);
+	window.customElements.define('converse-muc', 				ConverseMuc);
+
+	window.customElements.define('converse-chats', 				ConverseChats);	
+	window.customElements.define('converse-fontawesome', 		ConverseFontAwesome);
+	window.customElements.define('converse-root', 				ConverseRoot);
+}
+
+setupWebComponents();	
