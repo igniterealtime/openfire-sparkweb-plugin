@@ -100,7 +100,7 @@ class ConverseChats extends ConverseAbstract{
 }
 
 async function setupWebComponents() {
-	const response = await fetch("./converse.html");
+	const response = await fetch("./web-components.html");
 	const html = await response.text();
 	const template = document.createElement('div');
 	template.innerHTML = html;	
