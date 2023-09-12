@@ -186,7 +186,19 @@
 </section1>
 <section1 topic="Error conditions" anchor="errors">
   <p>Instead of providing the client with a URL the server MAY respond with an error if the request fails. In addition, the HTTP entity MAY inform the requester about the reason for the failure.</p>
-  <example caption="Alternative response by the server if the meeting request fails"><![CDATA[
+  <example caption="Alternative response by the server if the meeting request includes unsupported type"><![CDATA[
+<iq from='montague.tld'
+    id='step_03'
+    to='romeo@montague.tld/garden'
+    type='error'>
+  <request xmlns='urn:xmpp:http:online-meetings:create:0'
+           type='jitsi' id='my-meeting' />
+  <error type='cancel'>
+    <service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas' />
+    <text xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>The 'jitsi' meeting service provider type is not supported.</text>
+  </error>
+</iq>]]></example>
+  <example caption="Alternative response by the server if the meeting request fails due to meeting ID collision"><![CDATA[
 <iq from='montague.tld' 
     id='step_03' 
     to='romeo@montague.tld/garden' 
