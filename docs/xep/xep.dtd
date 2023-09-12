@@ -1,0 +1,157 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!--
+
+Copyright (c) 1999 - 2021 XMPP Standards Foundation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+-->
+
+<!ELEMENT xep ( header, section1* ) >
+<!ATTLIST xep
+          xmlns CDATA '' >
+<!ELEMENT header ( title, abstract, legal, number, status, lastcall*, interim*, type, sig, approver*, dependencies, supersedes, supersededby, shortname, schemaloc*, registry?, discuss?, expires?, author+, revision+, councilnote? ) >
+<!ELEMENT title (#PCDATA)* >
+<!ELEMENT abstract (#PCDATA)* >
+<!ELEMENT legal ( copyright, permissions, warranty, liability, conformance ) >
+<!ELEMENT copyright (#PCDATA | link)* >
+<!ELEMENT permissions (#PCDATA | link)* >
+<!ELEMENT warranty (#PCDATA | link)* >
+<!ELEMENT liability (#PCDATA | link)* >
+<!ELEMENT conformance (#PCDATA | link)* >
+<!ELEMENT number (#PCDATA)* >
+<!ELEMENT status (#PCDATA)* >
+<!ELEMENT lastcall (#PCDATA)* >
+<!ELEMENT interim EMPTY>
+<!ELEMENT type (#PCDATA)* >
+<!ELEMENT sig (#PCDATA)* >
+<!ELEMENT approver (#PCDATA)* >
+<!ELEMENT dependencies ( spec* ) >
+<!ELEMENT supersedes ( spec* ) >
+<!ELEMENT supersededby ( spec* ) >
+<!ELEMENT spec (#PCDATA)* >
+<!ELEMENT shortname (#PCDATA)* >
+<!ELEMENT schemaloc ( ns?, url ) >
+<!ELEMENT ns (#PCDATA)* >
+<!ELEMENT url (#PCDATA)* >
+<!ELEMENT registry EMPTY>
+<!ELEMENT discuss (#PCDATA)* >
+<!ELEMENT expires (#PCDATA)* >
+<!ELEMENT author ( firstname, surname, authornote?, org?, email?, jid?, uri? ) >
+<!ELEMENT firstname (#PCDATA)* >
+<!ELEMENT surname (#PCDATA)* >
+<!ELEMENT authornote EMPTY>
+<!ELEMENT org (#PCDATA)* >
+<!ELEMENT email (#PCDATA)* >
+<!ELEMENT jid (#PCDATA)* >
+<!ELEMENT uri (#PCDATA)* >
+<!ELEMENT revision ( version, date, initials, remark ) >
+<!ELEMENT version (#PCDATA)* >
+<!ELEMENT date (#PCDATA)* >
+<!ELEMENT initials (#PCDATA)* >
+<!ELEMENT remark (#PCDATA | p | ul)* >
+<!ELEMENT councilnote (#PCDATA)* >
+<!ELEMENT section1 ( div | p | section2 | example | code | cve | ul | ol | dl | table )* >
+<!ATTLIST section1
+          topic CDATA ''
+          anchor CDATA '' >
+<!ELEMENT section2 ( div | p | section3 | example | code | cve | ul | ol | dl | table )* >
+<!ATTLIST section2
+          topic CDATA ''
+          anchor CDATA '' >
+<!ELEMENT section3 ( div | p | section4 | example | code | cve | ul | ol | dl | table )* >
+<!ATTLIST section3
+          topic CDATA ''
+          anchor CDATA '' >
+<!ELEMENT section4 ( div | p | section5 | example | code | cve | ul | ol | dl | table )* >
+<!ATTLIST section4
+          topic CDATA ''
+          anchor CDATA '' >
+<!ELEMENT section5 ( div | p | example | code | cve | ul | ol | dl | table )* >
+<!ATTLIST section5
+          topic CDATA ''
+          anchor CDATA '' >
+<!ELEMENT div ( #PCDATA | div | p | example | code | cve | ul | ol | dl | table | blockquote )* >
+<!ATTLIST div
+          class CDATA ''
+          style CDATA '' >
+<!ELEMENT p (#PCDATA | br | img | link | note | tt | dfn | em | strong | cite | span | acronym )* >
+<!ATTLIST p
+          class CDATA ''
+          style CDATA '' >
+<!ELEMENT br EMPTY >
+<!ELEMENT ul (li+) >
+<!ATTLIST ul
+          class CDATA ''
+          style CDATA '' >
+<!ELEMENT ol (li+) >
+<!ATTLIST ol
+          class CDATA ''
+          start CDATA ''
+          style CDATA ''
+          type  CDATA '' >
+<!ELEMENT li (#PCDATA | p | link | note | tt | em | strong | cite | span | code | example | ul | ol)* >
+<!ATTLIST li
+          class CDATA ''
+          style CDATA '' >
+<!ELEMENT dl (di+) >
+<!ELEMENT di ( dt, dd ) >
+<!ELEMENT dt (#PCDATA)* >
+<!ELEMENT dd (#PCDATA | p | link | note | tt | em | strong | cite | span | code | example | ul | ol )* >
+<!ELEMENT img EMPTY>
+<!ATTLIST img
+  src CDATA ''
+  alt CDATA ''
+  height CDATA ''
+  width CDATA ''>
+<!ELEMENT link (#PCDATA | cite)* >
+<!ATTLIST link url CDATA '' >
+<!ELEMENT note (#PCDATA | link | tt | dfn | em | strong | cite | span | note)* >
+<!ELEMENT blockquote (#PCDATA | blockquote)* >
+<!ELEMENT acronym (#PCDATA)* >
+<!ELEMENT example (#PCDATA)* >
+<!ATTLIST example caption CDATA '' >
+<!ELEMENT code (#PCDATA | span | em | strong)* >
+<!ATTLIST code caption CDATA '' >
+<!ELEMENT cve (#PCDATA)* >
+<!ATTLIST cve
+          id CDATA ''
+          url CDATA '' >
+<!ELEMENT table (tr)* >
+<!ATTLIST table caption CDATA '' >
+<!ELEMENT tr ( th | td )* >
+<!ELEMENT th (#PCDATA)* >
+<!ATTLIST th
+          colspan CDATA ''
+          rowspan CDATA '' >
+<!ELEMENT td (#PCDATA | p | link | note | tt | em | strong | cite | span | code | ul | ol)* >
+<!ATTLIST td
+          align   CDATA ''
+          colspan CDATA ''
+          rowspan CDATA '' >
+<!ELEMENT tt (#PCDATA | link | em | string)* >
+<!ELEMENT dfn (#PCDATA)* >
+<!ELEMENT em (#PCDATA | link | tt | strong | span | note)* >
+<!ELEMENT strong (#PCDATA | link | tt | em | span | note)* >
+<!ELEMENT cite (#PCDATA)* >
+<!ELEMENT span (#PCDATA | link | tt | dfn | em | strong )* >
+<!ATTLIST span
+          class CDATA ''
+          style CDATA '' >
