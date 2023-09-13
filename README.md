@@ -17,14 +17,14 @@ A fully working XMPP client can be constructed in a web page with minimal HTML a
 ````
 <html lang="en">
 <head>
-    <title>SparkWeb Converse</title>
-	<link type="text/css" rel="stylesheet" media="screen" href="./converse.css">
-	<link type="text/css" rel="stylesheet" media="screen" href="./pade.css">	
-	<script src="./web-components.js"></script>	
-	<script src="./index.js"></script>
+  <title>SparkWeb Converse</title>
+  <link type="text/css" rel="stylesheet" media="screen" href="./converse.css">
+  <link type="text/css" rel="stylesheet" media="screen" href="./pade.css">	
+  <script src="./web-components.js"></script>	
+  <script src="./index.js"></script>
 </head>
 <body>
-	<converse-root id="conversejs"  class="conversejs converse-fullscreen theme-concord"></converse-root>
+  <converse-root id="conversejs"  class="conversejs converse-fullscreen theme-concord"></converse-root>
 </body>
 </html>	
 ````
