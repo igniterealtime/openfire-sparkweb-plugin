@@ -52,6 +52,7 @@
         <li>Introduced distinct namespaces for create and invite, retaining type-specific namespaces for feature discovery</li>
         <li>Introcuced Meeting Service type registry</li>
         <li>Removed CORS-related implementation note</li>
+        <li>Meeting ID in request now optional</li>
       </ul>
     </remark>
   </revision>
@@ -95,20 +96,24 @@
     <p>A user’s server SHOULD include itself as a services provider for this protocol in its service discovery items.</p>
     <example caption="Client sends service discovery request to server"><![CDATA[
 <iq from='romeo@montague.tld/garden'
-    id='step_01'
-    to='montague.tld' type='get'>
+    to='montague.tld'
+    id='disco_01'
+    type='get'>
   <query xmlns='http://jabber.org/protocol/disco#info'/>
 </iq>]]></example>
     <example caption="Server replies to service discovery request and reports capability to create online meeting for Jitsi and Galene"><![CDATA[
 <iq from='montague.tld'
-    id='step_01'
     to='romeo@montague.tld/garden'
+    id='disco_01'
     type='result'>
   <query xmlns='http://jabber.org/protocol/disco#info'>
-    <identity category='server' type='im' name='Openfire Server' />
-    <feature var='urn:xmpp:http:online-meetings:create:0' />
-    <feature var='urn:xmpp:http:online-meetings:jitsi:0' />
-    <feature var='urn:xmpp:http:online-meetings:galene:0' />
+    <identity
+        category='server'
+        type='im'
+        name='Openfire Server'/>
+    <feature var='urn:xmpp:http:online-meetings:create:0'/>
+    <feature var='urn:xmpp:http:online-meetings:jitsi:0'/>
+    <feature var='urn:xmpp:http:online-meetings:galene:0'/>
   </query>
 </iq>]]></example>
   </section2>
@@ -116,67 +121,86 @@
     <p>If an entity supports receiving meeting invitations as specified by this protocol, it advertises support by including the "urn:xmpp:http:online-meetings:invite:0" in its service discovery information features as specified in &xep0030; or section 6.3 of &xep0115;.</p>
     <example caption="Client sends service discovery request to invitee"><![CDATA[
 <iq from='romeo@montague.tld/garden'
-    id='invite_01'
-    to='juliet@capulet.example/balcony' type='get'>
+    to='juliet@capulet.example/balcony'
+    id='disco_02'
+    type='get'>
   <query xmlns='http://jabber.org/protocol/disco#info'/>
 </iq>]]></example>
     <example caption="Server replies to service discovery request and reports capability to create online meeting for Jitsi and Galene"><![CDATA[
 <iq from='juliet@capulet.example/balcony'
-    id='invite_01'
     to='romeo@montague.tld/garden'
+    id='disco_02'
     type='result'>
   <query xmlns='http://jabber.org/protocol/disco#info'>
-    <identity category='client' type='im' name='Spark' />
-    <feature var='urn:xmpp:http:online-meetings:invite:0' />
+    <identity
+        category='client'
+        type='im'
+        name='Spark'/>
+    <feature var='urn:xmpp:http:online-meetings:invite:0'/>
   </query>
 </iq>]]></example>
     <p>In order for an application to determine whether an entity supports this protocol, where possible it SHOULD use the dynamic, presence-based profile of service discovery defined in &xep0115;. However, if an application has not received entity capabilities information from an entity, it SHOULD use explicit service discovery instead.</p>
   </section2>
 </section1>
 <section1 topic="Requesting a Meeting" anchor="request">
-  <p>A client requests an online new meeting URL by sending an IQ-get to the server containing a &lt;request&gt; child element qualified by the 'urn:xmpp:http:online-meetings:invite:0' namespace. This element MUST include the type attribute specifying the Meeting Service type, which SHOULD be registered as described in the <link url="#registrar-type">Meeting Service Type Registry</link> section of this document and MUST include the id attribute specifying the identity of the online meeting requested.</p>
+  <p>A client requests an online new meeting URL by sending an IQ-get to the server containing a &lt;request&gt; child element qualified by the 'urn:xmpp:http:online-meetings:invite:0' namespace.</p>
+  <p>This 'request' MUST include the type attribute specifying the Meeting Service type, which SHOULD be registered as described in the <link url="#registrar-type">Meeting Service Type Registry</link> section of this document.</p>
   <example caption="Client requests an online meeting URL from the server"><![CDATA[
-<iq from='romeo@montague.tld/garden' 
-    id='step_02' 
-    to='montague.tld' 
+<iq from='romeo@montague.tld/garden'
+    to='montague.tld'
+    id='create_01'
     type='get'>
   <request xmlns='urn:xmpp:http:online-meetings:create:0'
-           type='jitsi' id='my-meeting' />
+           type='jitsi'/>
+</iq>]]></example>
+  <p>If the requesting entity desires to (re)create a room with a specific identifier, the optional 'id' attribute can be used to specify the identity of the online meeting requested. When the provided value cannot be used, for example when it does not match the format used by a meeting provider, or a meeting with that particular value is already in use, the server SHOULD return an error.</p>
+  <example caption="Client requests a URL for a meeting with a specific ID from the server"><![CDATA[
+<iq from='romeo@montague.tld/garden'
+    to='montague.tld'
+    id='create_02'
+    type='get'>
+  <request xmlns='urn:xmpp:http:online-meetings:create:0'
+           type='jitsi'
+           id='my_meeting'/>
 </iq>]]></example>
   <p>The XMPP server responds with one or two &xep0066; elements, one that contains a URL to be used to create and configure the meeting, and one that contains a URL suitable to invite others into the meeting.</p>
   <p>In the URLs that it returns, the server MAY specify a web-based protocol handler if available and registered by the user. Otherwise, standard HTTPS protocol will be specified. In any case, the fully resolved URL provided by the host MUST provide Transport Layer Security (&rfc5246;). The HTTPS URL MUST adhere to &rfc3986;. Non ASCII characters MUST be percent-encoded.</p>
   <example caption="The server responds with an out of band URI specifying the jitsi web-based protocol handler"><![CDATA[
-<iq from='montague.tld' 
-    id='step_03' 
-    to='romeo@montague.tld/garden' 
+<iq from='montague.tld'
+    to='romeo@montague.tld/garden'
+    id='create_01'
     type='result'>
-  <create xmlns='urn:xmpp:http:online-meetings:create:0' type='jitsi'>
+  <create xmlns='urn:xmpp:http:online-meetings:create:0'
+          type='jitsi'>
     <x xmlns='jabber:x:oob'>
-      <url>web+jitsi:https://meet.jit.si/my-meeting-4ba911a9ab321f2d2acd4e67118d5d</url>
+      <url>web+jitsi:https://meet.jit.si/OpenStandardsMuchGreatness</url>
       <desc>My Online Meeting</desc>
     </x>
   </create>
-  <invite xmlns='urn:xmpp:http:online-meetings:create:0' type='jitsi'>
+  <invite xmlns='urn:xmpp:http:online-meetings:create:0'
+          type='jitsi'>
     <x xmlns='jabber:x:oob'>
-      <url>web+jitsi:https://meet.jit.si/my-meeting-4ba911a9ab321f2d2acd4e67118d5d</url>
+      <url>web+jitsi:https://meet.jit.si/OpenStandardsMuchGreatness</url>
       <desc>My Online Meeting</desc>
     </x>
   </invite>
 </iq>]]></example>
   <example caption="The server responds with an out of band URI using standard HTTPS"><![CDATA[
-<iq from='montague.tld' 
-    id='step_03' 
-    to='romeo@montague.tld/garden' 
+<iq from='montague.tld'
+    to='romeo@montague.tld/garden'
+    id='create_01'
     type='result'>
-  <create xmlns='urn:xmpp:http:online-meetings:create:0' type='jitsi'>
+  <create xmlns='urn:xmpp:http:online-meetings:create:0'
+          type='jitsi'>
     <x xmlns='jabber:x:oob'>
-      <url>https://meet.jit.si/my-meeting-4ba911a9ab321f2d2acd4e67118d5d</url>
+      <url>https://meet.jit.si/OpenStandardsMuchGreatness</url>
       <desc>My Online Meeting</desc>
     </x>
   </create>
-  <invite xmlns='urn:xmpp:http:online-meetings:create:0' type='jitsi'>
+  <invite xmlns='urn:xmpp:http:online-meetings:create:0'
+          type='jitsi'>
     <x xmlns='jabber:x:oob'>
-      <url>https://meet.jit.si/my-meeting-4ba911a9ab321f2d2acd4e67118d5d</url>
+      <url>https://meet.jit.si/OpenStandardsMuchGreatness</url>
       <desc>My Online Meeting</desc>
     </x>
   </invite>
@@ -188,51 +212,53 @@
   <p>Instead of providing the client with a URL the server MAY respond with an error if the request fails. In addition, the HTTP entity MAY inform the requester about the reason for the failure.</p>
   <example caption="Alternative response by the server if the meeting request includes unsupported type"><![CDATA[
 <iq from='montague.tld'
-    id='step_03'
     to='romeo@montague.tld/garden'
+    id='create_01'
     type='error'>
   <request xmlns='urn:xmpp:http:online-meetings:create:0'
-           type='jitsi' id='my-meeting' />
+           type='jitsi'/>
   <error type='cancel'>
-    <service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas' />
+    <service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
     <text xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>The 'jitsi' meeting service provider type is not supported.</text>
   </error>
 </iq>]]></example>
   <example caption="Alternative response by the server if the meeting request fails due to meeting ID collision"><![CDATA[
-<iq from='montague.tld' 
-    id='step_03' 
-    to='romeo@montague.tld/garden' 
+<iq from='montague.tld'
+    to='romeo@montague.tld/garden'
+    id='create_02'
     type='error'>
   <request xmlns='urn:xmpp:http:online-meetings:create:0'
-           type='jitsi' id='my-meeting' />
+           type='jitsi'
+           id='my-meeting'/>
   <error type='modify'>
-    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas' />
+    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
     <text xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>Meeting is in use</text>
   </error>
 </iq>]]></example>
   <p>For any other type of error the service SHOULD respond with appropriate error types to indicate temporary or permanent errors.</p>
   <p>For temporary errors such as exceeding a personal quota the service MAY include a &lt;retry/&gt; element qualified by the 'urn:xmpp:http:online-meetings:create:0' namespace as a child of the &lt;error/&gt; element. The retry element MUST include an attribute 'stamp' which indicates the time at which the requesting entity may try again. The format of the timestamp MUST adhere to the date-time format specified in &xep0082; and MUST be expressed in UTC.</p>
   <example caption="Alternative response by the server to indicate a temporary error after the client exceeded a quota"><![CDATA[
-<iq from='montague.tld' 
-    id='step_03' 
-    to='romeo@montague.tld/garden' 
+<iq from='montague.tld'
+    to='romeo@montague.tld/garden'
+    id='create_01'
     type='error'>
   <request xmlns='urn:xmpp:http:online-meetings:create:0'
-           type='jitsi' id='my-meeting' />
+           type='jitsi'/>
   <error type='wait'>
-    <resource-constraint xmlns='urn:ietf:params:xml:ns:xmpp-stanzas' />
+    <resource-constraint xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
     <text xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>Quota reached. You can only request 5 meetings a day</text>
-    <retry xmlns='urn:xmpp:http:online-meetings:create:0' stamp='2017-12-03T23:42:05Z' />
+    <retry xmlns='urn:xmpp:http:online-meetings:create:0' stamp='2017-12-03T23:42:05Z'/>
   </error>
 </iq>]]></example>
   <example caption="Alternative response by the server to indicate an auth error to a client that is not allowed to create an online meeting"><![CDATA[
-<iq from='montague.tld' id='step_03' 
-    to='romeo@montague.tld/garden' 
+<iq from='montague.tld'
+    to='romeo@montague.tld/garden'
+    id='create_01'
     type='error'>
   <request xmlns='urn:xmpp:http:online-meetings:create:0'
-           type='jitsi' id='my-meeting' />
+           type='jitsi'/>
   <error type='auth'>
-    <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas' />
+    <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
     <text xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>Only premium members are allowed to create meetings</text>
   </error>
 </iq>]]></example>
@@ -240,11 +266,13 @@
 <section1 topic="Meeting Invitation" anchor="meeting-invitation">
   <p>After the requesting entity has successfully created a meeting, it MAY invite other entities to join the meeting. It does so by sending invitees a message stanza containing the invite URL received from the server.</p>
   <example caption="User sends meeting invitation"><![CDATA[
-<message from='romeo@montague.tld/garden'
+<message
+    from='romeo@montague.tld/garden'
     to='juliet@capulet.example/balcony'>
-  <invite xmlns='urn:xmpp:http:online-meetings:create:0' type='jitsi'>
+  <invite xmlns='urn:xmpp:http:online-meetings:create:0'
+          type='jitsi'>
     <x xmlns='jabber:x:oob'>
-      <url>https://meet.jit.si/my-meeting-4ba911a9ab321f2d2acd4e67118d5d</url>
+      <url>https://meet.jit.si/OpenStandardsMuchGreatness</url>
       <desc>My Online Meeting</desc>
     </x>
   </invite>
