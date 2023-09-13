@@ -55,6 +55,7 @@
         <li>Meeting ID in request now optional</li>
         <li>Add optional 'desc' in the meeting request.</li>
         <li>Moved IQ child elements into a wrapper, renamed 'create' element to 'initiate'</li>
+        <li>Add fall-back body element to invite message stanza.</li>
       </ul>
     </remark>
   </revision>
@@ -174,7 +175,7 @@
     type='get'>
   <query xmlns='urn:xmpp:http:online-meetings:0'
          type='jitsi'>
-    <desc>Meeting room for Open Standards discussion.</desc>
+    <desc>Meeting room for Open Standards discussion</desc>
 </iq>]]></example>
   <p>The XMPP server responds with one or two &xep0066; elements: a 'initiate' element that contains a URL to be used to create and configure the meeting, and an 'invite' element that contains a URL suitable to invite others into the meeting.</p>
   <p>In the URLs that it returns, the server MAY specify a web-based protocol handler if available and registered by the user. Otherwise, standard HTTPS protocol will be specified. In any case, the fully resolved URL provided by the host MUST provide Transport Layer Security (&rfc5246;). The HTTPS URL MUST adhere to &rfc3986;. Non ASCII characters MUST be percent-encoded.</p>
@@ -187,13 +188,13 @@
     <initiate type='jitsi'>
       <x xmlns='jabber:x:oob'>
         <url>web+jitsi:https://meet.jit.si/OpenStandardsMuchGreatness</url>
-        <desc>Meeting room for Open Standards discussion.</desc>
+        <desc>Meeting room for Open Standards discussion</desc>
       </x>
     </initiate>
     <invite type='jitsi'>
       <x xmlns='jabber:x:oob'>
         <url>web+jitsi:https://meet.jit.si/OpenStandardsMuchGreatness</url>
-        <desc>Meeting room for Open Standards discussion.</desc>
+        <desc>Meeting room for Open Standards discussion</desc>
       </x>
     </invite>
   </query>
@@ -207,13 +208,13 @@
     <initiate type='jitsi'>
       <x xmlns='jabber:x:oob'>
         <url>https://meet.jit.si/OpenStandardsMuchGreatness</url>
-        <desc>Meeting room for Open Standards discussion.</desc>
+        <desc>Meeting room for Open Standards discussion</desc>
       </x>
     </initiate>
     <invite type='jitsi'>
       <x xmlns='jabber:x:oob'>
         <url>https://meet.jit.si/OpenStandardsMuchGreatness</url>
-        <desc>Meeting room for Open Standards discussion.</desc>
+        <desc>Meeting room for Open Standards discussion</desc>
       </x>
     </invite>
   </query>
@@ -278,6 +279,7 @@
 </section1>
 <section1 topic="Meeting Invitation" anchor="meeting-invitation">
   <p>After the requesting entity has successfully initiated a meeting, it MAY invite other entities to join the meeting. It does so by sending invitees a message stanza containing an 'invite' child element, qualified by the online-meetings namespace, that contains an OOB fragment with the data from the meeting initiation response from the server.</p>
+  <p>To allow users of clients that do not support this XEP to receive the invitation, a 'body' element containing the meeting address MAY be included.</p>
   <example caption="User sends meeting invitation"><![CDATA[
 <message
     from='romeo@montague.tld/garden'
@@ -286,9 +288,10 @@
           type='jitsi'>
     <x xmlns='jabber:x:oob'>
       <url>https://meet.jit.si/OpenStandardsMuchGreatness</url>
-      <desc>My Online Meeting</desc>
+      <desc>Meeting room for Open Standards discussion</desc>
     </x>
   </invite>
+  <body>You are invited to join 'Meeting room for Open Standards discussion' at https://meet.jit.si/OpenStandardsMuchGreatness</body>
 </message>]]></example>
   <p>There is no further XMPP communication required between the server and the client for the client to join the meeting. The actual online meeting engagement with the provided URL is out of scope of this document.</p>
 </section1>
