@@ -53,6 +53,7 @@
         <li>Introcuced Meeting Service type registry</li>
         <li>Removed CORS-related implementation note</li>
         <li>Meeting ID in request now optional</li>
+        <li>Add optional 'desc' in the meeting request.</li>
       </ul>
     </remark>
   </revision>
@@ -163,45 +164,55 @@
            type='jitsi'
            id='my_meeting'/>
 </iq>]]></example>
-  <p>The XMPP server responds with one or two &xep0066; elements, one that contains a URL to be used to create and configure the meeting, and one that contains a URL suitable to invite others into the meeting.</p>
+  <p>An optional 'desc' child element can be used to assign a human-readable description to the meeting. The server SHOULD use this value in its response (as the value for the 'desc' element of OOB elements), but otherwise treat this as an opaque value.</p>
+  <example caption="Client uses the optional 'desc' when requesting a meeting."><![CDATA[
+<iq from='romeo@montague.tld/garden'
+    to='montague.tld'
+    id='create_03'
+    type='get'>
+  <request xmlns='urn:xmpp:http:online-meetings:create:0'
+           type='jitsi'>
+    <desc>Meeting room for Open Standards discussion.</desc>
+</iq>]]></example>
+  <p>The XMPP server responds with one or two &xep0066; elements: a 'create' element that contains a URL to be used to create and configure the meeting, and an 'invite' element that contains a URL suitable to invite others into the meeting.</p>
   <p>In the URLs that it returns, the server MAY specify a web-based protocol handler if available and registered by the user. Otherwise, standard HTTPS protocol will be specified. In any case, the fully resolved URL provided by the host MUST provide Transport Layer Security (&rfc5246;). The HTTPS URL MUST adhere to &rfc3986;. Non ASCII characters MUST be percent-encoded.</p>
   <example caption="The server responds with an out of band URI specifying the jitsi web-based protocol handler"><![CDATA[
 <iq from='montague.tld'
     to='romeo@montague.tld/garden'
-    id='create_01'
+    id='create_03'
     type='result'>
   <create xmlns='urn:xmpp:http:online-meetings:create:0'
           type='jitsi'>
     <x xmlns='jabber:x:oob'>
       <url>web+jitsi:https://meet.jit.si/OpenStandardsMuchGreatness</url>
-      <desc>My Online Meeting</desc>
+      <desc>Meeting room for Open Standards discussion.</desc>
     </x>
   </create>
   <invite xmlns='urn:xmpp:http:online-meetings:create:0'
           type='jitsi'>
     <x xmlns='jabber:x:oob'>
       <url>web+jitsi:https://meet.jit.si/OpenStandardsMuchGreatness</url>
-      <desc>My Online Meeting</desc>
+      <desc>Meeting room for Open Standards discussion.</desc>
     </x>
   </invite>
 </iq>]]></example>
   <example caption="The server responds with an out of band URI using standard HTTPS"><![CDATA[
 <iq from='montague.tld'
     to='romeo@montague.tld/garden'
-    id='create_01'
+    id='create_03'
     type='result'>
   <create xmlns='urn:xmpp:http:online-meetings:create:0'
           type='jitsi'>
     <x xmlns='jabber:x:oob'>
       <url>https://meet.jit.si/OpenStandardsMuchGreatness</url>
-      <desc>My Online Meeting</desc>
+      <desc>Meeting room for Open Standards discussion.</desc>
     </x>
   </create>
   <invite xmlns='urn:xmpp:http:online-meetings:create:0'
           type='jitsi'>
     <x xmlns='jabber:x:oob'>
       <url>https://meet.jit.si/OpenStandardsMuchGreatness</url>
-      <desc>My Online Meeting</desc>
+      <desc>Meeting room for Open Standards discussion.</desc>
     </x>
   </invite>
 </iq>]]></example>
