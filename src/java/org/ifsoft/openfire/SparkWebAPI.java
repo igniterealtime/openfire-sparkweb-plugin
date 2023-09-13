@@ -1225,7 +1225,7 @@ public class SparkWebAPI {
         return Response.status(Response.Status.OK).build();		
 	}
 	
-	@ApiOperation(tags = {"Authentication"}, value="Login with Username/Password", notes="This endpoint is used to login a user with a username and password")	
+	@ApiOperation(tags = {"Authentication"}, value="Authenticate with Username/Password", notes="This endpoint is used to authenticate a user with a username and password")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The authentication token", response = TokenEntity.class), @ApiResponse(code = 500, message = "Authentication failed")})	
     @POST
     @Path("/login/{username}")
@@ -1267,7 +1267,7 @@ public class SparkWebAPI {
         return Response.status(Response.Status.OK).build();
     }
 	
-	@ApiOperation(tags = {"Authentication"}, value="Register a new user with username/password", notes="This endpoint is used to register a new user")	
+	@ApiOperation(tags = {"Authentication"}, value="Register a new user with username/password", notes="This endpoint is used to register a new user. In-band registration must be enabled in Openfire.")	
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The authentication token", response = TokenEntity.class), @ApiResponse(code = 500, message = "Authentication failed")})	
     @POST
     @Path("/register/{username}")

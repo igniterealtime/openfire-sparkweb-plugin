@@ -50,21 +50,6 @@
 
     if ( error == null && update != null )
     {
-        if ( "general".equals( update ) )
-        {
-            if ( ParamUtils.getParameter( request, "default_domain" ) != null )
-            {
-                JiveGlobals.setProperty( "sparkweb.config.default_domain", URLEncoder.encode( ParamUtils.getParameter( request, "default_domain" ), "UTF-8" ) );
-            }
-            else
-            {
-                JiveGlobals.deleteProperty( "sparkweb.config.default_domain" );
-            }
-
-            response.sendRedirect("sparkweb-config.jsp?success=update");
-            return;
-        }
-
         if ( "language".equals( update ) )
         {
             if ( ParamUtils.getParameter( request, "language" ) != null )
@@ -80,9 +65,6 @@
         response.sendRedirect("sparkweb-config.jsp?noupdate");
         return;
     }
-
-    // Read all updated values from the properties.
-    final String defaultDomain = JiveGlobals.getProperty( "sparkweb.config.default_domain", XMPPServer.getInstance().getServerInfo().getXMPPDomain() );
 %>
 <html>
 <head>
@@ -169,41 +151,6 @@
 </p>
 
 <br>
-
-<div class="jive-contentBoxHeader"><fmt:message key="config.page.general.header" /></div>
-<div class="jive-contentBox">
-
-    <p><fmt:message key="config.page.general.description" /></p>
-
-    <form action="sparkweb-config.jsp">
-        <input type="hidden" name="csrf" value="${csrf}"/>
-        <input type="hidden" name="update" value="general"/>
-
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tbody>
-            <tr valign="top">
-                <td colspan="2" style="padding-bottom: .5em;">
-                    <fmt:message key="config.page.default_domain.description"/>
-                </td>
-            </tr>
-            <tr valign="top">
-                <td width="1%" nowrap style="padding-top: 1em;">
-                    <b><label for="default_domain"><fmt:message key="config.page.default_domain.label" /></label></b>
-                </td>
-                <td width="99%" style="padding-top: 1em;">
-                    <input type="text" name="default_domain" id="default_domain" size="30" value="<%=defaultDomain%>">
-                </td>
-            </tr>
-            </tbody>
-        </table>
-
-        <br>
-
-        <input type="submit" value="<fmt:message key="global.save_settings" />">
-
-    </form>
-
-</div>
 
 <div class="jive-contentBoxHeader"><fmt:message key="config.page.language.header" /></div>
 <div class="jive-contentBox">

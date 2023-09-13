@@ -81,7 +81,7 @@ Create, update and delete Openfire bookmarks
 | POST | /sparkweb/api/rest/login/{username} | [login user](#login-user) | Login with Username/Password |
 | POST | /sparkweb/api/rest/logout | [logout user](#logout-user) | Logout user |
 | POST | /sparkweb/api/rest/register/{username} | [register user](#register-user) | Register a new user with username/password |
-| GET | /sparkweb/api/sse | [sse listener](#sse-listener) | Server Sent Events (Event Source) |
+| GET | /sparkweb/api/sse | [sse listener](#sse-listener) | Server Sent Events (EventSource) |
 | POST | /sparkweb/api/rest/webauthn/authenticate/finish/{username} | [webauthn authenticate finish](#webauthn-authenticate-finish) | Finish process to authenticate a user with WebAuthn |
 | POST | /sparkweb/api/rest/webauthn/authenticate/start/{username} | [webauthn authenticate start](#webauthn-authenticate-start) | Start process to authenticate a user with WebAuthn |
 | POST | /sparkweb/api/rest/webauthn/register/finish/{username} | [webauthn register finish](#webauthn-register-finish) | Finish process to register a user for WebAuthn |
@@ -2374,13 +2374,13 @@ Status: Internal Server Error
 
 ###### <span id="register-user-500-schema"></span> Schema
 
-### <span id="sse-listener"></span> Server Sent Events (Event Source) (*sseListener*)
+### <span id="sse-listener"></span> Server Sent Events (EventSource) (*sseListener*)
 
 ```
 GET /sparkweb/api/sse
 ```
 
-# Server Sent Events (EventSourc)
+# Server Sent Events (EventSource)
  These are the different types of events that can be sent by the server:
 
  ## chatapi.xmpp - raw xmpp messages

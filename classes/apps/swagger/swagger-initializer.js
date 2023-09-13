@@ -19,7 +19,6 @@ window.addEventListener('offline', function() {
 window.onload = function() {
 	console.debug("window.onload");
 
-  // the following lines will be replaced by docker/configurator, when it runs in a docker-container
 	window.ui = SwaggerUIBundle({
 		url: location.protocol + "//" + location.host + "/sparkweb/api/swagger.json",
 		dom_id: '#swagger-ui',
