@@ -2,7 +2,7 @@
 
 SparkWeb uses JSON Web Tokens (JWTs) as access tokens for multiple REST API requests and SSE connections from the same user. All these connections share the same XMPP client session.  A user must aquire an access token to create and access this XMPP client session by authenticating.
 
-Several authentication protocols are available to the developer to combine and use to create a multi factor authentication experience.
+Several authentication protocols are available for a developer to combine and create a multi factor authentication experience.
 
 ## Web Credentials
 Web Credentials API allows standard username and password to be stored and recalled from the web browser and used with HTTP Basic Authentication over TLS (HTTPS) for both REST and SSE connections.
