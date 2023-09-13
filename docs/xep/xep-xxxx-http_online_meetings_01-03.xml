@@ -286,11 +286,11 @@
     to='juliet@capulet.example/balcony'>
   <invite xmlns='urn:xmpp:http:online-meetings:0'
           type='jitsi'>
-    <x xmlns='jabber:x:oob'>
+  </invite>
+  <x xmlns='jabber:x:oob'>
       <url>https://meet.jit.si/OpenStandardsMuchGreatness</url>
       <desc>Meeting room for Open Standards discussion</desc>
-    </x>
-  </invite>
+  </x>
   <body>You are invited to join 'Meeting room for Open Standards discussion' at https://meet.jit.si/OpenStandardsMuchGreatness</body>
 </message>]]></example>
   <p>There is no further XMPP communication required between the server and the client for the client to join the meeting. The actual online meeting engagement with the provided URL is out of scope of this document.</p>
