@@ -291,7 +291,7 @@
       <desc>Meeting room for Open Standards discussion</desc>
     </x>
   </invite>
-  <body>You are invited to join 'Meeting room for Open Standards discussion' at https://meet.jit.si/OpenStandardsMuchGreatness</body>
+  <body>You are invited to join 'Meeting room for Open Standards discussion' at <a href="https://meet.jit.si/OpenStandardsMuchGreatness">Meeting room for Open Standards discussion</a></body>
 </message>]]></example>
   <p>There is no further XMPP communication required between the server and the client for the client to join the meeting. The actual online meeting engagement with the provided URL is out of scope of this document.</p>
 </section1>
