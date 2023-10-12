@@ -305,6 +305,8 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
                 session.close();
                 SessionManager.getInstance().removeSession(session);
             }
+			OpenfireConnection.removeConnection(getUsername());
+			
 			// TODO
             //RESTServicePlugin.getInstance().removeServlets(sseHolder);
 
