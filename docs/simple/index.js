@@ -2,7 +2,7 @@ let sparkWeb;
 
 window.addEventListener('load', () => {
 	console.debug("window.load");
-	sparkWeb = new SparkWeb("http://localhost:7070", "simple-app");
+	sparkWeb = new SparkWeb(document.getElementById("host").value, "simple-app");
 	
 	document.getElementById("login").addEventListener('click', async () => {
 		await sparkWeb.login();
