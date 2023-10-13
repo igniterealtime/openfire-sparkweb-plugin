@@ -101,7 +101,7 @@ class SparkWeb
 			this._setupPushNotifications();				
 		}
 
-		navigator.serviceWorker.register('./sparkweb-sw.js', {scope: '.'}).then(initialiseState, initialiseError);	
+		navigator.serviceWorker.register('../lib/sparkweb-sw.js', {scope: '.'}).then(initialiseState, initialiseError);	
 	}
 	
 	_setupPushNotifications() {		
