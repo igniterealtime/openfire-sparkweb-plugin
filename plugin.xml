@@ -5,12 +5,9 @@
     <name>${project.name}</name>
     <description>${project.description}</description>
     <version>${project.version}</version>
-    <licenseType>Proprietary</licenseType>
     <date>${build.date}</date>
-	<csrfProtectionEnabled>true</csrfProtectionEnabled>	
-    <databaseKey>openlink</databaseKey>
-    <databaseVersion>0</databaseVersion>  	
-    <minServerVersion>4.7.5</minServerVersion>
+	<csrfProtectionEnabled>true</csrfProtectionEnabled>		
+    <minServerVersion>4.8.0</minServerVersion>
     <adminconsole>
         <tab id="tab-webclients" name="${admin.sidebar.webclients.name}" description="${admin.sidebar.webclients.description}" url="sparkweb-config.jsp">
             <sidebar id="tab-sparkweb" name="${plugin.title}" description="${plugin.description}">

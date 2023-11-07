@@ -105,7 +105,6 @@ import org.eclipse.jetty.security.*;
 import org.eclipse.jetty.security.authentication.*;
 import org.eclipse.jetty.websocket.servlet.*;
 import org.eclipse.jetty.websocket.server.*;
-import org.eclipse.jetty.websocket.server.pathmap.ServletPathSpec;
 import org.eclipse.jetty.servlets.EventSource;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -782,8 +781,9 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
     }
 
     private void ensureSparkWebUser(String username, String email) {
-
-        if ( !userManager.isRegisteredUser( username ) )
+		JID userJid = new JID(username + "@" + server.getServerInfo().getXMPPDomain());	
+		
+        if ( !userManager.isRegisteredUser( userJid, false ) )
         {
             Log.debug( "No pre-existing sparkweb user. Generating one." );
             String password = JiveGlobals.getProperty("sparkweb.user.password", null);			

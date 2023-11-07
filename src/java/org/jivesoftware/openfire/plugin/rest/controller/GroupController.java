@@ -146,7 +146,11 @@ public class GroupController {
             } catch (GroupAlreadyExistsException e) {
                 throw new ServiceException("Could not create a group", groupEntity.getName(),
                         ExceptionType.GROUP_ALREADY_EXISTS, Response.Status.CONFLICT, e);
-            }
+
+            } catch (Exception e1) {
+                throw new ServiceException("Could not create a group", groupEntity.getName(),
+                        ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST, e1);
+            }			
         } else {
             throw new ServiceException("Could not create new group", "groups",
                     ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);

@@ -133,7 +133,7 @@
 </p>
 <p>
     <% if ( httpBindManager.isHttpBindActive() ) {
-        final String unsecuredAddress = "http://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + httpBindManager.getHttpBindUnsecurePort() + "/sparkweb/swagger";
+        final String unsecuredAddress = "http://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + HttpBindManager.HTTP_BIND_PORT.getValue() + "/sparkweb/swagger";
     %>
         <fmt:message key="config.page.link.unsecure">
             <fmt:param value="<%=unsecuredAddress%>"/>
@@ -142,7 +142,7 @@
 </p>
 <p>
     <% if ( httpBindManager.isHttpsBindActive() ) {
-        final String securedAddress = "https://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + httpBindManager.getHttpBindSecurePort() + "/sparkweb/swagger";
+        final String securedAddress = "https://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + HttpBindManager.HTTP_BIND_SECURE_PORT.getValue() + "/sparkweb/swagger";
     %>
         <fmt:message key="config.page.link.secure">
             <fmt:param value="<%=securedAddress%>"/>

@@ -47,7 +47,6 @@ import org.jivesoftware.smackx.muc.*;
 import org.jivesoftware.smackx.muc.packet.*;
 import org.jivesoftware.smackx.chatstates.*;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
-import org.jivesoftware.smackx.*;
 import org.jivesoftware.smackx.workgroup.*;
 import org.jivesoftware.smackx.workgroup.user.*;
 import org.jivesoftware.smackx.workgroup.agent.*;
@@ -77,8 +76,10 @@ import org.jivesoftware.openfire.plugin.rest.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.xmpp.packet.JID;
 import org.dom4j.*;
+
+import org.xmpp.packet.JID;
+import org.xmpp.packet.StreamError;
 
 import net.sf.json.*;
 
@@ -330,7 +331,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
         try {
             session = SessionManager.getInstance().createClientSession( smackConnection, (Locale) null );
             smackConnection.setRouter( new SessionPacketRouter( session ) );
-            session.setAuthToken(new AuthToken( username ), resource.toString());
+            session.setAuthToken(AuthToken.generateUserToken( username ), resource.toString());
             authenticated = true;
 
             afterSuccessfulLogin(false);
@@ -1460,7 +1461,7 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
             this.router = router;
         }
 
-        public void closeVirtualConnection()
+        public void closeVirtualConnection(StreamError error)
         {
             Log.debug("SmackConnection - close ");
 
@@ -1520,6 +1521,20 @@ public class OpenfireConnection extends AbstractXMPPConnection implements Roster
             return null;
         }
 
+        @Override
+        public Optional<String> getCipherSuiteName() {
+            return Optional.of("unknown");
+        }
+		
+		@Override
+		public boolean isCompressed() {
+			return false;
+		}
+
+		@Override
+		public Optional<String> getTLSProtocolName() {
+            return Optional.of("unknown");
+		}		
     }
 
     // -------------------------------------------------------

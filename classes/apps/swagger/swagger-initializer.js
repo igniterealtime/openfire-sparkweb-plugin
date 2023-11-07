@@ -62,11 +62,12 @@ window.onload = function() {
 			}		
 			const url = location.protocol + "//" + location.host;
 
+			let credentials;
 			let username = sessionStorage.getItem("sparkweb.config.username");
 			let password = sessionStorage.getItem("sparkweb.config.password");
 			
 			if (!username) {
-				let credentials = await navigator.credentials.get({password: true});
+				credentials = await navigator.credentials.get({password: true});
 				console.debug("web credentials get", credentials);	
 				
 				if (credentials?.id) {

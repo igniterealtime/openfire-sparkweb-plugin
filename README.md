@@ -1,4 +1,11 @@
-# Introduction
+## SparkWeb 
+Modern web client services (REST, SSE JWT and WebAuthn) to Openfire/XMPP.
+ 
+## CI Build Status
+
+[![Build Status](https://github.com/igniterealtime/openfire-sparkweb-plugin/workflows/Java%20CI/badge.svg)](https://github.com/igniterealtime/openfire-sparkweb-plugin/actions)
+
+## Introduction
 This plugin adds support for a whole range of modern web service connections to Openfire/XMPP via the embedded Jetty web server in a different way to the traditional persistent client XMPP session over TCP/5222 or Bosh/7443 or Websockets/7443 used by native binary clients.
 
 It uses :
