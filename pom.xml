@@ -76,7 +76,13 @@
         </plugins>
     </build>
 
-    <dependencies>  
+    <dependencies>  		
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.100.Final</version>
+            <scope>provided</scope>					
+        </dependency>	
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpg-jdk15on</artifactId>
@@ -188,10 +194,10 @@
             <artifactId>json-lib</artifactId>
             <version>0.8</version>
 			<exclusions>
-			  <exclusion>
-				<groupId>xerces</groupId>
-				<artifactId>xercesImpl</artifactId>
-			  </exclusion>
+				<exclusion>
+					<groupId>xerces</groupId>
+					<artifactId>xercesImpl</artifactId>
+				</exclusion>
 			</exclusions> 			
         </dependency> 
 
@@ -199,17 +205,107 @@
             <groupId>com.github.waffle</groupId>
             <artifactId>waffle-jna</artifactId>
             <version>1.9.1</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.github.ben-manes.caffeine</groupId>
+					<artifactId>caffeine</artifactId>	
+				</exclusion>
+			</exclusions> 				
         </dependency>  
 
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-jetty-http</artifactId>
             <version>${jersey.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-io</artifactId>		
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-http</artifactId>				
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-security</artifactId>				
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-server</artifactId>		
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-servlet</artifactId>				
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-util</artifactId>				
+				</exclusion>	
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-util-ajax</artifactId>		
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-webapp</artifactId>				
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-xml</artifactId>				
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-continuation</artifactId>				
+				</exclusion>				
+			</exclusions> 				
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-jetty-servlet</artifactId>
             <version>${jersey.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-io</artifactId>		
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-http</artifactId>				
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-security</artifactId>				
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-server</artifactId>		
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-servlet</artifactId>				
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-util</artifactId>				
+				</exclusion>	
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-util-ajax</artifactId>		
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-webapp</artifactId>				
+				</exclusion>
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-xml</artifactId>				
+				</exclusion>				
+				<exclusion>
+					<groupId>org.eclipse.jetty</groupId>
+					<artifactId>jetty-continuation</artifactId>				
+				</exclusion>				
+			</exclusions> 							
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.inject</groupId>
@@ -273,6 +369,12 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>23.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.checkerframework</groupId>
+					<artifactId>checker-qual</artifactId>
+				</exclusion>
+			</exclusions> 			
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>

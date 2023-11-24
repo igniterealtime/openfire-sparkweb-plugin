@@ -103,8 +103,6 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.util.security.*;
 import org.eclipse.jetty.security.*;
 import org.eclipse.jetty.security.authentication.*;
-import org.eclipse.jetty.websocket.servlet.*;
-import org.eclipse.jetty.websocket.server.*;
 import org.eclipse.jetty.servlets.EventSource;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;

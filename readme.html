@@ -13,25 +13,63 @@
     <div class="stackedit__toc">
       
 <ul>
-<li><a href="#introduction">Introduction</a></li>
+<li>
+<ul>
+<li><a href="#llama">LLaMA</a></li>
+<li><a href="#ci-build-status">CI Build Status</a></li>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#known-issues">Known Issues</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#configuration">Configuration</a></li>
+<li><a href="#how-to-use">How to use</a></li>
+</ul>
+</li>
 </ul>
 
     </div>
   </div>
   <div class="stackedit__right">
     <div class="stackedit__html">
-      <h1 id="introduction">Introduction</h1>
-<p>This plugin adds support for a whole range of modern web service connections to Openfire/XMPP via the embedded Jetty web server in a different way to the traditional persistent client XMPP session over TCP/5222 or Bosh/7443 or Websockets/7443 used by native binary clients.</p>
-<p>It uses :</p>
-<ul>
-<li><a href="authenticate.md">Web Authentication, Web Credentials and Time based one time passwords (TOTP) with JWTs (JSON Web Tokens)</a> instead of traditional username/passwords to perform multiple factor authentication on user requests and apply the considered user permissions and entitlements for the request or entitlement.</li>
-<li><a href="api.md">REST APIs</a> to make requests and receive immediate responses.</li>
-<li><a href="sse.md">Server Sent Events</a> (SSE) and</li>
-<li>Web-Push to push events to users when they are online or offline.</li>
-</ul>
-<p>A user has a singleton xmpp session in Openfire that is created on demand and removed when it expires. This single user session can have many active REST and SSE connections depending on how many browsers tabs, browser windows or browser instances are connected to Openfire from applications in web pages opened on behalf of the user.</p>
-<p>The xmpp session has the full feature set of an XMPP client that is based on Smack/Spark. It also has User Interface (UI) consisting of web-components that can bind directly to Spark features. For example, a contacts roster widget and a chat conversation widget. that work independent of each other and can be hosted in different web pages or different browsers but end up pointing at the same xmpp session.</p>
-<p>A fully working XMPP client can be constructed in a web page with minimal HTML and JavaScript.</p>
+      <h2 id="llama">LLaMA</h2>
+<p>AI Inference engine for Openfire using LLaMA.<br>
+This plugin is a wrapper to llama.cpp server binary. It uses the HTTP API to create a chatbot in Openfire which will engage in XMPP chat and groupchat conversations.</p>
+<h2 id="ci-build-status">CI Build Status</h2>
+<p><a href="https://github.com/igniterealtime/openfire-llama-plugin/actions"><img src="https://github.com/igniterealtime/openfire-llama-plugin/workflows/Java%20CI/badge.svg" alt="Build Status"></a></p>
+<h2 id="overview">Overview</h2>
+<img src="https://igniterealtime.github.io/openfire-llama-plugin/llama-chat.png">
+<h2 id="known-issues">Known Issues</h2>
+<p>This version has embedded binaries for only Linux 64 and Windows 64.</p>
+<h2 id="installation">Installation</h2>
+<p>copy llama.jar to the plugins folder</p>
+<h2 id="configuration">Configuration</h2>
+<img src="https://igniterealtime.github.io/openfire-llama-plugin/llama-settings.png">
+<h3 id="enable-llama">Enable LLaMA</h3>
+<p>Enables or disables the plugin. Reload plugin or restart Openfire if this or any of the settings other settings are changed.</p>
+<h3 id="usernamepassword">Username/Password</h3>
+<p>This is Openfire username/password for the user that will act as a chatbot for LLaMA. By default the user will be “llama” and the password witll be a random string. If you are using ldap or your Openfire user manager is in read-only mode and a new user cannot be created, then you must create the user and specify the username and password here…</p>
+<h3 id="alias">Alias</h3>
+<p>Set an alias for the model. The alias will be returned in chat responses.</p>
+<h3 id="port">Port</h3>
+<p>Set the port to listen. Default: 8080</p>
+<h3 id="model-url">Model URL</h3>
+<p>Specify the path to the LLaMA model file to be downloaded and used. Default is <a href="https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGUF/resolve/main/llama-2-7b-chat.Q2_K.gguf?download=true">https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGUF/resolve/main/llama-2-7b-chat.Q2_K.gguf?download=true</a><br>
+The first time the plugin starts, it will download this file and cache in OPENFIRE_HOME/llama folder.</p>
+<h3 id="system-prompt">System Prompt</h3>
+<p>Prompting large language models like Llama 2 is an art and a science. Set your system prompt here. Default is “You are a helpful assistant”</p>
+<h3 id="predictions">Predictions</h3>
+<p>Set the maximum number of tokens to predict when generating text. Note: May exceed the set limit slightly if the last token is a partial multibyte character. When 0, no tokens will be generated but the prompt is evaluated into the cache. Default is 256</p>
+<h3 id="temperature">Temperature</h3>
+<p>Adjust the randomness of the generated text (default: 0.5).</p>
+<h3 id="top-k-sampling">Top K Sampling</h3>
+<p>Limit the next token selection to the K most probable tokens (default: 40).</p>
+<h3 id="top-p-sampling">Top P Sampling</h3>
+<p>Limit the next token selection to a subset of tokens with a cumulative probability above a threshold P (default: 0.95).</p>
+<h2 id="how-to-use">How to use</h2>
+<p>The plugin will create an Openfire users called llama (by default). The user can be engaged with in chat or groupchats.</p>
+<h3 id="chat">Chat</h3>
+<p>Add llama as a contact and start a chat conversation</p>
+<h3 id="groupchat">Groupchat</h3>
+<p>Start as chat message with the LLaMA username (llama) and LLaMA will join the groupchat and respond to the message typed. Not that this only works with groupchats hosted in your Openfire server. Federation is not supported.</p>
 
     </div>
   </div>
