@@ -76,10 +76,76 @@
         </plugins>
     </build>
 
-    <dependencies>  		
+    <dependencies>  
+        <dependency>
+            <groupId>org.igniterealtime.openfire</groupId>
+            <artifactId>xmppserver</artifactId>
+            <version>${openfire.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
+            <artifactId>netty-buffer</artifactId>
+            <version>4.1.100.Final</version>
+            <scope>provided</scope>					
+        </dependency>	
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-http</artifactId>
+            <version>4.1.100.Final</version>
+            <scope>provided</scope>					
+        </dependency>		
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-socks</artifactId>
+            <version>4.1.100.Final</version>
+            <scope>provided</scope>					
+        </dependency>		
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-common</artifactId>
+            <version>4.1.100.Final</version>
+            <scope>provided</scope>					
+        </dependency>		
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+            <version>4.1.100.Final</version>
+            <scope>provided</scope>					
+        </dependency>				
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns</artifactId>
+            <version>4.1.100.Final</version>
+            <scope>provided</scope>					
+        </dependency>		
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+            <version>4.1.100.Final</version>
+            <scope>provided</scope>					
+        </dependency>		
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-classes-epoll</artifactId>
+            <version>4.1.100.Final</version>
+            <scope>provided</scope>					
+        </dependency>		
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-classes-kqueue</artifactId>
+            <version>4.1.100.Final</version>
+            <scope>provided</scope>					
+        </dependency>		
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-unix-common</artifactId>
+            <version>4.1.100.Final</version>
+            <scope>provided</scope>					
+        </dependency>		
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler-proxy</artifactId>
             <version>4.1.100.Final</version>
             <scope>provided</scope>					
         </dependency>	
@@ -451,6 +517,15 @@
         </dependency>		
 		
     </dependencies>   
+
+    <distributionManagement>
+        <!-- Repository in which we deploy this project, when desired. -->
+        <repository>
+            <id>igniterealtime</id>
+            <name>Ignite Realtime Repository</name>
+            <url>https://www.igniterealtime.org/archiva/repository/maven/</url>
+        </repository>
+    </distributionManagement>
     
     <repositories>
         <repository>
