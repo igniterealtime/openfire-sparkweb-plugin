@@ -34,6 +34,25 @@
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-jspc-maven-plugin</artifactId>
             </plugin> 
+            <plugin>
+                <groupId>com.googlecode.maven-download-plugin</groupId>
+                <artifactId>download-maven-plugin</artifactId>
+                <version>1.5.0</version>
+                <executions>
+                    <execution>
+                    <id>retrieve-pade-webclient</id>
+                    <phase>prepare-package</phase>
+                    <goals>
+                        <goal>wget</goal>
+                    </goals>
+                    <configuration>
+                        <url>https://igniterealtime.github.io/pade/docs-2.1.5.1.zip</url>
+                        <unpack>true</unpack>
+                        <outputDirectory>${project.basedir}/classes/apps/pade</outputDirectory>
+                    </configuration>
+                    </execution>                    
+                </executions>
+            </plugin>			   			
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>

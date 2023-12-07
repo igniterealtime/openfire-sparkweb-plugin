@@ -2,5 +2,5 @@
 target/
 temp/
 tempdir/
-classes/apps/demo/
+classes/apps/pade/
 *.cmd
