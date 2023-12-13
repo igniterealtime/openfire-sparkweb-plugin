@@ -100,7 +100,21 @@
 <section1 topic="Introduction" anchor="intro">
   <p>XMPP protocol extensions already defines a method for initiating peer-to-peer media sessions such as <span class="ref"><link url="https://xmpp.org/extensions/xep-0166.html">Jingle (XEP-0166)</link></span> <note>XEP-0166: Jingle &lt;<link url="https://xmpp.org/extensions/xep-0166.html">https://xmpp.org/extensions/xep-0166.html</link>&gt;.</note> however due to its very nature of being peer-to-peer it does not work very well in scenarios with online meetings. It also does not work alongside offline storage, MUC history and <span class="ref"><link url="https://xmpp.org/extensions/xep-0313.html">Message Archive Management (XEP-0313)</link></span> <note>XEP-0313: Message Archive Management &lt;<link url="https://xmpp.org/extensions/xep-0313.html">https://xmpp.org/extensions/xep-0313.html</link>&gt;.</note>.</p>
   <p>Using a web browser to manually request a URL from an HTTP server and sharing the link has been a workaround for this for a long time now. While users have a variety of services to choose from, the downside of this manual approach is that an XMPP client can not automate this process on behalf of the user since these services don’t share a common API.</p>
-  <p>This XEP defines an approach to request initiation of an online meeting via an HTTP server and receive a URL can be used to join and invite others to the meeting.</p>
+  <p>This XEP defines an approach to request initiation of an online meeting via an HTTP server and receive a URL can be used to join and invite others to the meeting. It has two main features:</p>
+  <ol>
+	  <li>An IQ-based protocol to request a meeting link from a server.</li>
+	  <li>An additional element to add to a message to send the received meeting link to another party</li>
+  </ol>
+  <p>
+  The second feature is achieved by using <span class="ref"><link url="https://xmpp.org/extensions/xep-0482.html">Call Invites (XEP-0482)</link></span> <note>XEP-0482:Call Invites &lt;<link url="https://xmpp.org/extensions/xep-0482.html">https://xmpp.org/extensions/xep-0482.html</link>&gt;.</note>, which describes
+  call invites using Jingle and external URIs. The XEP mentions how a web URLs can be used as external URI to join a call. For completeness, an example is repeated here to explicitly show how meeting invitations should be sent to invitees.
+  </p>
+  <p>
+	<span class="ref"><link url="https://xmpp.org/extensions/xep-0482.html">Call Invites (XEP-0482)</link></span> <note>XEP-0482:Call Invites &lt;<link url="https://xmpp.org/extensions/xep-0482.html">https://xmpp.org/extensions/xep-0482.html</link>&gt;.</note> has other call features, like announcing call join and
+	leave on the XMPP side. These are relevant for online meetings if the website behind the URL is opened
+	in a frame or similar inside the XMPP client as the meeting host xmpp client can track meeting participants and then knows when users leave the meeting without having to depend on APIs provided by the meeting service provider which may have cross-domain challenges.
+	For completeness, examples are also repeated in this XEP for the context of online meeting invitations.
+  </p>
 </section1>
 <section1 topic="Requirements" anchor="reqs">
   <ul>
