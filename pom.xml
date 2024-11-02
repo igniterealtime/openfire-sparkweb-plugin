@@ -10,14 +10,13 @@
         <version>4.8.3</version>
     </parent>
     
-    <groupId>org.igniterealtime.openfire</groupId>
     <artifactId>sparkweb</artifactId>
     <version>0.0.2-SNAPSHOT</version>
     <name>SparkWeb</name>
     <description>SparkWeb Plugin for Openfire</description>
 	
     <properties>
-		<build.date>2023/12/31</build.date>	
+        <build.date>2023-12-31</build.date>
         <jackson.version>2.15.2</jackson.version>
         <jersey.version>2.36</jersey.version>	
         <bouncycastle.version>1.70</bouncycastle.version>	
