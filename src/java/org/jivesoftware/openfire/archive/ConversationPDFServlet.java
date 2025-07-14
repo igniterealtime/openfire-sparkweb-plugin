@@ -102,7 +102,7 @@ public class ConversationPDFServlet extends HttpServlet {
                     DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
                     startDate = formatter.parse(start);
                 }
-                startDate = new Date(startDate.getTime() - JiveConstants.MINUTE * 5);
+                startDate = new Date(startDate.getTime() - (60 * 1000 * 5));
                 search.setDateRangeMin(startDate);
             }
             catch (Exception e) {
@@ -123,7 +123,7 @@ public class ConversationPDFServlet extends HttpServlet {
                     DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
                     endDate = formatter.parse(end);
                 }
-                endDate = new Date(endDate.getTime() + JiveConstants.DAY - 1);
+                endDate = new Date(endDate.getTime() + (24 * 60 * 60 * 1000) - 1);
                 search.setDateRangeMax(endDate);
             }
             catch (Exception e) {

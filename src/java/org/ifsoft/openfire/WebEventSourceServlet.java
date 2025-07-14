@@ -12,8 +12,8 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import org.eclipse.jetty.servlets.EventSource;
-import org.eclipse.jetty.servlets.EventSourceServlet;
+import org.eclipse.jetty.ee8.servlets.EventSource;
+import org.eclipse.jetty.ee8.servlets.EventSourceServlet;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.http.HttpBindManager;

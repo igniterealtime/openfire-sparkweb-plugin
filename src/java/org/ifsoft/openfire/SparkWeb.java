@@ -93,17 +93,15 @@ import org.jivesoftware.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
-import org.eclipse.jetty.plus.annotation.ContainerInitializer;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.servlet.*;
+import org.eclipse.jetty.ee8.webapp.WebAppContext;
+import org.eclipse.jetty.ee8.servlet.*;
+import org.eclipse.jetty.ee8.servlets.EventSource;
+
 import org.eclipse.jetty.server.*;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.util.security.*;
 import org.eclipse.jetty.security.*;
 import org.eclipse.jetty.security.authentication.*;
-import org.eclipse.jetty.servlets.EventSource;
+
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -586,10 +584,6 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 		
 		addSecurityToWebContext(context);
 		
-        final List<ContainerInitializer> initializers = new ArrayList<>();
-        initializers.add(new ContainerInitializer(new JettyJasperInitializer(), null));
-        context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
-        context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
         context.setWelcomeFiles(new String[]{"index.html"});
 		context.addServlet(new ServletHolder(new WebEventSourceServlet()), "/sse");
 		
@@ -909,16 +903,6 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 							Log.debug("notifyRoomSubscribers members " + jid + " " + roomJID);
 							notifyRoomSubscribers(jid, room, roomJID, message, nickname, userJid);
 						}
-
-						for (MUCRole role : room.getModerators())
-						{
-							Log.debug("notifyRoomSubscribers moderators " + role.getUserAddress() + " " + roomJID, message);
-						}
-
-						for (MUCRole role : room.getParticipants())
-						{
-							Log.debug("notifyRoomSubscribers participants " + role.getUserAddress() + " " + roomJID, message);
-						}
 					}
 
 				}
@@ -943,6 +927,18 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
     public void occupantLeft(JID roomJID, JID user, String nickname) {
 		
 	}
+	
+    public void roomClearChatHistory(long roomID, JID roomJID) {
+
+    }
+
+    public void roomCreated(long roomID, JID roomJID) {
+
+    }
+	
+    public void roomDestroyed(long roomID, JID roomJID) {
+
+    }	
 
     private void notifyRoomSubscribers(JID subscriberJID, MUCRoom room, JID roomJID, Message message, String nickname, String senderJid)    {
         try {
@@ -962,13 +958,13 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
     }
 
     private void notifyRoomActivity(JID subscriberJID, MUCRoom room, JID roomJID, Message message, String nickname, String senderJid)    {
-        if (room.getAffiliation(subscriberJID) != MUCRole.Affiliation.none && !senderJid.equals(subscriberJID.toBareJID()))
+        if (room.getAffiliation(subscriberJID) != Affiliation.none && !senderJid.equals(subscriberJID.toBareJID()))
         {
             Log.debug("notifyRoomActivity checking " + subscriberJID + " " + roomJID);
             boolean inRoom = false;
 
             try {
-                for (MUCRole role : room.getOccupants())
+                for (MUCOccupant role : room.getOccupants())
                 {
                     if (role.getUserAddress().asBareJID().toString().equals(subscriberJID.toString())) inRoom = true;
                 }
@@ -990,7 +986,7 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
                     notification.setTo(subscriberJID);
                     Element rai = notification.addChildElement("rai", "urn:xmpp:rai:0");
                     rai.addElement("activity").setText(roomJID.toString());
-                    server.getRoutingTable().routePacket(subscriberJID, notification, true);
+                    server.getRoutingTable().routePacket(subscriberJID, notification);
                 }
                 else {
                     // user is offline, send web push notification if user mentioned
