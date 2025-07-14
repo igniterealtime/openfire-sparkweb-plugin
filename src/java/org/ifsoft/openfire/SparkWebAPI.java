@@ -1437,7 +1437,7 @@ public class SparkWebAPI {
         }
 	}
 
-	@ApiOperation(tags = {"Authentication"}, value="Authenticate a user with with a TOTP code", notes="This endpoint is used to authenticate a user with a time based one-time password (TOTP) for two-factor (2FA) authentication")
+	@ApiOperation(tags = {"Authentication"}, value="Authenticate a user with a TOTP code", notes="This endpoint is used to authenticate a user with a time based one-time password (TOTP) for two-factor (2FA) authentication")
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "The authentication token", response = TokenEntity.class), @ApiResponse(code = 500, message = "Authentication failed")})	
     @POST
     @Path("/totp/authenticate/{username}/{code}")

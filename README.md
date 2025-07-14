@@ -21,66 +21,68 @@ The xmpp session has the full feature set of an XMPP client that is based on Sma
 
 Here is a [simple example](classes/apps/examples/login.html) to create an xmpp session token with standard username and password. The token is used to create an EventSource which can receive a chat message.
 
-````
+````html
 <html lang="en">
-<head>	
+<head>
   <script>
-	let token;
-	
-	window.addEventListener('load', async () => {
-		console.debug("window.load"); 
-		
-		document.getElementById("login").addEventListener('click', async () => {
-			const url = document.getElementById("url").value;
-			const username = document.getElementById("username").value;
-			const body = document.getElementById("password").value;
-			
-			const response = await fetch(url + "/sparkweb/api/rest/login/" + username, {method: "POST", body});
-			const json =  await response.json();		
-			token = json.token;	
+    let token;
+    
+    window.addEventListener('load', async () => {
+        console.debug("window.load");
+        
+        document.getElementById("login").addEventListener('click', async () => {
+            const url = document.getElementById("url").value;
+            const username = document.getElementById("username").value;
+            const body = document.getElementById("password").value;
+            
+            const response = await fetch(url + "/sparkweb/api/rest/login/" + username, {method: "POST", body});
+            const json =  await response.json();
+            token = json.token;
 
-			if (token) {
-				const status = document.getElementById("status");
-				const source = new EventSource(url + "/sparkweb/sse?token=" + token);
-				
-				source.onerror = async event => {
-					console.debug("EventSource - onError", event);				
-				};
+            if (token) {
+                const status = document.getElementById("status");
+                const source = new EventSource(url + "/sparkweb/sse?token=" + token);
+                
+                source.onerror = async event => {
+                    console.debug("EventSource - onError", event);
+                };
 
-				source.addEventListener('onConnect', async event => {
-					const msg = JSON.parse(event.data);				
-					status.innerHTML = "User " + msg.username + " (" + msg.name + ") Signed In";				
-					console.debug("EventSource - onConnect", msg);				
-				});	
+                source.addEventListener('onConnect', async event => {
+                    const msg = JSON.parse(event.data);
+                    status.innerHTML = "User " + msg.username + " (" + msg.name + ") Signed In";
+                    console.debug("EventSource - onConnect", msg);
+                });    
 
-				source.addEventListener('chatapi.chat', async event => {
-					const msg = JSON.parse(event.data);	
-					
-					if (msg.type == "headline") {
-						status.innerHTML = "System Message - " + msg.body;				
-					} else {
-						status.innerHTML = msg.type + " " + msg.from + " - " + msg.body;								
-					}
-					console.debug("EventSource - chatapi.chat", msg);	
-				});				
-			}			
-		});		
-		
-	});
-	
-	window.addEventListener('beforeunload', async () => {
-		console.debug("window.beforeunload");
-		if (token) fetch(document.getElementById("url").value + "/sparkweb/api/rest/logout", {method: "POST", headers: {"Authorization": token}});
-	})			
+                source.addEventListener('chatapi.chat', async event => {
+                    const msg = JSON.parse(event.data);
+                    
+                    if (msg.type == "headline") {
+                        status.innerHTML = "System Message - " + msg.body;
+                    } else {
+                        status.innerHTML = msg.type + " " + msg.from + " - " + msg.body;
+                    }
+                    console.debug("EventSource - chatapi.chat", msg);
+                });
+            }
+        });
+        
+    });
+    
+    window.addEventListener('beforeunload', async () => {
+        console.debug("window.beforeunload");
+        if (token) {
+            fetch(document.getElementById("url").value + "/sparkweb/api/rest/logout", {method: "POST", headers: {"Authorization": token}});
+        }
+    })
   </script>
 </head>
 
 <body>
-	<div style="margin: 10px;font-family: monospace;font-size: 16px;" id="status">Inactive</div> 
-	<input id="url" type="text" value="https://localhost:7443" /><br/>
-	<input id="username" type="text" value="admin" /><br/>
-	<input id="password" type="text" value="admin" /><br/>	
-	<button id="login">Login</button>
+    <div style="margin: 10px;font-family: monospace;font-size: 16px;" id="status">Inactive</div>
+    <input id="url" type="text" value="https://localhost:7443" /><br/>
+    <input id="username" type="text" value="admin" /><br/>
+    <input id="password" type="text" value="admin" /><br/>
+    <button id="login">Login</button>
 </body>
-</html>	
+</html>
 ````
