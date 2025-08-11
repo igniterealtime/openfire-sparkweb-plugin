@@ -539,7 +539,13 @@
             <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
             <version>${jersey.version}</version>
             <scope>test</scope>
-        </dependency>		
+        </dependency>	
+
+		<dependency>
+			<groupId>siacs</groupId>
+			<artifactId>conversations</artifactId>
+			<version>2.19.0</version>		
+		</dependency>				
 		
     </dependencies>   
 
@@ -558,6 +564,19 @@
             <name>Ignite Realtime Repository</name>
             <url>https://igniterealtime.org/archiva/repository/maven/</url>
         </repository>
+
+        <repository>
+            <id>localLibs</id>
+            <name>localLibs</name>
+            <url>file://${project.basedir}/src/lib</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+				<checksumPolicy>warn</checksumPolicy>
+			</releases>			
+        </repository> 	
 		
     </repositories>
 

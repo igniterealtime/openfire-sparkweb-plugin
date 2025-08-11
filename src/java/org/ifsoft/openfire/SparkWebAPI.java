@@ -107,6 +107,15 @@ import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 
+import eu.siacs.conversations.xmpp.jingle.*;
+import eu.siacs.conversations.xmpp.jingle.stanzas.RtpDescription;
+import eu.siacs.conversations.xmpp.jingle.stanzas.IceUdpTransportInfo;
+import eu.siacs.conversations.xmpp.jingle.stanzas.Content;
+import im.conversations.android.xmpp.model.jingle.Jingle;
+
+import com.google.common.collect.Iterables;
+
+
 @SwaggerDefinition(tags = { @Tag(name = "Authentication", description = "provides server-side authentication services"), @Tag(name = "Chat", description = "provides chat services for the authenticated user"), @Tag(name = "Group Chat", description = "provides groupchat services to manage contacts"), @Tag(name = "Presence", description = "provides presence services"), @Tag(name = "Collaboration", description = "provides meeting and other collaboration services"), @Tag(name = "User Management", description = "provides user services for the authenticated user"), @Tag(name = "Contact Management", description = "provides user roster services to manage contacts"), @Tag(name = "Web Push", description = "provides server-side Web Push services"), @Tag(name = "Bookmarks", description = "Create, update and delete Openfire bookmarks") }, info = @Info(description = "SparkWeb REST API adds support for a whole range of modern web service connections to Openfire/XMPP", version = "0.0.1", title = "SparkWeb API"), schemes = {SwaggerDefinition.Scheme.HTTPS, SwaggerDefinition.Scheme.HTTP}, securityDefinition = @SecurityDefinition(apiKeyAuthDefinitions = {@ApiKeyAuthDefinition(key = "authorization", name = "authorization", in = ApiKeyAuthDefinition.ApiKeyLocation.HEADER)}))
 @Api(authorizations = {@Authorization("authorization")})
 @Path("rest")
@@ -906,6 +915,92 @@ public class SparkWebAPI {
 
         return Response.status(Response.Status.OK).build();
     }
+	
+	@ApiOperation(tags = {"Collaboration"}, value="Convert browser SDP to Jingle Content XML", notes="This is a helper for Jingle")	
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "The SDP was converted"), @ApiResponse(code = 400, message = "The SDP conversion failed")})	
+    @Path("/jingle/{action}/{sessionId}")
+    @POST	
+    public String sdpToJingleContent(@ApiParam(value = "The jingle action", required = true) @PathParam("action") String action, @ApiParam(value = "The jingle session ID", required = true) @PathParam("sessionId") String sessionId, @ApiParam(value = "The SDP to be converted", required = true) String sdp) throws ServiceException   {
+        Log.debug("sdpToJingleContent\n" + sdp);
+		
+		Jingle jingle = new Jingle(Jingle.Action.of(action), sessionId);
+
+        try {
+			// TODO sdp value only working when hard-coded.
+			//sdp = "v=0\r\no=- 1487142082619623512 1753989567 IN IP4 0.0.0.0\r\ns=-\r\nt=0 0\r\na=msid-semantic:WMS *\r\na=fingerprint:sha-256\r\nDB:3F:A9:D6:D8:4F:FA:E8:79:CE:6E:BA:BE:4C:B7:51:3D:8D:75:00:02:FA:CE:3F:13:A3:97:4C:56:4D:C8:4B\r\na=extmap-allow-mixed\r\na=group:BUNDLE 0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\nc=IN IP4 0.0.0.0\r\na=setup:active\r\na=mid:0\r\na=ice-ufrag:cTjXOAnqKImReQKR\r\na=ice-pwd:AxdkYswWKQkxIeiqaKuLmtxaIAochJsW\r\na=rtcp-mux\r\na=rtcp-rsize\r\na=rtpmap:111 opus/48000/2\r\na=fmtp:111 minptime=10;useinbandfec=1\r\na=rtcp-fb:111 transport-cc\r\na=extmap:3 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\r\na=recvonly\r\na=candidate:120050571 1 udp 2130706431 172.27.156.213 10000 typ host ufrag cTjXOAnqKImReQKR\r\na=candidate:120050571 2 udp 2130706431 172.27.156.213 10000 typ host ufrag cTjXOAnqKImReQKR";
+			/*
+			v=0
+			o=- 8770656990916039506 2 IN IP4 127.0.0.1
+			s=-
+			t=0 0
+			a=msid-semantic:WMS *
+			a=fingerprint:sha-256
+			a=extmap-allow-mixed
+			a=group:BUNDLE 0
+			m=audio 9 UDP/TLS/RTP/SAVPF 111
+			c=IN IP4 0.0.0.0
+			a=rtpmap:111 opus/48000/2
+			a=extmap:3 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01
+			a=candidate:120050571 1 udp 2130706431 172.27.156.213 10000 typ host ufrag cTjXOAnqKImReQKR
+			a=candidate:120050571 2 udp 2130706431 172.27.156.213 10000 typ host ufrag cTjXOAnqKImReQKR
+			a=ice-ufrag:cTjXOAnqKImReQKR
+			a=fmtp:111 minptime=10;useinbandfec=1
+			a=rtcp-fb:111 transport-cc
+			a=ice-pwd:AxdkYswWKQkxIeiqaKuLmtxaIAochJsW
+			a=setup:active
+			a=mid:0
+			a=rtcp-mux
+			a=recvonly
+			a=rtcp-rsize			
+			*/
+			SessionDescription sessionDescription = SessionDescription.parse(sdp);
+			Log.debug("session description\n" + sessionDescription);
+			
+			RtpContentMap map = RtpContentMap.of(sessionDescription, true);
+			
+			for (final Object key : map.contents.keySet()) {
+				final DescriptionTransport<RtpDescription, IceUdpTransportInfo> descriptionTransport = (DescriptionTransport<RtpDescription, IceUdpTransportInfo>) map.contents.get((String) key);
+				final Content content = new Content(Content.Creator.INITIATOR, descriptionTransport.senders, (String) key);
+							
+				if (descriptionTransport.description != null) {
+					content.addChild(descriptionTransport.description);
+				}			
+				
+				for (final SessionDescription.Media media : (List<SessionDescription.Media>) sessionDescription.media) {			
+					final String mid = (String) Iterables.getFirst(((SessionDescription.Media) media).attributes.get("mid"), null);
+					
+					if (mid == null || "".equals(mid.trim())) {
+						continue;
+					}
+					Log.debug("cadidate mid " + mid);
+					
+					for (final String sdpCandidate : (List<String>) media.attributes.get("candidate")) {
+						
+						final IceUdpTransportInfo.Candidate candidate = IceUdpTransportInfo.Candidate.fromSdpAttributeValue(sdpCandidate, null);
+						 
+						Log.debug("cadidate xml " + candidate);
+										
+						if (candidate != null) {
+							descriptionTransport.transport.addChild(candidate);
+						}
+					}
+				}			
+				
+				content.addChild(descriptionTransport.transport);
+				Log.debug("Jingle content\n" + content);
+				jingle.addJingleContent(content);
+			}
+			
+			if (map.group != null) {
+				jingle.addGroup(map.group);
+			}			
+
+        } catch (Exception e) {
+			Log.error("sdpToJingleContent " + e, e);
+            throw new ServiceException("Exception", e.getMessage(), ExceptionType.ILLEGAL_ARGUMENT_EXCEPTION, Response.Status.BAD_REQUEST);
+        }
+		return jingle.toString();
+    }	
 	
 	//-------------------------------------------------------
 	//

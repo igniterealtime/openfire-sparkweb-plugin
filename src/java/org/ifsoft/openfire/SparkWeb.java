@@ -222,7 +222,7 @@ public class SparkWeb implements Plugin, ProcessListener, ClusterEventListener, 
 		server.getIQDiscoInfoHandler().addServerFeature("urn:xmpp:http:online-meetings:jitsi:0");					
 
 		Log.info("SparkWeb plugin enabled");
-		startTime = System.currentTimeMillis();
+		startTime = System.currentTimeMillis();		
     }
 	
 
